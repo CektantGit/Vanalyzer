@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vizbl Analytics</title>
+  <title>Vizbl Аналитика</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -200,6 +200,25 @@
     .chart-head strong {
       font-size: 16px;
       letter-spacing: -0.02em;
+    }
+
+    .overview-kpi {
+      min-width: 220px;
+      text-align: right;
+    }
+
+    .overview-kpi .value {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .overview-kpi .subtext {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
     }
 
     .chart-canvas.large { height: 270px; }
@@ -777,43 +796,43 @@
   <div class="page">
     <header class="topbar">
       <div class="topbar-title">
-        <h1>Vizbl Analytics Dashboard</h1>
-        <p id="lastUpdatedText">Last updated: —</p>
+        <h1>Vizbl Аналитика</h1>
+        <p id="lastUpdatedText">Обновлено: —</p>
       </div>
       <div class="topbar-actions">
-        <button type="button" class="btn" id="downloadBtn">Download</button>
-        <button type="button" class="btn secondary" id="openBtn">Open</button>
-        <button type="button" class="btn secondary" id="updateBtn" disabled>Update</button>
-        <button type="button" class="btn ghost" id="exportCsvBtn">Export</button>
+        <button type="button" class="btn" id="downloadBtn">Скачать</button>
+        <button type="button" class="btn secondary" id="openBtn">Открыть</button>
+        <button type="button" class="btn secondary" id="updateBtn" disabled>Обновить</button>
+        <button type="button" class="btn ghost" id="exportCsvBtn">Экспорт CSV</button>
       </div>
     </header>
 
     <section class="hero">
       <div class="hero-main">
-        <div class="eyebrow">Total views</div>
+        <div class="eyebrow">Все просмотры</div>
         <div class="hero-value" id="heroTotalViews">0</div>
-        <div class="hero-sub" id="heroSummaryText">Open a bundle or download a fresh one to analyze object history, growth, and status trends.</div>
+        <div class="hero-sub" id="heroSummaryText">Откройте bundle или скачайте новый, чтобы анализировать историю объектов, рост и статусы.</div>
 
         <div class="hero-stats">
           <div class="mini-stat">
-            <div class="label">Growth</div>
+            <div class="label">Рост</div>
             <div class="value" id="heroGrowth">0%</div>
-            <div class="subtext" id="heroGrowthSub">vs previous update</div>
+            <div class="subtext" id="heroGrowthSub">к прошлому обновлению</div>
           </div>
           <div class="mini-stat">
-            <div class="label">Objects</div>
+            <div class="label">Объекты</div>
             <div class="value" id="heroObjects">0</div>
-            <div class="subtext">Tracked objects</div>
+            <div class="subtext">Отслеживаемые объекты</div>
           </div>
           <div class="mini-stat">
-            <div class="label">Zero</div>
+            <div class="label">Ноль</div>
             <div class="value" id="heroZero">0</div>
-            <div class="subtext">No current views</div>
+            <div class="subtext">Сейчас без просмотров</div>
           </div>
           <div class="mini-stat">
-            <div class="label">Removed</div>
+            <div class="label">Удалено</div>
             <div class="value" id="heroRemoved">0</div>
-            <div class="subtext">Missing from latest sync</div>
+            <div class="subtext">Нет в последней синхронизации</div>
           </div>
         </div>
       </div>
@@ -821,10 +840,10 @@
       <div class="hero-chart">
         <div class="chart-head">
           <div>
-            <div class="label">History</div>
-            <strong>Total views history</strong>
+            <div class="label">История</div>
+            <strong>История всех просмотров</strong>
           </div>
-          <div class="muted" id="heroChartMeta">No data loaded</div>
+          <div class="muted" id="heroChartMeta">Данные не загружены</div>
         </div>
         <div class="chart-canvas large">
           <canvas id="heroChartCanvas"></canvas>
@@ -834,68 +853,68 @@
 
     <section class="insights-row">
       <article class="insight">
-        <div class="label">Top growth object</div>
+        <div class="label">Лидер по росту</div>
         <div class="value" id="insightTopGrowth">—</div>
-        <div class="subtext" id="insightTopGrowthSub">No data</div>
+        <div class="subtext" id="insightTopGrowthSub">Нет данных</div>
       </article>
       <article class="insight">
-        <div class="label">Biggest delta</div>
+        <div class="label">Максимальный прирост</div>
         <div class="value" id="insightBiggestDelta">0</div>
-        <div class="subtext" id="insightBiggestDeltaSub">Latest update delta</div>
+        <div class="subtext" id="insightBiggestDeltaSub">Изменение за последнее обновление</div>
       </article>
       <article class="insight">
-        <div class="label">Zero count</div>
+        <div class="label">Объектов с нулём</div>
         <div class="value" id="insightZeroCount">0</div>
-        <div class="subtext">Objects at zero views</div>
+        <div class="subtext">Объекты без просмотров</div>
       </article>
       <article class="insight">
-        <div class="label">Removed count</div>
+        <div class="label">Удалённых объектов</div>
         <div class="value" id="insightRemovedCount">0</div>
-        <div class="subtext">Removed in current state</div>
+        <div class="subtext">Удалены в текущем состоянии</div>
       </article>
       <article class="insight">
-        <div class="label">Top 10 share</div>
+        <div class="label">Доля топ-10</div>
         <div class="value" id="insightTopShare">0%</div>
-        <div class="subtext" id="insightTopShareSub">Share of total views</div>
+        <div class="subtext" id="insightTopShareSub">Доля от всех просмотров</div>
       </article>
     </section>
 
     <section class="filterbar">
-      <input class="search" id="searchInput" type="text" placeholder="Search name or tinuuid" />
+      <input class="search" id="searchInput" type="text" placeholder="Поиск по названию или tinuuid" />
       <select class="select" id="periodSelect">
-        <option value="update">Period: update</option>
-        <option value="day">Period: day</option>
-        <option value="week">Period: week</option>
-        <option value="month">Period: month</option>
-        <option value="all">Period: all</option>
+        <option value="update">Период: обновление</option>
+        <option value="day">Период: день</option>
+        <option value="week">Период: неделя</option>
+        <option value="month">Период: месяц</option>
+        <option value="all">Период: всё время</option>
       </select>
       <select class="select" id="sortSelect">
-        <option value="views_desc">Sort: views ↓</option>
-        <option value="delta_desc">Sort: delta ↓</option>
-        <option value="growth_desc">Sort: growth ↓</option>
-        <option value="name_asc">Sort: name A→Z</option>
-        <option value="status_asc">Sort: status</option>
+        <option value="views_desc">Сортировка: просмотры ↓</option>
+        <option value="delta_desc">Сортировка: прирост ↓</option>
+        <option value="growth_desc">Сортировка: рост ↓</option>
+        <option value="name_asc">Сортировка: имя А→Я</option>
+        <option value="status_asc">Сортировка: статус</option>
       </select>
       <select class="select" id="statusFilterSelect">
-        <option value="all">Status: all</option>
-        <option value="hot">Hot</option>
-        <option value="rising">Rising</option>
-        <option value="stagnant">Stagnant</option>
-        <option value="zero">Zero</option>
-        <option value="removed">Removed</option>
+        <option value="all">Статус: все</option>
+        <option value="hot">Горячий</option>
+        <option value="rising">Растёт</option>
+        <option value="stagnant">Стагнирует</option>
+        <option value="zero">Ноль</option>
+        <option value="removed">Удалён</option>
       </select>
       <div class="tabs">
-        <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
-        <button type="button" class="tab-btn" data-tab="table">Table</button>
-        <button type="button" class="tab-btn" data-tab="cards">Cards</button>
+        <button type="button" class="tab-btn active" data-tab="overview">Обзор</button>
+        <button type="button" class="tab-btn" data-tab="table">Таблица</button>
+        <button type="button" class="tab-btn" data-tab="cards">Карточки</button>
       </div>
     </section>
 
     <div class="statusline">
-      <div class="chip" id="fileChip">File: not opened</div>
-      <div class="chip" id="modeChip">Mode: idle</div>
-      <div class="chip" id="filterChip">Filter: update / all statuses</div>
-      <div class="status" id="status">Ready.</div>
+      <div class="chip" id="fileChip">Файл: не открыт</div>
+      <div class="chip" id="modeChip">Режим: ожидание</div>
+      <div class="chip" id="filterChip">Фильтр: обновление / все статусы</div>
+      <div class="status" id="status">Готово.</div>
     </div>
 
     <main class="content">
@@ -905,10 +924,15 @@
             <article class="panel">
               <div class="chart-head">
                 <div>
-                  <div class="label">Overview</div>
-                  <strong>Total views chart</strong>
+                  <div class="label">Обзор</div>
+                  <strong>Все просмотры за выбранный период</strong>
+                  <div class="muted" id="overviewTotalViewsMeta">Нет данных</div>
                 </div>
-                <div class="muted" id="overviewTotalViewsMeta">No data</div>
+                <div class="overview-kpi">
+                  <div class="label">Добавлено за период</div>
+                  <div class="value" id="overviewPeriodDeltaValue">0</div>
+                  <div class="subtext" id="overviewPeriodDeltaSub">По выбранному периоду</div>
+                </div>
               </div>
               <div class="chart-canvas medium">
                 <canvas id="overviewTotalViewsCanvas"></canvas>
@@ -917,10 +941,10 @@
             <article class="panel">
               <div class="chart-head">
                 <div>
-                  <div class="label">Overview</div>
-                  <strong>Growth chart</strong>
+                  <div class="label">Обзор</div>
+                  <strong>Прирост по объектам</strong>
                 </div>
-                <div class="muted" id="overviewGrowthMeta">No data</div>
+                <div class="muted" id="overviewGrowthMeta">Нет данных</div>
               </div>
               <div class="chart-canvas medium">
                 <canvas id="overviewGrowthCanvas"></canvas>
@@ -930,13 +954,13 @@
 
           <div class="stack">
             <article class="list">
-              <div class="label">Top gainers</div>
-              <strong id="topGainersTitle">Best movers in selected period</strong>
+              <div class="label">Лидеры роста</div>
+              <strong id="topGainersTitle">Лучший прирост за выбранный период</strong>
               <div class="list-items" id="topGainersList"></div>
             </article>
             <article class="list">
-              <div class="label">Top viewed</div>
-              <strong id="topViewedTitle">Highest total views right now</strong>
+              <div class="label">Топ по просмотрам</div>
+              <strong id="topViewedTitle">Максимум просмотров сейчас</strong>
               <div class="list-items" id="topViewedList"></div>
             </article>
           </div>
@@ -948,11 +972,11 @@
           <table>
             <thead>
               <tr>
-                <th><button type="button" class="sort-btn" data-sort="name_asc">name</button></th>
-                <th><button type="button" class="sort-btn" data-sort="views_desc">views</button></th>
-                <th><button type="button" class="sort-btn" data-sort="delta_desc">delta</button></th>
-                <th><button type="button" class="sort-btn" data-sort="growth_desc">growth%</button></th>
-                <th><button type="button" class="sort-btn" data-sort="status_asc">status</button></th>
+                <th><button type="button" class="sort-btn" data-sort="name_asc" >название</button></th>
+                <th><button type="button" class="sort-btn" data-sort="views_desc" >просмотры</button></th>
+                <th><button type="button" class="sort-btn" data-sort="delta_desc" >прирост</button></th>
+                <th><button type="button" class="sort-btn" data-sort="growth_desc" >рост %</button></th>
+                <th><button type="button" class="sort-btn" data-sort="status_asc" >статус</button></th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -964,7 +988,7 @@
         <div class="cards-grid" id="cardsGrid"></div>
       </section>
 
-      <div id="emptyState" class="empty hidden">No objects match the current search and filters.</div>
+      <div id="emptyState" class="empty hidden">Нет объектов, подходящих под текущий поиск и фильтры.</div>
     </main>
   </div>
 
@@ -972,11 +996,11 @@
 
   <div id="loader" class="overlay hidden">
     <div class="overlay-card">
-      <h2 class="overlay-title" id="loaderTitle">Loading</h2>
-      <div class="overlay-text" id="loaderText">Preparing…</div>
+      <h2 class="overlay-title" id="loaderTitle">Загрузка</h2>
+      <div class="overlay-text" id="loaderText">Подготовка…</div>
       <div class="progress"><div class="progress-bar" id="loaderBar"></div></div>
       <div class="progress-row">
-        <div id="loaderStep">Step 0</div>
+        <div id="loaderStep">Шаг 0</div>
         <div id="loaderPercent">0%</div>
       </div>
     </div>
@@ -986,7 +1010,7 @@
     <div class="modal-card">
       <div class="modal-head">
         <div>
-          <h2 class="modal-title" id="modalTitle">Object detail</h2>
+          <h2 class="modal-title" id="modalTitle">Детали объекта</h2>
           <div class="modal-sub" id="modalSub">—</div>
         </div>
         <button type="button" class="icon-btn" id="closeModalBtn">✕</button>
@@ -996,21 +1020,21 @@
           <div class="modal-preview" id="modalPreview"></div>
           <div class="modal-details">
             <div class="modal-section">
-              <div class="label">Status</div>
+              <div class="label">Статус</div>
               <div id="modalStatus"></div>
             </div>
             <div class="modal-section">
-              <div class="label">Current views</div>
+              <div class="label">Текущие просмотры</div>
               <div id="modalViews" class="value">0</div>
             </div>
             <div class="modal-section">
-              <div class="label">Delta / week / month</div>
+              <div class="label">Прирост / неделя / месяц</div>
               <div id="modalDeltas" class="muted">—</div>
             </div>
             <div class="modal-section">
-              <div class="label">Links</div>
+              <div class="label">Ссылки</div>
               <div class="card-actions">
-                <a class="row-btn" id="modalGoLink" target="_blank" rel="noopener noreferrer">Object page</a>
+                <a class="row-btn" id="modalGoLink" target="_blank" rel="noopener noreferrer">Страница объекта</a>
                 <a class="row-btn" id="modalViewerLink" target="_blank" rel="noopener noreferrer">3D viewer</a>
               </div>
             </div>
@@ -1019,12 +1043,12 @@
         <section class="modal-main">
           <div class="chart-head">
             <div>
-              <div class="label">History chart</div>
-              <strong>Object history</strong>
+              <div class="label">График истории</div>
+              <strong>История объекта</strong>
             </div>
             <div class="seg">
-              <button type="button" class="seg-btn active" id="daysBtn">Days</button>
-              <button type="button" class="seg-btn" id="monthsBtn">Months</button>
+              <button type="button" class="seg-btn active" id="daysBtn">Дни</button>
+              <button type="button" class="seg-btn" id="monthsBtn">Месяцы</button>
             </div>
           </div>
           <div class="muted" id="chartMeta">—</div>
@@ -1056,6 +1080,22 @@
       overviewTotal: null,
       overviewGrowth: null,
       detail: null
+    };
+
+    const STATUS_LABELS = {
+      hot: "Горячий",
+      rising: "Растёт",
+      stagnant: "Стагнирует",
+      zero: "Ноль",
+      removed: "Удалён"
+    };
+
+    const PERIOD_LABELS = {
+      update: "обновление",
+      day: "день",
+      week: "неделя",
+      month: "месяц",
+      all: "всё время"
     };
 
     const els = {
@@ -1103,6 +1143,8 @@
       topViewedList: document.getElementById("topViewedList"),
       overviewTotalViewsMeta: document.getElementById("overviewTotalViewsMeta"),
       overviewGrowthMeta: document.getElementById("overviewGrowthMeta"),
+      overviewPeriodDeltaValue: document.getElementById("overviewPeriodDeltaValue"),
+      overviewPeriodDeltaSub: document.getElementById("overviewPeriodDeltaSub"),
       tableBody: document.getElementById("tableBody"),
       cardsGrid: document.getElementById("cardsGrid"),
 
@@ -1175,7 +1217,7 @@
     }
 
     function setMode(text) {
-      const value = `Mode: ${text}`;
+      const value = `Режим: ${text}`;
       els.modeChip.textContent = value;
       els.modeChip.title = value;
     }
@@ -1185,14 +1227,26 @@
       els.fileChip.title = text;
     }
 
+    function getPeriodLabel(period) {
+      return PERIOD_LABELS[period] || period;
+    }
+
+    function getStatusLabel(status) {
+      return STATUS_LABELS[status] || status;
+    }
+
+    function getStatusFilterLabel(status) {
+      return status === "all" ? "все статусы" : getStatusLabel(status);
+    }
+
     function setFilterChip() {
-      const value = `Filter: ${currentPeriod} / ${currentStatusFilter}`;
+      const value = `Фильтр: ${getPeriodLabel(currentPeriod)} / ${getStatusFilterLabel(currentStatusFilter)}`;
       els.filterChip.textContent = value;
       els.filterChip.title = value;
     }
 
     function formatNum(value) {
-      return Number(value || 0).toLocaleString("en-US");
+      return Number(value || 0).toLocaleString("ru-RU");
     }
 
     function formatSignedNum(value) {
@@ -1212,7 +1266,7 @@
       if (!iso) return "—";
       const d = new Date(iso);
       if (Number.isNaN(+d)) return "—";
-      return d.toLocaleString("en-US");
+      return d.toLocaleString("ru-RU");
     }
 
     function formatFileDate(date = new Date()) {
@@ -1300,7 +1354,7 @@
     }
 
     function getName(obj) {
-      return obj?.name || obj?.title || "Untitled Object";
+      return obj?.name || obj?.title || "Без названия";
     }
 
     function getViews(obj) {
@@ -1320,29 +1374,29 @@
     }
 
     function validateBundle(bundle) {
-      if (!bundle || typeof bundle !== "object") throw new Error("JSON must be an object.");
-      if (!Array.isArray(bundle.objects)) throw new Error("Missing objects array.");
+      if (!bundle || typeof bundle !== "object") throw new Error("JSON должен быть объектом.");
+      if (!Array.isArray(bundle.objects)) throw new Error("В JSON отсутствует массив objects.");
       if (!Array.isArray(bundle.snapshots)) bundle.snapshots = [];
       if (!Array.isArray(bundle.totalViewsHistory)) bundle.totalViewsHistory = [];
       return true;
     }
 
-    async function fetchAllObjectsWithProgress(title = "Loading objects") {
-      showLoader(title, "Connecting to API…", 2, "Step 1");
+    async function fetchAllObjectsWithProgress(title = "Загрузка объектов") {
+      showLoader(title, "Подключение к API…", 2, "Шаг 1");
       let page = 1;
       let pagesLoaded = 0;
       let all = [];
       const hardLimit = 2000;
 
       while (page <= hardLimit) {
-        updateLoader(`Loading page ${page}…`, Math.min(8 + pagesLoaded * 2, 82), `Page ${page}`);
+        updateLoader(`Загрузка страницы ${page}…`, Math.min(8 + pagesLoaded * 2, 82), `Страница ${page}`);
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ page })
         });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status} on page ${page}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status} на странице ${page}`);
         const data = await res.json();
         const objs = Array.isArray(data?.objs) ? data.objs : [];
         if (!objs.length) break;
@@ -1351,7 +1405,7 @@
         page += 1;
       }
 
-      updateLoader(`Fetched ${all.length} objects. Preparing…`, 88, "Preparing data");
+      updateLoader(`Получено объектов: ${all.length}. Подготовка…`, 88, "Подготовка данных");
       return all;
     }
 
@@ -1462,19 +1516,19 @@
 
     async function downloadFreshBundle() {
       try {
-        setMode("downloading fresh bundle");
-        const raw = await fetchAllObjectsWithProgress("Creating bundle");
-        updateLoader("Building bundle…", 94, "Assembling bundle");
+        setMode("загрузка нового bundle");
+        const raw = await fetchAllObjectsWithProgress("Создание bundle");
+        updateLoader("Сборка bundle…", 94, "Формирование файла");
         const bundle = createBundleFromFreshApi(raw);
         currentBundle = bundle;
-        applyBundleToUI(bundle, `bundle_${formatFileDate()}.json`, "fresh bundle ready");
+        applyBundleToUI(bundle, `bundle_${formatFileDate()}.json`, "новый bundle готов");
         const filename = `bundle_${formatFileDate()}.json`;
-        if (!downloadJson(bundle, filename)) throw new Error("Download failed.");
-        setStatus(`Fresh bundle downloaded: ${filename}.`);
+        if (!downloadJson(bundle, filename)) throw new Error("Не удалось скачать файл.");
+        setStatus(`Новый bundle скачан: ${filename}.`);
       } catch (error) {
         console.error(error);
-        setMode("error");
-        setStatus(`Download failed: ${error.message}`);
+        setMode("ошибка");
+        setStatus(`Ошибка скачивания: ${error.message}`);
       } finally {
         hideLoader();
       }
@@ -1484,20 +1538,20 @@
       const file = event.target.files?.[0];
       if (!file) return;
       try {
-        setMode("opening local bundle");
-        showLoader("Opening JSON", "Reading local file…", 20, "Reading");
+        setMode("открытие локального bundle");
+        showLoader("Открытие JSON", "Чтение локального файла…", 20, "Чтение");
         const text = await file.text();
-        updateLoader("Parsing JSON…", 48, "Parsing");
+        updateLoader("Парсинг JSON…", 48, "Парсинг");
         const parsed = JSON.parse(text);
         validateBundle(parsed);
-        updateLoader("Preparing dashboard…", 82, "Rendering");
+        updateLoader("Подготовка дашборда…", 82, "Отрисовка");
         currentBundle = parsed;
-        applyBundleToUI(parsed, file.name, "local bundle opened");
-        setStatus(`Opened ${file.name}.`);
+        applyBundleToUI(parsed, file.name, "локальный bundle открыт");
+        setStatus(`Открыт файл: ${file.name}.`);
       } catch (error) {
         console.error(error);
-        setMode("error");
-        setStatus(`Open failed: ${error.message}`);
+        setMode("ошибка");
+        setStatus(`Ошибка открытия: ${error.message}`);
       } finally {
         hideLoader();
         event.target.value = "";
@@ -1506,24 +1560,24 @@
 
     async function updateOpenedBundle() {
       if (!currentBundle) {
-        setStatus("Open a bundle first.");
+        setStatus("Сначала откройте bundle.");
         return;
       }
       try {
-        setMode("updating bundle");
-        showLoader("Updating bundle", "Fetching latest API snapshot…", 8, "Preparing");
-        const raw = await fetchAllObjectsWithProgress("Updating bundle");
-        updateLoader("Merging history and snapshots…", 90, "Merging");
+        setMode("обновление bundle");
+        showLoader("Обновление bundle", "Получение последнего снимка API…", 8, "Подготовка");
+        const raw = await fetchAllObjectsWithProgress("Обновление bundle");
+        updateLoader("Объединение истории и snapshots…", 90, "Слияние");
         const updated = mergeOpenedBundleWithFreshApi(currentBundle, raw);
         currentBundle = updated;
-        applyBundleToUI(updated, `bundle_updated_${formatFileDate()}.json`, "bundle updated");
+        applyBundleToUI(updated, `bundle_updated_${formatFileDate()}.json`, "bundle обновлён");
         const filename = `bundle_updated_${formatFileDate()}.json`;
-        if (!downloadJson(updated, filename)) throw new Error("Download failed.");
-        setStatus(`Bundle updated and downloaded: ${filename}.`);
+        if (!downloadJson(updated, filename)) throw new Error("Не удалось скачать файл.");
+        setStatus(`Bundle обновлён и скачан: ${filename}.`);
       } catch (error) {
         console.error(error);
-        setMode("error");
-        setStatus(`Update failed: ${error.message}`);
+        setMode("ошибка");
+        setStatus(`Ошибка обновления: ${error.message}`);
       } finally {
         hideLoader();
       }
@@ -1559,6 +1613,30 @@
       const last = sorted[sorted.length - 1];
       const baseline = getPeriodBaseline(sorted, period);
       return Number(last.views || 0) - Number(baseline?.views || 0);
+    }
+
+    function getHistoryForPeriod(history, period) {
+      const sorted = sortHistory(history);
+      if (!sorted.length) return [];
+      const baseline = getPeriodBaseline(sorted, period);
+      const baselineIndex = Math.max(sorted.findIndex(point => point.capturedAt === baseline?.capturedAt), 0);
+      return sorted.slice(baselineIndex);
+    }
+
+    function getBundleOverviewPeriodData(bundle, period) {
+      const totalHistory = dedupeHistory(bundle?.totalViewsHistory || []);
+      const periodHistory = getHistoryForPeriod(totalHistory, period);
+      const periodDelta = getDeltaForPeriod(totalHistory, period);
+      const lastPoint = periodHistory[periodHistory.length - 1] || totalHistory[totalHistory.length - 1] || null;
+      const totalViews = Number(lastPoint?.views || 0);
+      const growthPercent = getGrowthPercent(totalViews, periodDelta);
+      return {
+        totalHistory,
+        periodHistory,
+        periodDelta,
+        totalViews,
+        growthPercent
+      };
     }
 
     function getGrowthPercent(totalViews, delta) {
@@ -1613,6 +1691,10 @@
       return entry.deltaUpdate;
     }
 
+    function getPeriodGrowth(entry) {
+      return getGrowthPercent(entry.totalViews, getPeriodDelta(entry));
+    }
+
     function applyFilters(list) {
       const q = String(els.searchInput.value || "").trim().toLowerCase();
       return list.filter(entry => {
@@ -1630,7 +1712,7 @@
     function sortAnalytics(list) {
       const arr = [...list];
       if (currentSort === "name_asc") {
-        arr.sort((a, b) => String(a.item.name || "").localeCompare(String(b.item.name || ""), "en", { sensitivity: "base" }));
+        arr.sort((a, b) => String(a.item.name || "").localeCompare(String(b.item.name || ""), "ru", { sensitivity: "base" }));
         return arr;
       }
       if (currentSort === "delta_desc") {
@@ -1638,7 +1720,7 @@
         return arr;
       }
       if (currentSort === "growth_desc") {
-        arr.sort((a, b) => b.growth - a.growth || getPeriodDelta(b) - getPeriodDelta(a));
+        arr.sort((a, b) => getPeriodGrowth(b) - getPeriodGrowth(a) || getPeriodDelta(b) - getPeriodDelta(a));
         return arr;
       }
       if (currentSort === "status_asc") {
@@ -1660,8 +1742,8 @@
     function applyBundleToUI(bundle, fileLabel, modeLabel) {
       validateBundle(bundle);
       analyticsCache = buildAnalytics(bundle);
-      els.lastUpdatedText.textContent = `Last updated: ${formatHumanDate(bundle.updatedAt)}`;
-      setFileChip(`File: ${fileLabel}`);
+      els.lastUpdatedText.textContent = `Обновлено: ${formatHumanDate(bundle.updatedAt)}`;
+      setFileChip(`Файл: ${fileLabel}`);
       setMode(modeLabel);
       setFilterChip();
       els.updateBtn.disabled = false;
@@ -1698,9 +1780,9 @@
         els.heroObjects.textContent = "0";
         els.heroZero.textContent = "0";
         els.heroRemoved.textContent = "0";
-        els.heroSummaryText.textContent = "Open a bundle or download a fresh one to analyze object history, growth, and status trends.";
-        els.heroChartMeta.textContent = "No data loaded";
-        drawLineChart("hero", document.getElementById("heroChartCanvas"), [], [], "Total views", false);
+        els.heroSummaryText.textContent = "Откройте bundle или скачайте новый, чтобы анализировать историю объектов, рост и статусы.";
+        els.heroChartMeta.textContent = "Данные не загружены";
+        drawLineChart("hero", document.getElementById("heroChartCanvas"), [], [], "Все просмотры", false);
         return;
       }
 
@@ -1713,19 +1795,19 @@
 
       els.heroTotalViews.textContent = formatNum(totalViews);
       els.heroGrowth.textContent = formatPercent(totalGrowthPercent);
-      els.heroGrowthSub.textContent = `${formatSignedNum(totalGrowthDelta)} since previous update`;
+      els.heroGrowthSub.textContent = `${formatSignedNum(totalGrowthDelta)} к прошлому обновлению`;
       els.heroObjects.textContent = formatNum(analyticsCache.length);
       els.heroZero.textContent = formatNum(zeroCount);
       els.heroRemoved.textContent = formatNum(removedCount);
-      els.heroSummaryText.textContent = `${formatNum(analyticsCache.filter(entry => entry.status === "hot").length)} hot, ${formatNum(analyticsCache.filter(entry => entry.status === "rising").length)} rising, ${formatNum(analyticsCache.filter(entry => entry.status === "stagnant").length)} stagnant.`;
-      els.heroChartMeta.textContent = history.length ? `${history.length} points · ${formatHumanDate(history[history.length - 1].capturedAt)}` : "No total history";
+      els.heroSummaryText.textContent = `${formatNum(analyticsCache.filter(entry => entry.status === "hot").length)} горячих, ${formatNum(analyticsCache.filter(entry => entry.status === "rising").length)} растущих, ${formatNum(analyticsCache.filter(entry => entry.status === "stagnant").length)} стагнирующих.`;
+      els.heroChartMeta.textContent = history.length ? `${history.length} точек · ${formatHumanDate(history[history.length - 1].capturedAt)}` : "Нет общей истории";
 
       drawLineChart(
         "hero",
         document.getElementById("heroChartCanvas"),
         history.map(point => formatPointLabel(point.capturedAt)),
         history.map(point => Number(point.views || 0)),
-        "Total views",
+        "Все просмотры",
         true
       );
     }
@@ -1733,18 +1815,18 @@
     function renderInsights(list) {
       if (!analyticsCache.length) {
         els.insightTopGrowth.textContent = "—";
-        els.insightTopGrowthSub.textContent = "No data";
+        els.insightTopGrowthSub.textContent = "Нет данных";
         els.insightBiggestDelta.textContent = "0";
-        els.insightBiggestDeltaSub.textContent = "Latest update delta";
+        els.insightBiggestDeltaSub.textContent = `Прирост за период: ${getPeriodLabel(currentPeriod)}`;
         els.insightZeroCount.textContent = "0";
         els.insightRemovedCount.textContent = "0";
         els.insightTopShare.textContent = "0%";
-        els.insightTopShareSub.textContent = "Share of total views";
+        els.insightTopShareSub.textContent = "Доля от всех просмотров";
         return;
       }
 
-      const topGrowth = [...analyticsCache].sort((a, b) => b.growth - a.growth)[0];
-      const biggestDelta = [...analyticsCache].sort((a, b) => b.deltaUpdate - a.deltaUpdate)[0];
+      const topGrowth = [...analyticsCache].sort((a, b) => getPeriodGrowth(b) - getPeriodGrowth(a))[0];
+      const biggestDelta = [...analyticsCache].sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a))[0];
       const zeroCount = analyticsCache.filter(entry => entry.status === "zero").length;
       const removedCount = analyticsCache.filter(entry => entry.status === "removed").length;
       const totalViews = analyticsCache.reduce((sum, entry) => sum + entry.totalViews, 0);
@@ -1752,37 +1834,46 @@
       const top10Share = totalViews > 0 ? (top10Views / totalViews) * 100 : 0;
 
       els.insightTopGrowth.textContent = topGrowth ? escapeText(topGrowth.item.name) : "—";
-      els.insightTopGrowthSub.textContent = topGrowth ? `${formatPercent(topGrowth.growth)} · ${topGrowth.status}` : "No data";
-      els.insightBiggestDelta.textContent = biggestDelta ? formatSignedNum(biggestDelta.deltaUpdate) : "0";
-      els.insightBiggestDeltaSub.textContent = biggestDelta ? escapeText(biggestDelta.item.name) : "Latest update delta";
+      els.insightTopGrowthSub.textContent = topGrowth ? `${formatPercent(getPeriodGrowth(topGrowth))} · ${getStatusLabel(topGrowth.status)}` : "Нет данных";
+      els.insightBiggestDelta.textContent = biggestDelta ? formatSignedNum(getPeriodDelta(biggestDelta)) : "0";
+      els.insightBiggestDeltaSub.textContent = biggestDelta ? `${escapeText(biggestDelta.item.name)} · ${getPeriodLabel(currentPeriod)}` : `Прирост за период: ${getPeriodLabel(currentPeriod)}`;
       els.insightZeroCount.textContent = formatNum(zeroCount);
       els.insightRemovedCount.textContent = formatNum(removedCount);
       els.insightTopShare.textContent = `${top10Share.toFixed(1)}%`;
-      els.insightTopShareSub.textContent = `${formatNum(top10Views)} of ${formatNum(totalViews)} total views`;
+      els.insightTopShareSub.textContent = `${formatNum(top10Views)} из ${formatNum(totalViews)} всех просмотров`;
     }
 
     function renderOverview(list) {
-      const totalHistory = dedupeHistory(currentBundle?.totalViewsHistory || []);
-      els.overviewTotalViewsMeta.textContent = totalHistory.length ? `${totalHistory.length} points in bundle history` : "No total history";
+      const overview = getBundleOverviewPeriodData(currentBundle, currentPeriod);
+      const chartHistory = overview.periodHistory.length ? overview.periodHistory : overview.totalHistory;
+      els.overviewTotalViewsMeta.textContent = chartHistory.length
+        ? `${chartHistory.length} точек · период: ${getPeriodLabel(currentPeriod)}`
+        : "Нет истории по всем просмотрам";
+      els.overviewPeriodDeltaValue.textContent = formatSignedNum(overview.periodDelta);
+      els.overviewPeriodDeltaSub.textContent = chartHistory.length
+        ? `${formatPercent(overview.growthPercent)} · рост по всем просмотрам за период`
+        : "Нет данных по выбранному периоду";
       drawLineChart(
         "overviewTotal",
         document.getElementById("overviewTotalViewsCanvas"),
-        totalHistory.map(point => formatPointLabel(point.capturedAt)),
-        totalHistory.map(point => Number(point.views || 0)),
-        "Total views",
+        chartHistory.map(point => formatPointLabel(point.capturedAt)),
+        chartHistory.map(point => Number(point.views || 0)),
+        `Все просмотры · ${getPeriodLabel(currentPeriod)}`,
         false
       );
 
       const growthEntries = [...analyticsCache]
         .sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a))
         .slice(0, 8);
-      els.overviewGrowthMeta.textContent = growthEntries.length ? `Top ${growthEntries.length} by ${currentPeriod} delta` : "No data";
+      els.overviewGrowthMeta.textContent = growthEntries.length
+        ? `Топ ${growthEntries.length} по приросту за период: ${getPeriodLabel(currentPeriod)}`
+        : "Нет данных";
       drawBarChart(
         "overviewGrowth",
         document.getElementById("overviewGrowthCanvas"),
-        growthEntries.map(entry => truncate(entry.item.name || "Untitled", 20)),
+        growthEntries.map(entry => truncate(entry.item.name || "Без названия", 20)),
         growthEntries.map(entry => getPeriodDelta(entry)),
-        `Delta (${currentPeriod})`
+        `Прирост (${getPeriodLabel(currentPeriod)})`
       );
 
       renderList(els.topGainersList, [...list].sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a)).slice(0, 8), entry => formatSignedNum(getPeriodDelta(entry)));
@@ -1792,7 +1883,7 @@
     function renderList(container, entries, valueGetter) {
       container.innerHTML = "";
       if (!entries.length) {
-        container.innerHTML = '<div class="muted">No data for current filters.</div>';
+        container.innerHTML = '<div class="muted">Нет данных для текущих фильтров.</div>';
         return;
       }
       entries.forEach((entry, index) => {
@@ -1802,7 +1893,7 @@
         row.innerHTML = `
           <span class="rank">${index + 1}</span>
           <span class="list-main">
-            <strong>${escapeHtml(entry.item.name || "Untitled Object")}</strong>
+            <strong>${escapeHtml(entry.item.name || "Без названия")}</strong>
             <span>${escapeHtml(entry.item.tinuuid || "—")}</span>
           </span>
           <span class="list-value">${escapeHtml(valueGetter(entry))}</span>
@@ -1820,13 +1911,13 @@
         tr.innerHTML = `
           <td>
             <div class="table-name-wrap">
-              <span class="table-name">${escapeHtml(entry.item.name || "Untitled Object")}</span>
+              <span class="table-name">${escapeHtml(entry.item.name || "Без названия")}</span>
               <span class="table-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
             </div>
           </td>
           <td>${formatNum(entry.totalViews)}</td>
           <td>${formatSignedNum(getPeriodDelta(entry))}</td>
-          <td>${formatPercent(entry.growth)}</td>
+          <td>${formatPercent(getPeriodGrowth(entry))}</td>
           <td>${renderStatusPill(entry.status)}</td>
         `;
         tr.addEventListener("click", () => openDetailModal(entry));
@@ -1843,8 +1934,8 @@
         article.innerHTML = `
           <div class="card-media">
             ${entry.item.mainPreview
-              ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Object preview")}" />`
-              : `<div class="card-fallback">No preview</div>`}
+              ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Превью объекта")}" />`
+              : `<div class="card-fallback">Нет превью</div>`}
             <div class="card-topline">
               <span class="badge">#${index + 1}</span>
               ${renderStatusPill(entry.status)}
@@ -1852,26 +1943,26 @@
           </div>
           <div class="card-body">
             <div>
-              <span class="card-title">${escapeHtml(entry.item.name || "Untitled Object")}</span>
+              <span class="card-title">${escapeHtml(entry.item.name || "Без названия")}</span>
               <span class="card-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
             </div>
             <div class="card-metrics">
               <div class="metric">
-                <div class="label">Views</div>
+                <div class="label">Просмотры</div>
                 <div class="value">${formatNum(entry.totalViews)}</div>
               </div>
               <div class="metric">
-                <div class="label">Delta</div>
+                <div class="label">Прирост</div>
                 <div class="value">${formatSignedNum(getPeriodDelta(entry))}</div>
               </div>
               <div class="metric">
-                <div class="label">Growth</div>
-                <div class="value">${formatPercent(entry.growth)}</div>
+                <div class="label">Рост</div>
+                <div class="value">${formatPercent(getPeriodGrowth(entry))}</div>
               </div>
             </div>
             <div class="card-actions">
-              <a class="row-btn" href="${escapeHtml(entry.goUrl || "#")}" ${entry.goUrl ? 'target="_blank" rel="noopener noreferrer"' : 'aria-disabled="true"'}>${entry.goUrl ? "Object page" : "No page"}</a>
-              <button type="button" class="row-btn card-detail-btn">Details</button>
+              <a class="row-btn" href="${escapeHtml(entry.goUrl || "#")}" ${entry.goUrl ? 'target="_blank" rel="noopener noreferrer"' : 'aria-disabled="true"'}>${entry.goUrl ? "Страница объекта" : "Нет страницы"}</a>
+              <button type="button" class="row-btn card-detail-btn">Детали</button>
             </div>
           </div>
         `;
@@ -1888,7 +1979,7 @@
     }
 
     function renderStatusPill(status) {
-      const label = status.charAt(0).toUpperCase() + status.slice(1);
+      const label = getStatusLabel(status);
       return `<span class="status-pill status-${escapeHtml(status)}">${escapeHtml(label)}</span>`;
     }
 
@@ -1896,15 +1987,15 @@
       currentChartEntry = entry;
       currentChartMode = "days";
       updateChartModeButtons();
-      els.modalTitle.textContent = entry.item.name || "Object detail";
+      els.modalTitle.textContent = entry.item.name || "Детали объекта";
       els.modalSub.textContent = `TINUUID: ${entry.item.tinuuid || "—"}`;
       els.modalPreview.innerHTML = entry.item.mainPreview
-        ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Preview")}" />`
-        : `<div class="modal-preview-fallback">No preview</div>`;
+        ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Превью")}" />`
+        : `<div class="modal-preview-fallback">Нет превью</div>`;
       els.modalStatus.innerHTML = renderStatusPill(entry.status);
       els.modalViews.textContent = formatNum(entry.totalViews);
-      els.modalDeltas.textContent = `Update ${formatSignedNum(entry.deltaUpdate)} · Week ${formatSignedNum(entry.deltaWeek)} · Month ${formatSignedNum(entry.deltaMonth)}`;
-      setModalLink(els.modalGoLink, entry.goUrl, "Object page");
+      els.modalDeltas.textContent = `Обновление ${formatSignedNum(entry.deltaUpdate)} · Неделя ${formatSignedNum(entry.deltaWeek)} · Месяц ${formatSignedNum(entry.deltaMonth)}`;
+      setModalLink(els.modalGoLink, entry.goUrl, "Страница объекта");
       setModalLink(els.modalViewerLink, entry.viewerUrl, "3D viewer");
       els.detailModal.classList.remove("hidden");
       drawDetailChart(entry);
@@ -1941,14 +2032,14 @@
       if (currentChartMode === "days") {
         labels = history.map(point => formatPointLabel(point.capturedAt));
         values = history.map(point => Number(point.views || 0));
-        els.chartMeta.textContent = `${history.length} points · daily snapshot view`;
+        els.chartMeta.textContent = `${history.length} точек · дневные снимки`;
       } else {
         const grouped = groupByMonth(history);
         labels = grouped.labels;
         values = grouped.values;
-        els.chartMeta.textContent = `${labels.length} month buckets`;
+        els.chartMeta.textContent = `${labels.length} месячных срезов`;
       }
-      drawLineChart("detail", document.getElementById("detailChartCanvas"), labels, values, "Views", true);
+      drawLineChart("detail", document.getElementById("detailChartCanvas"), labels, values, "Просмотры", true);
     }
 
     function drawLineChart(key, canvas, labels, values, label, fill) {
@@ -2032,7 +2123,7 @@
       const d = new Date(iso);
       if (Number.isNaN(+d)) return "—";
       const p = n => String(n).padStart(2, "0");
-      return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+      return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
 
     function groupByMonth(history) {
@@ -2052,7 +2143,7 @@
 
     function exportCurrentCsv() {
       if (!filteredAnalytics.length) {
-        setStatus("No rows to export.");
+        setStatus("Нет строк для экспорта.");
         return;
       }
       const rows = [["name", "tinuuid", "views", "delta", "growth_percent", "status", "removed", "viewer_url", "go_url"]];
@@ -2062,7 +2153,7 @@
           entry.item.tinuuid || "",
           entry.totalViews,
           getPeriodDelta(entry),
-          entry.growth.toFixed(2),
+          getPeriodGrowth(entry).toFixed(2),
           entry.status,
           entry.item.removed ? "true" : "false",
           entry.viewerUrl || "",
@@ -2072,9 +2163,9 @@
       const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
       const filename = `vizbl_export_${formatFileDate()}.csv`;
       if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
-        setStatus(`CSV exported: ${filename}.`);
+        setStatus(`CSV экспортирован: ${filename}.`);
       } else {
-        setStatus("CSV export failed.");
+        setStatus("Ошибка экспорта CSV.");
       }
     }
 
