@@ -3,26 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vizbl Аналитика</title>
+  <title>Vizbl Analytics Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --bg: #0a0d12;
-      --panel: #121821;
-      --panel-2: #171f2b;
-      --panel-3: #0f141c;
+      --panel: #111824;
+      --panel-2: #162131;
+      --panel-3: #0f141d;
       --border: rgba(255, 255, 255, 0.08);
       --border-strong: rgba(255, 255, 255, 0.14);
-      --text: #f3f6fb;
-      --muted: #93a0b5;
+      --text: #f4f7fb;
+      --muted: #91a0b8;
       --accent: #63a7ff;
-      --accent-soft: rgba(99, 167, 255, 0.16);
-      --green: #4bd18b;
-      --yellow: #f5c76d;
-      --red: #ff7d7d;
-      --shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+      --accent-2: #4bd18b;
+      --accent-soft: rgba(99, 167, 255, 0.14);
+      --danger: #ff7d7d;
+      --warning: #f5c76d;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.34);
       --radius: 18px;
-      --maxw: 1600px;
+      --radius-sm: 12px;
+      --maxw: 1680px;
     }
 
     * { box-sizing: border-box; }
@@ -38,6 +39,13 @@
 
     body { padding: 18px; }
 
+    button, input, select {
+      font: inherit;
+      color: inherit;
+    }
+
+    .hidden { display: none !important; }
+
     .page {
       max-width: var(--maxw);
       margin: 0 auto;
@@ -46,136 +54,229 @@
       gap: 14px;
     }
 
-    .topbar {
-      position: sticky;
-      top: 12px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 14px 16px;
-      background: rgba(10, 13, 18, 0.92);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      backdrop-filter: blur(14px);
-      box-shadow: var(--shadow);
-    }
-
-    .topbar-title h1 {
-      margin: 0;
-      font-size: 22px;
-      letter-spacing: -0.03em;
-    }
-
-    .topbar-title p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .hero,
     .panel,
-    .insight,
+    .hero,
+    .kpi-card,
+    .insight-card,
+    .filterbar,
     .table-wrap,
     .card,
     .list,
+    .distribution-panel,
+    .snapshot-panel,
     .empty,
-    .overview-grid .panel,
-    .filterbar {
+    .topbar {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
 
-    .hero {
-      padding: 18px;
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 120;
       display: grid;
-      grid-template-columns: minmax(300px, 430px) minmax(0, 1fr);
+      grid-template-columns: minmax(320px, 1.2fr) minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      background: rgba(10, 13, 18, 0.94);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar-main h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .topbar-meta {
+      margin-top: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip,
+    .top-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .topbar-source {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      position: relative;
+    }
+
+    .btn,
+    .tab-btn,
+    .metric-btn,
+    .seg-btn,
+    .sort-btn,
+    .row-btn,
+    .icon-btn,
+    .list-item {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover,
+    .tab-btn:hover,
+    .metric-btn:hover,
+    .seg-btn:hover,
+    .sort-btn:hover,
+    .row-btn:hover,
+    .icon-btn:hover,
+    .list-item:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #07101f;
+      font-weight: 700;
+    }
+
+    .btn.secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: 220px;
+      padding: 8px;
+      border-radius: 14px;
+      background: rgba(12, 17, 24, 0.98);
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .dropdown button {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+      text-align: left;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .dropdown button:hover { background: var(--panel-2); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
       gap: 16px;
+      padding: 18px;
     }
 
     .hero-main {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       min-width: 0;
     }
 
-    .eyebrow {
+    .eyebrow,
+    .panel-label,
+    .metric-label,
+    .modal-label,
+    .table-note {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
     .hero-value {
-      font-size: clamp(40px, 6vw, 72px);
-      line-height: 0.94;
-      font-weight: 900;
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: 0.95;
       letter-spacing: -0.05em;
+      font-weight: 900;
     }
 
-    .hero-sub {
+    .hero-summary {
       color: var(--muted);
       font-size: 14px;
       line-height: 1.5;
+      min-height: 42px;
     }
 
-    .hero-stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .mini-stat {
-      padding: 12px;
-      border-radius: 14px;
-      background: var(--panel-2);
+    .metric-switch,
+    .tabs,
+    .seg {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 12px;
+      background: var(--panel-3);
       border: 1px solid var(--border);
-      min-width: 0;
+      width: fit-content;
     }
 
-    .mini-stat .label,
-    .metric .label,
-    .insight .label,
-    .list .label,
-    .chart-head .label,
-    .modal-section .label {
+    .metric-btn,
+    .tab-btn,
+    .seg-btn {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
       color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 6px;
+      font-weight: 600;
     }
 
-    .mini-stat .value,
-    .insight .value,
-    .metric .value {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-    }
-
-    .mini-stat .subtext,
-    .insight .subtext,
-    .metric .subtext,
-    .table-note,
-    .muted {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
+    .metric-btn.active,
+    .tab-btn.active,
+    .seg-btn.active {
+      background: var(--accent-soft);
+      color: var(--text);
     }
 
     .hero-chart {
@@ -183,182 +284,108 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 14px;
-      min-height: 330px;
+      min-height: 360px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .chart-head {
       display: flex;
-      align-items: baseline;
       justify-content: space-between;
+      align-items: flex-start;
       gap: 12px;
       flex-wrap: wrap;
     }
 
     .chart-head strong {
+      display: block;
+      margin-top: 4px;
       font-size: 16px;
       letter-spacing: -0.02em;
     }
 
-    .overview-kpi {
-      min-width: 220px;
-      text-align: right;
+    .chart-canvas {
+      position: relative;
+      min-height: 240px;
+      flex: 1;
     }
 
-    .overview-kpi .value {
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 1;
-    }
+    .chart-canvas.large { min-height: 300px; }
+    .chart-canvas.medium { min-height: 240px; }
+    .chart-canvas.small { min-height: 220px; }
 
-    .overview-kpi .subtext {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .chart-canvas.large { height: 270px; }
-    .chart-canvas.medium { height: 250px; }
-    .chart-canvas.small { height: 220px; }
-
+    .kpi-row,
     .insights-row {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 12px;
     }
 
-    .insight {
+    .kpi-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .insights-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+    .kpi-card,
+    .insight-card {
       padding: 14px;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kpi-card .value,
+    .insight-card .value,
+    .metric-value,
+    .overview-accent {
+      font-size: 26px;
+      font-weight: 850;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .muted,
+    .subtext {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     .filterbar {
       padding: 12px 14px;
       display: grid;
-      grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(120px, 180px)) auto;
+      grid-template-columns: minmax(220px, 1.2fr) repeat(4, minmax(130px, 180px)) auto;
       gap: 10px;
       align-items: center;
     }
 
-    .tabs {
-      display: inline-flex;
-      padding: 4px;
-      border-radius: 12px;
-      background: var(--panel-3);
-      border: 1px solid var(--border);
-      gap: 4px;
-      justify-self: end;
-    }
-
-    .tab-btn,
-    .seg-btn,
-    .sort-btn,
-    .btn,
-    .row-btn,
-    .status-pill {
-      border: 0;
-      font-family: inherit;
-      cursor: pointer;
-      transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
-    }
-
-    .tab-btn:hover,
-    .seg-btn:hover,
-    .sort-btn:hover,
-    .btn:hover,
-    .row-btn:hover { transform: translateY(-1px); }
-
-    .tab-btn,
-    .seg-btn {
-      height: 34px;
-      padding: 0 12px;
-      border-radius: 10px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .tab-btn.active,
-    .seg-btn.active {
-      background: var(--accent);
-      color: #07111f;
-    }
-
-    .btn {
-      height: 40px;
-      padding: 0 14px;
-      border-radius: 12px;
-      background: var(--accent);
-      color: #07111f;
-      font-size: 13px;
-      font-weight: 800;
-      border: 1px solid transparent;
-    }
-
-    .btn.secondary {
-      background: var(--panel-2);
-      color: var(--text);
-      border-color: var(--border-strong);
-    }
-
-    .btn.ghost,
-    .row-btn {
-      background: var(--panel-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn:disabled,
-    .row-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .control,
-    .select,
-    .search {
+    .search,
+    .select {
       width: 100%;
       height: 40px;
       border-radius: 12px;
-      border: 1px solid var(--border-strong);
+      border: 1px solid var(--border);
       background: var(--panel-3);
       color: var(--text);
       padding: 0 12px;
-      outline: none;
-      font-size: 13px;
     }
 
     .statusline {
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .statusline-left,
+    .statusline-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
       align-items: center;
     }
 
-    .chip {
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--muted);
-      font-size: 12px;
-      max-width: 100%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .status {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
+    .status { color: var(--muted); font-size: 13px; }
 
     .content {
       display: flex;
@@ -366,219 +393,240 @@
       gap: 14px;
     }
 
-    .tab-panel.hidden,
-    .hidden { display: none !important; }
-
     .overview-grid {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
       gap: 14px;
     }
 
     .stack {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 14px;
     }
 
-    .panel {
+    .panel,
+    .list,
+    .distribution-panel,
+    .snapshot-panel,
+    .table-wrap {
       padding: 14px;
       min-width: 0;
-    }
-
-    .list {
-      padding: 14px;
     }
 
     .list-items {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     .list-item {
+      width: 100%;
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
       gap: 10px;
       align-items: center;
+      text-align: left;
       padding: 10px 12px;
       border-radius: 12px;
-      background: var(--panel-3);
       border: 1px solid var(--border);
-      min-width: 0;
+      background: var(--panel-3);
     }
 
-    .rank {
+    .rank,
+    .badge {
       width: 28px;
       height: 28px;
       border-radius: 999px;
+      background: rgba(99, 167, 255, 0.14);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      background: var(--accent-soft);
-      color: var(--accent);
+      flex-shrink: 0;
     }
 
-    .list-main {
+    .list-main,
+    .table-name-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
       min-width: 0;
     }
 
     .list-main strong,
-    .card-title,
-    .modal-title,
-    .table-name {
-      display: block;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      white-space: nowrap;
+    .table-name,
+    .card-title {
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .list-main span,
     .table-sub,
-    .card-sub,
-    .modal-sub {
+    .card-sub {
       color: var(--muted);
       font-size: 12px;
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .list-value {
+    .overview-grid-2,
+    .distribution-grid,
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .overview-accent-wrap {
       text-align: right;
-      font-size: 13px;
-      font-weight: 700;
+      min-width: 220px;
     }
 
-    .table-wrap {
-      overflow: hidden;
-    }
+    .table-wrap { overflow: auto; }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      min-width: 1180px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(17, 24, 36, 0.98);
+      backdrop-filter: blur(10px);
+      text-align: left;
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--border-strong);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    tbody td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
       font-size: 13px;
     }
 
-    thead { background: var(--panel-2); }
-
-    th, td {
-      padding: 12px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-
     tbody tr {
       cursor: pointer;
-      transition: background 0.16s ease;
+      transition: background 0.15s ease;
     }
 
-    tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
 
     .sort-btn {
-      background: transparent;
-      color: inherit;
       padding: 0;
+      color: inherit;
       font-size: inherit;
-      font-weight: inherit;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .table-name-wrap {
-      display: grid;
-      gap: 4px;
-      min-width: 0;
+    .preview-thumb,
+    .card-media img,
+    .modal-preview img {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
     }
+
+    .preview-fallback,
+    .card-fallback,
+    .modal-preview-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 12px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .preview-fallback {
+      width: 56px;
+      height: 56px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-hot { background: rgba(75, 209, 139, 0.18); color: #7df0ac; border-color: rgba(75, 209, 139, 0.35); }
+    .status-rising { background: rgba(99, 167, 255, 0.18); color: #8cc0ff; border-color: rgba(99, 167, 255, 0.35); }
+    .status-stable { background: rgba(255,255,255,0.08); color: #dce5f1; border-color: rgba(255,255,255,0.16); }
+    .status-stagnant { background: rgba(245, 199, 109, 0.16); color: #ffd992; border-color: rgba(245, 199, 109, 0.28); }
+    .status-newly-active { background: rgba(99, 167, 255, 0.22); color: #c1dcff; border-color: rgba(99, 167, 255, 0.34); }
+    .status-zero { background: rgba(255,255,255,0.08); color: #b7c3d6; border-color: rgba(255,255,255,0.14); }
+    .status-dominant { background: rgba(124, 102, 255, 0.22); color: #cabfff; border-color: rgba(124, 102, 255, 0.34); }
+    .status-removed { background: rgba(255, 125, 125, 0.18); color: #ffaeae; border-color: rgba(255, 125, 125, 0.32); }
 
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 12px;
     }
 
     .card {
       overflow: hidden;
-      cursor: pointer;
+      display: flex;
+      flex-direction: column;
     }
 
     .card-media {
       position: relative;
-      aspect-ratio: 1.45 / 1;
-      background: #0d1218;
-      border-bottom: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .card-media img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .card-fallback,
-    .modal-preview-fallback {
-      width: 100%;
-      height: 100%;
+      padding: 12px 12px 0;
       display: flex;
-      align-items: center;
       justify-content: center;
-      color: var(--muted);
-      font-size: 12px;
-      background: #0d1218;
+      min-height: 170px;
+      background: var(--panel-3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-media img,
+    .card-fallback {
+      width: 100%;
+      height: 150px;
+      border-radius: 14px;
     }
 
     .card-topline {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
+      top: 18px;
+      left: 18px;
+      right: 18px;
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
       gap: 8px;
-    }
-
-    .badge,
-    .status-pill {
-      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      white-space: nowrap;
-      border: 1px solid transparent;
     }
-
-    .badge {
-      background: rgba(10, 13, 18, 0.86);
-      color: var(--text);
-      border-color: var(--border-strong);
-    }
-
-    .status-pill {
-      cursor: default;
-    }
-
-    .status-hot { background: rgba(75, 209, 139, 0.18); color: #7df0ac; border-color: rgba(75, 209, 139, 0.35); }
-    .status-rising { background: rgba(99, 167, 255, 0.16); color: #8cc0ff; border-color: rgba(99, 167, 255, 0.35); }
-    .status-stagnant { background: rgba(255,255,255,0.08); color: #d1d9e6; border-color: rgba(255,255,255,0.12); }
-    .status-zero { background: rgba(245, 199, 109, 0.14); color: #ffd992; border-color: rgba(245, 199, 109, 0.32); }
-    .status-removed { background: rgba(255, 125, 125, 0.16); color: #ff9b9b; border-color: rgba(255, 125, 125, 0.34); }
 
     .card-body {
       padding: 12px;
-      display: grid;
-      gap: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .card-metrics {
@@ -592,258 +640,259 @@
       border-radius: 12px;
       background: var(--panel-3);
       border: 1px solid var(--border);
-      min-width: 0;
+    }
+
+    .metric .value { font-size: 18px; }
+
+    .card-meta,
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .row-btn,
+    .icon-btn {
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
     }
 
     .card-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .row-btn {
-      flex: 1;
-      height: 36px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .distribution-summary,
+    .snapshot-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
+
+    .summary-box {
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+    }
+
+    .snapshot-table-wrap {
+      overflow: auto;
+      margin-top: 12px;
+    }
+
+    .snapshot-table { min-width: 980px; }
 
     .overlay,
     .modal {
       position: fixed;
       inset: 0;
-      z-index: 300;
-      background: rgba(4, 7, 11, 0.76);
+      background: rgba(6, 10, 16, 0.72);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 220;
       padding: 18px;
-      backdrop-filter: blur(8px);
     }
 
     .overlay-card,
     .modal-card {
-      width: min(1080px, 100%);
-      background: #0f141c;
+      width: min(1180px, 100%);
+      background: #0c121b;
       border: 1px solid var(--border-strong);
-      border-radius: 20px;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
     }
 
     .overlay-card {
-      width: min(520px, 100%);
-      padding: 20px;
+      max-width: 480px;
+      padding: 22px;
     }
 
-    .overlay-title,
-    .modal-title {
-      margin: 0;
-      font-size: 22px;
-    }
-
-    .overlay-text { margin: 10px 0 14px; color: var(--muted); font-size: 14px; }
-
+    .overlay-title { margin: 0 0 8px; }
+    .overlay-text { color: var(--muted); }
     .progress {
-      width: 100%;
-      height: 12px;
+      height: 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      overflow: hidden;
+      background: var(--panel-3);
       border: 1px solid var(--border);
+      margin: 14px 0 8px;
+      overflow: hidden;
     }
 
     .progress-bar {
       height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--green));
-      transition: width 0.18s ease;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), #8ac2ff);
     }
 
     .progress-row {
-      margin-top: 10px;
       display: flex;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
       color: var(--muted);
       font-size: 12px;
     }
 
-    .modal-card { overflow: hidden; }
+    .modal-card {
+      max-height: calc(100vh - 36px);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
 
     .modal-head {
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 14px;
-      padding: 18px;
+      gap: 12px;
+      align-items: center;
+      padding: 18px 18px 14px;
       border-bottom: 1px solid var(--border);
     }
 
-    .icon-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 18px;
-      cursor: pointer;
+    .modal-title {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
     }
+
+    .modal-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
     .modal-grid {
       display: grid;
-      grid-template-columns: 300px minmax(0, 1fr);
-      gap: 0;
+      grid-template-columns: 330px minmax(0, 1fr);
+      min-height: 0;
     }
 
     .modal-side {
-      padding: 18px;
       border-right: 1px solid var(--border);
-      display: grid;
-      gap: 14px;
-      align-content: start;
-      background: #0d1218;
-    }
-
-    .modal-preview {
-      aspect-ratio: 1.2 / 1;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: #0c1118;
-    }
-
-    .modal-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .modal-details {
-      display: grid;
-      gap: 10px;
-    }
-
-    .modal-section {
-      padding: 12px;
-      border-radius: 14px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-    }
-
-    .modal-main {
       padding: 18px;
-      display: grid;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-preview,
+    .modal-preview img,
+    .modal-preview-fallback {
+      width: 100%;
+      min-height: 220px;
+      height: 220px;
+      border-radius: 16px;
+    }
+
+    .modal-details,
+    .modal-main {
+      display: flex;
+      flex-direction: column;
       gap: 14px;
       min-width: 0;
     }
 
-    .seg {
-      display: inline-flex;
-      gap: 4px;
-      padding: 4px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-3);
-    }
-
-    .modal-chart {
-      background: var(--panel-3);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px;
-      min-height: 320px;
+    .modal-main {
+      padding: 18px;
+      overflow: auto;
     }
 
     .empty {
-      padding: 28px;
+      padding: 34px;
       text-align: center;
       color: var(--muted);
     }
 
-    @media (max-width: 1280px) {
-      .hero,
+    @media (max-width: 1400px) {
       .overview-grid,
-      .modal-grid { grid-template-columns: 1fr; }
-      .insights-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .filterbar { grid-template-columns: 1fr 1fr 1fr; }
-      .tabs { justify-self: start; }
-      .modal-side { border-right: 0; border-bottom: 1px solid var(--border); }
+      .hero,
+      .modal-grid,
+      .distribution-grid,
+      .snapshot-grid { grid-template-columns: 1fr; }
+      .kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .insights-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .filterbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .topbar { grid-template-columns: 1fr; }
+      .topbar-actions { justify-content: flex-start; }
     }
 
     @media (max-width: 900px) {
       body { padding: 12px; }
-      .topbar { top: 8px; padding: 12px; }
-      .topbar, .statusline { align-items: flex-start; }
-      .hero-stats,
-      .card-metrics,
+      .topbar { top: 8px; }
+      .kpi-row,
       .insights-row,
-      .filterbar { grid-template-columns: 1fr; }
-      .topbar { flex-direction: column; }
-      .topbar-actions { width: 100%; justify-content: stretch; }
-      .topbar-actions .btn { flex: 1; }
-      .cards-grid { grid-template-columns: 1fr; }
-      th:nth-child(4), td:nth-child(4) { display: none; }
+      .filterbar,
+      .distribution-summary,
+      .snapshot-summary,
+      .card-meta,
+      .detail-grid,
+      .overview-grid-2,
+      .snapshot-grid { grid-template-columns: 1fr; }
+      .card-metrics { grid-template-columns: 1fr 1fr; }
+      .topbar-actions .btn { flex: 1 1 calc(50% - 8px); }
+      .modal-grid { grid-template-columns: 1fr; }
+      .modal-side { border-right: 0; border-bottom: 1px solid var(--border); }
     }
   </style>
 </head>
 <body>
   <div class="page">
     <header class="topbar">
-      <div class="topbar-title">
-        <h1>Vizbl Аналитика</h1>
-        <p id="lastUpdatedText">Обновлено: —</p>
+      <div class="topbar-main">
+        <h1>Vizbl Analytics Dashboard</h1>
+        <div class="topbar-meta">
+          <span class="top-chip" id="currentFileText">Файл: не открыт</span>
+          <span class="top-chip" id="currentSourceText">Источник: API Vizbl</span>
+          <span class="top-chip" id="ownerIndicatorText">Owners: aea6ef6c…</span>
+        </div>
+      </div>
+      <div class="topbar-source">
+        <span class="top-chip" id="lastUpdatedText">Обновлено: —</span>
+        <span class="top-chip" id="modeChip">Режим: ожидание</span>
+        <span class="top-chip" id="metricChip">Метрика: Views</span>
       </div>
       <div class="topbar-actions">
-        <button type="button" class="btn" id="downloadBtn">Скачать</button>
-        <button type="button" class="btn secondary" id="openBtn">Открыть</button>
-        <button type="button" class="btn secondary" id="updateBtn" disabled>Обновить</button>
-        <button type="button" class="btn ghost" id="exportCsvBtn">Экспорт CSV</button>
+        <button type="button" class="btn" id="downloadBtn">Download</button>
+        <button type="button" class="btn secondary" id="openBtn">Open</button>
+        <button type="button" class="btn secondary" id="updateBtn" disabled>Update</button>
+        <button type="button" class="btn ghost" id="exportBtn">Export</button>
+        <button type="button" class="btn ghost" id="resetFiltersBtn">Reset</button>
+        <div class="dropdown hidden" id="exportMenu">
+          <button type="button" id="exportCurrentBtn">Экспорт текущей таблицы CSV</button>
+          <button type="button" id="exportFullBtn">Экспорт всего датасета CSV</button>
+          <button type="button" id="exportSnapshotsBtn">Экспорт snapshots CSV</button>
+        </div>
       </div>
     </header>
 
     <section class="hero">
       <div class="hero-main">
-        <div class="eyebrow">Все просмотры</div>
-        <div class="hero-value" id="heroTotalViews">0</div>
-        <div class="hero-sub" id="heroSummaryText">Откройте bundle или скачайте новый, чтобы анализировать историю объектов, рост и статусы.</div>
-
-        <div class="hero-stats">
-          <div class="mini-stat">
-            <div class="label">Рост</div>
-            <div class="value" id="heroGrowth">0%</div>
-            <div class="subtext" id="heroGrowthSub">к прошлому обновлению</div>
-          </div>
-          <div class="mini-stat">
-            <div class="label">Объекты</div>
-            <div class="value" id="heroObjects">0</div>
-            <div class="subtext">Отслеживаемые объекты</div>
-          </div>
-          <div class="mini-stat">
-            <div class="label">Ноль</div>
-            <div class="value" id="heroZero">0</div>
-            <div class="subtext">Сейчас без просмотров</div>
-          </div>
-          <div class="mini-stat">
-            <div class="label">Удалено</div>
-            <div class="value" id="heroRemoved">0</div>
-            <div class="subtext">Нет в последней синхронизации</div>
-          </div>
+        <div class="eyebrow">Hero analytics</div>
+        <div class="hero-value" id="heroPrimaryValue">0</div>
+        <div class="hero-summary" id="heroSummaryText">Откройте bundle или скачайте новый, чтобы анализировать объекты Vizbl по Views, Showcase Views и Likes.</div>
+        <div class="metric-switch" id="metricSwitch">
+          <button type="button" class="metric-btn active" data-metric="views">Views</button>
+          <button type="button" class="metric-btn" data-metric="viewsShowcase">Showcase Views</button>
+          <button type="button" class="metric-btn" data-metric="likes">Likes</button>
         </div>
       </div>
-
       <div class="hero-chart">
         <div class="chart-head">
           <div>
-            <div class="label">История</div>
-            <strong>История всех просмотров</strong>
+            <div class="panel-label">Trend</div>
+            <strong id="heroChartTitle">Тренд по Views</strong>
           </div>
-          <div class="muted" id="heroChartMeta">Данные не загружены</div>
+          <div class="muted" id="heroChartMeta">Нет данных</div>
         </div>
         <div class="chart-canvas large">
           <canvas id="heroChartCanvas"></canvas>
@@ -851,70 +900,114 @@
       </div>
     </section>
 
+    <section class="kpi-row">
+      <article class="kpi-card">
+        <div class="panel-label">Current total</div>
+        <div class="value" id="kpiCurrentTotal">0</div>
+        <div class="subtext" id="kpiCurrentTotalSub">—</div>
+      </article>
+      <article class="kpi-card">
+        <div class="panel-label">Delta since update</div>
+        <div class="value" id="kpiDeltaUpdate">0</div>
+        <div class="subtext" id="kpiDeltaUpdateSub">—</div>
+      </article>
+      <article class="kpi-card">
+        <div class="panel-label">Tracked objects</div>
+        <div class="value" id="kpiTrackedObjects">0</div>
+        <div class="subtext" id="kpiTrackedObjectsSub">—</div>
+      </article>
+      <article class="kpi-card">
+        <div class="panel-label">Zero count</div>
+        <div class="value" id="kpiZeroCount">0</div>
+        <div class="subtext" id="kpiZeroCountSub">—</div>
+      </article>
+      <article class="kpi-card">
+        <div class="panel-label">Removed count</div>
+        <div class="value" id="kpiRemovedCount">0</div>
+        <div class="subtext" id="kpiRemovedCountSub">—</div>
+      </article>
+    </section>
+
     <section class="insights-row">
-      <article class="insight">
-        <div class="label">Лидер по росту</div>
+      <article class="insight-card">
+        <div class="panel-label">Top growth object</div>
         <div class="value" id="insightTopGrowth">—</div>
         <div class="subtext" id="insightTopGrowthSub">Нет данных</div>
       </article>
-      <article class="insight">
-        <div class="label">Максимальный прирост</div>
+      <article class="insight-card">
+        <div class="panel-label">Biggest delta</div>
         <div class="value" id="insightBiggestDelta">0</div>
-        <div class="subtext" id="insightBiggestDeltaSub">Изменение за последнее обновление</div>
+        <div class="subtext" id="insightBiggestDeltaSub">Нет данных</div>
       </article>
-      <article class="insight">
-        <div class="label">Объектов с нулём</div>
-        <div class="value" id="insightZeroCount">0</div>
-        <div class="subtext">Объекты без просмотров</div>
+      <article class="insight-card">
+        <div class="panel-label">Biggest relative growth</div>
+        <div class="value" id="insightRelativeGrowth">0%</div>
+        <div class="subtext" id="insightRelativeGrowthSub">Нет данных</div>
       </article>
-      <article class="insight">
-        <div class="label">Удалённых объектов</div>
-        <div class="value" id="insightRemovedCount">0</div>
-        <div class="subtext">Удалены в текущем состоянии</div>
+      <article class="insight-card">
+        <div class="panel-label">Newly active count</div>
+        <div class="value" id="insightNewlyActive">0</div>
+        <div class="subtext" id="insightNewlyActiveSub">Нет данных</div>
       </article>
-      <article class="insight">
-        <div class="label">Доля топ-10</div>
+      <article class="insight-card">
+        <div class="panel-label">Stagnant high-value count</div>
+        <div class="value" id="insightStagnant">0</div>
+        <div class="subtext" id="insightStagnantSub">Нет данных</div>
+      </article>
+      <article class="insight-card">
+        <div class="panel-label">Top 10 share</div>
         <div class="value" id="insightTopShare">0%</div>
-        <div class="subtext" id="insightTopShareSub">Доля от всех просмотров</div>
+        <div class="subtext" id="insightTopShareSub">Нет данных</div>
       </article>
     </section>
 
     <section class="filterbar">
-      <input class="search" id="searchInput" type="text" placeholder="Поиск по названию или tinuuid" />
+      <input class="search" id="searchInput" type="text" placeholder="Search by name / tinuuid / uuid" />
       <select class="select" id="periodSelect">
-        <option value="update">Период: обновление</option>
-        <option value="day">Период: день</option>
-        <option value="week">Период: неделя</option>
-        <option value="month">Период: месяц</option>
-        <option value="all">Период: всё время</option>
+        <option value="update">Period: update</option>
+        <option value="week">Period: week</option>
+        <option value="month">Period: month</option>
+        <option value="all">Period: all</option>
       </select>
       <select class="select" id="sortSelect">
-        <option value="views_desc">Сортировка: просмотры ↓</option>
-        <option value="delta_desc">Сортировка: прирост ↓</option>
-        <option value="growth_desc">Сортировка: рост ↓</option>
-        <option value="name_asc">Сортировка: имя А→Я</option>
-        <option value="status_asc">Сортировка: статус</option>
+        <option value="current_desc">Sort: current ↓</option>
+        <option value="delta_desc">Sort: delta ↓</option>
+        <option value="growth_desc">Sort: growth ↓</option>
+        <option value="momentum_desc">Sort: momentum ↓</option>
+        <option value="name_asc">Sort: name A→Z</option>
+        <option value="status_asc">Sort: status</option>
       </select>
       <select class="select" id="statusFilterSelect">
-        <option value="all">Статус: все</option>
-        <option value="hot">Горячий</option>
-        <option value="rising">Растёт</option>
-        <option value="stagnant">Стагнирует</option>
-        <option value="zero">Ноль</option>
-        <option value="removed">Удалён</option>
+        <option value="all">Status: all</option>
+        <option value="hot">Hot</option>
+        <option value="rising">Rising</option>
+        <option value="stable">Stable</option>
+        <option value="stagnant">Stagnant</option>
+        <option value="newly-active">Newly active</option>
+        <option value="dominant">Dominant</option>
+        <option value="zero">Zero</option>
+        <option value="removed">Removed</option>
       </select>
-      <div class="tabs">
-        <button type="button" class="tab-btn active" data-tab="overview">Обзор</button>
-        <button type="button" class="tab-btn" data-tab="table">Таблица</button>
-        <button type="button" class="tab-btn" data-tab="cards">Карточки</button>
+      <select class="select" id="typeFilterSelect">
+        <option value="all">Type: all</option>
+      </select>
+      <div class="tabs" id="tabsBar">
+        <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+        <button type="button" class="tab-btn" data-tab="table">Table</button>
+        <button type="button" class="tab-btn" data-tab="cards">Cards</button>
+        <button type="button" class="tab-btn" data-tab="distribution">Distribution</button>
+        <button type="button" class="tab-btn" data-tab="snapshots">Snapshots</button>
       </div>
     </section>
 
     <div class="statusline">
-      <div class="chip" id="fileChip">Файл: не открыт</div>
-      <div class="chip" id="modeChip">Режим: ожидание</div>
-      <div class="chip" id="filterChip">Фильтр: обновление / все статусы</div>
-      <div class="status" id="status">Готово.</div>
+      <div class="statusline-left">
+        <div class="chip" id="filterChip">Фильтр: update / все статусы / все типы</div>
+        <div class="chip" id="datasetChip">Датасет: 0 объектов</div>
+      </div>
+      <div class="statusline-right">
+        <div class="status" id="statusText">Готово.</div>
+      </div>
     </div>
 
     <main class="content">
@@ -924,45 +1017,63 @@
             <article class="panel">
               <div class="chart-head">
                 <div>
-                  <div class="label">Обзор</div>
-                  <strong>Все просмотры за выбранный период</strong>
-                  <div class="muted" id="overviewTotalViewsMeta">Нет данных</div>
+                  <div class="panel-label">Overview</div>
+                  <strong id="overviewTrendTitle">Trend chart</strong>
+                  <div class="muted" id="overviewTrendMeta">Нет данных</div>
                 </div>
-                <div class="overview-kpi">
-                  <div class="label">Добавлено за период</div>
-                  <div class="value" id="overviewPeriodDeltaValue">0</div>
-                  <div class="subtext" id="overviewPeriodDeltaSub">По выбранному периоду</div>
+                <div class="overview-accent-wrap">
+                  <div class="panel-label">Добавлено за период</div>
+                  <div class="overview-accent" id="overviewPeriodDeltaValue">0</div>
+                  <div class="subtext" id="overviewPeriodDeltaSub">Нет данных</div>
                 </div>
               </div>
               <div class="chart-canvas medium">
-                <canvas id="overviewTotalViewsCanvas"></canvas>
+                <canvas id="overviewTrendCanvas"></canvas>
               </div>
             </article>
             <article class="panel">
               <div class="chart-head">
                 <div>
-                  <div class="label">Обзор</div>
-                  <strong>Прирост по объектам</strong>
+                  <div class="panel-label">Overview</div>
+                  <strong id="overviewSnapshotTitle">Growth per snapshot</strong>
                 </div>
-                <div class="muted" id="overviewGrowthMeta">Нет данных</div>
+                <div class="muted" id="overviewSnapshotMeta">Нет данных</div>
               </div>
               <div class="chart-canvas medium">
-                <canvas id="overviewGrowthCanvas"></canvas>
+                <canvas id="overviewSnapshotCanvas"></canvas>
               </div>
             </article>
           </div>
-
           <div class="stack">
             <article class="list">
-              <div class="label">Лидеры роста</div>
-              <strong id="topGainersTitle">Лучший прирост за выбранный период</strong>
+              <div class="panel-label">Top gainers</div>
+              <strong id="topGainersTitle">Лучший прирост за период</strong>
               <div class="list-items" id="topGainersList"></div>
             </article>
-            <article class="list">
-              <div class="label">Топ по просмотрам</div>
-              <strong id="topViewedTitle">Максимум просмотров сейчас</strong>
-              <div class="list-items" id="topViewedList"></div>
+            <article class="panel">
+              <div class="chart-head">
+                <div>
+                  <div class="panel-label">Top objects</div>
+                  <strong id="topObjectsTitle">Лидеры по активной метрике</strong>
+                </div>
+                <div class="muted" id="topObjectsMeta">Нет данных</div>
+              </div>
+              <div class="chart-canvas medium">
+                <canvas id="topObjectsCanvas"></canvas>
+              </div>
             </article>
+            <div class="overview-grid-2">
+              <article class="list">
+                <div class="panel-label">Newly active</div>
+                <strong>Новые активные объекты</strong>
+                <div class="list-items" id="newlyActiveList"></div>
+              </article>
+              <article class="list">
+                <div class="panel-label">Stagnant high-value</div>
+                <strong>Высокое значение без роста</strong>
+                <div class="list-items" id="stagnantList"></div>
+              </article>
+            </div>
           </div>
         </div>
       </section>
@@ -972,11 +1083,19 @@
           <table>
             <thead>
               <tr>
-                <th><button type="button" class="sort-btn" data-sort="name_asc" >название</button></th>
-                <th><button type="button" class="sort-btn" data-sort="views_desc" >просмотры</button></th>
-                <th><button type="button" class="sort-btn" data-sort="delta_desc" >прирост</button></th>
-                <th><button type="button" class="sort-btn" data-sort="growth_desc" >рост %</button></th>
-                <th><button type="button" class="sort-btn" data-sort="status_asc" >статус</button></th>
+                <th>preview</th>
+                <th><button type="button" class="sort-btn" data-sort="current_desc">rank</button></th>
+                <th><button type="button" class="sort-btn" data-sort="name_asc">name</button></th>
+                <th>tinuuid</th>
+                <th>type</th>
+                <th>owner</th>
+                <th><button type="button" class="sort-btn" data-sort="current_desc">current</button></th>
+                <th><button type="button" class="sort-btn" data-sort="delta_desc">delta update</button></th>
+                <th>delta week</th>
+                <th>delta month</th>
+                <th><button type="button" class="sort-btn" data-sort="growth_desc">growth %</button></th>
+                <th><button type="button" class="sort-btn" data-sort="status_asc">status</button></th>
+                <th>removed</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -988,7 +1107,115 @@
         <div class="cards-grid" id="cardsGrid"></div>
       </section>
 
-      <div id="emptyState" class="empty hidden">Нет объектов, подходящих под текущий поиск и фильтры.</div>
+      <section class="tab-panel hidden" id="distributionTab">
+        <div class="distribution-grid">
+          <article class="distribution-panel">
+            <div class="chart-head">
+              <div>
+                <div class="panel-label">Distribution</div>
+                <strong id="histogramTitle">Histogram</strong>
+              </div>
+              <div class="muted" id="histogramMeta">Нет данных</div>
+            </div>
+            <div class="chart-canvas medium">
+              <canvas id="histogramCanvas"></canvas>
+            </div>
+          </article>
+          <article class="distribution-panel">
+            <div class="chart-head">
+              <div>
+                <div class="panel-label">Distribution</div>
+                <strong id="paretoTitle">Pareto chart</strong>
+              </div>
+              <div class="muted" id="paretoMeta">Нет данных</div>
+            </div>
+            <div class="chart-canvas medium">
+              <canvas id="paretoCanvas"></canvas>
+            </div>
+          </article>
+        </div>
+        <div class="distribution-summary">
+          <div class="summary-box">
+            <div class="panel-label">Top share analysis</div>
+            <div class="value" id="distributionTopShare">0%</div>
+            <div class="subtext" id="distributionTopShareSub">Нет данных</div>
+          </div>
+          <div class="summary-box">
+            <div class="panel-label">Head vs tail</div>
+            <div class="value" id="distributionHeadTail">0 / 0</div>
+            <div class="subtext" id="distributionHeadTailSub">Нет данных</div>
+          </div>
+          <div class="summary-box">
+            <div class="panel-label">Percentiles</div>
+            <div class="value" id="distributionPercentiles">P50 0</div>
+            <div class="subtext" id="distributionPercentilesSub">Нет данных</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="snapshotsTab">
+        <div class="snapshot-grid">
+          <article class="snapshot-panel">
+            <div class="chart-head">
+              <div>
+                <div class="panel-label">Snapshots</div>
+                <strong id="snapshotsTotalTitle">Total metric over time</strong>
+              </div>
+              <div class="muted" id="snapshotsTotalMeta">Нет данных</div>
+            </div>
+            <div class="chart-canvas medium">
+              <canvas id="snapshotsTotalCanvas"></canvas>
+            </div>
+          </article>
+          <article class="snapshot-panel">
+            <div class="chart-head">
+              <div>
+                <div class="panel-label">Snapshots</div>
+                <strong id="snapshotsDeltaTitle">Delta per snapshot</strong>
+              </div>
+              <div class="muted" id="snapshotsDeltaMeta">Нет данных</div>
+            </div>
+            <div class="chart-canvas medium">
+              <canvas id="snapshotsDeltaCanvas"></canvas>
+            </div>
+          </article>
+        </div>
+        <div class="snapshot-summary">
+          <div class="summary-box">
+            <div class="panel-label">Snapshots count</div>
+            <div class="value" id="snapshotCountValue">0</div>
+            <div class="subtext" id="snapshotCountSub">Нет данных</div>
+          </div>
+          <div class="summary-box">
+            <div class="panel-label">Last snapshot delta</div>
+            <div class="value" id="snapshotLastDeltaValue">0</div>
+            <div class="subtext" id="snapshotLastDeltaSub">Нет данных</div>
+          </div>
+          <div class="summary-box">
+            <div class="panel-label">Visible objects</div>
+            <div class="value" id="snapshotVisibleValue">0</div>
+            <div class="subtext" id="snapshotVisibleSub">Нет данных</div>
+          </div>
+        </div>
+        <div class="snapshot-table-wrap table-wrap">
+          <table class="snapshot-table">
+            <thead>
+              <tr>
+                <th>capturedAt</th>
+                <th>totalObjects</th>
+                <th>visibleObjects</th>
+                <th>totalViews</th>
+                <th>totalViewsShowcase</th>
+                <th>totalLikes</th>
+                <th>delta</th>
+              </tr>
+            </thead>
+            <tbody id="snapshotsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="empty hidden" id="emptyState">Нет объектов, подходящих под текущие фильтры.</div>
     </main>
   </div>
 
@@ -1013,49 +1240,61 @@
           <h2 class="modal-title" id="modalTitle">Детали объекта</h2>
           <div class="modal-sub" id="modalSub">—</div>
         </div>
-        <button type="button" class="icon-btn" id="closeModalBtn">✕</button>
+        <div class="card-actions">
+          <button type="button" class="row-btn" id="copyTinuuidBtn">Copy tinuuid</button>
+          <button type="button" class="row-btn" id="exportObjectHistoryBtn">Export object history CSV</button>
+          <button type="button" class="icon-btn" id="closeModalBtn">✕</button>
+        </div>
       </div>
       <div class="modal-grid">
         <aside class="modal-side">
           <div class="modal-preview" id="modalPreview"></div>
-          <div class="modal-details">
-            <div class="modal-section">
-              <div class="label">Статус</div>
+          <div class="detail-grid">
+            <div class="summary-box">
+              <div class="panel-label">Status</div>
               <div id="modalStatus"></div>
             </div>
-            <div class="modal-section">
-              <div class="label">Текущие просмотры</div>
-              <div id="modalViews" class="value">0</div>
+            <div class="summary-box">
+              <div class="panel-label">Growth %</div>
+              <div class="value" id="modalGrowth">0%</div>
             </div>
-            <div class="modal-section">
-              <div class="label">Прирост / неделя / месяц</div>
-              <div id="modalDeltas" class="muted">—</div>
+          </div>
+          <div class="modal-details">
+            <div class="summary-box"><div class="modal-label">Name</div><div id="modalName">—</div></div>
+            <div class="summary-box"><div class="modal-label">TINUUID</div><div id="modalTinuuid">—</div></div>
+            <div class="summary-box"><div class="modal-label">UUID</div><div id="modalUuid">—</div></div>
+            <div class="summary-box"><div class="modal-label">Type</div><div id="modalType">—</div></div>
+            <div class="summary-box"><div class="modal-label">Owner</div><div id="modalOwner">—</div></div>
+            <div class="detail-grid">
+              <div class="summary-box"><div class="modal-label">Views</div><div class="value" id="modalViews">0</div></div>
+              <div class="summary-box"><div class="modal-label">Showcase Views</div><div class="value" id="modalShowcaseViews">0</div></div>
+              <div class="summary-box"><div class="modal-label">Likes</div><div class="value" id="modalLikes">0</div></div>
+              <div class="summary-box"><div class="modal-label">Active metric delta</div><div class="value" id="modalDeltaUpdate">0</div></div>
             </div>
-            <div class="modal-section">
-              <div class="label">Ссылки</div>
-              <div class="card-actions">
-                <a class="row-btn" id="modalGoLink" target="_blank" rel="noopener noreferrer">Страница объекта</a>
-                <a class="row-btn" id="modalViewerLink" target="_blank" rel="noopener noreferrer">3D viewer</a>
-              </div>
+            <div class="summary-box">
+              <div class="modal-label">Deltas</div>
+              <div class="subtext" id="modalDeltas">—</div>
+            </div>
+            <div class="card-actions">
+              <a class="row-btn" id="modalGoLink" target="_blank" rel="noopener noreferrer">Object page</a>
+              <a class="row-btn" id="modalViewerLink" target="_blank" rel="noopener noreferrer">3D viewer</a>
             </div>
           </div>
         </aside>
         <section class="modal-main">
           <div class="chart-head">
             <div>
-              <div class="label">График истории</div>
-              <strong>История объекта</strong>
+              <div class="panel-label">History chart</div>
+              <strong id="detailChartTitle">История активной метрики</strong>
             </div>
             <div class="seg">
-              <button type="button" class="seg-btn active" id="daysBtn">Дни</button>
-              <button type="button" class="seg-btn" id="monthsBtn">Месяцы</button>
+              <button type="button" class="seg-btn active" id="daysBtn">Days</button>
+              <button type="button" class="seg-btn" id="monthsBtn">Months</button>
             </div>
           </div>
-          <div class="muted" id="chartMeta">—</div>
-          <div class="modal-chart">
-            <div class="chart-canvas small">
-              <canvas id="detailChartCanvas"></canvas>
-            </div>
+          <div class="muted" id="chartMeta">Нет данных</div>
+          <div class="chart-canvas small">
+            <canvas id="detailChartCanvas"></canvas>
           </div>
         </section>
       </div>
@@ -1063,190 +1302,229 @@
   </div>
 
   <script>
-    const API_URL = "https://api.vizbl.us/obj/GetPublic";
+    // 1. config
+    const APP_CONFIG = {
+      apiUrl: "https://api.vizbl.us/obj/GetPublic",
+      owners: ["aea6ef6c-6b9b-41f8-8a50-c3b62d014f49"],
+      useOwnersFilter: true,
+      hardPageLimit: 2000
+    };
 
-    let currentBundle = null;
-    let analyticsCache = [];
-    let filteredAnalytics = [];
-    let currentTab = "overview";
-    let currentSort = "views_desc";
-    let currentPeriod = "update";
-    let currentStatusFilter = "all";
-    let currentChartMode = "days";
-    let currentChartEntry = null;
-
-    const charts = {
-      hero: null,
-      overviewTotal: null,
-      overviewGrowth: null,
-      detail: null
+    const METRIC_DEFS = {
+      views: {
+        key: "views",
+        label: "Views",
+        shortLabel: "Views",
+        currentField: "lastViews",
+        historyKey: "views",
+        totalHistoryKey: "totalViewsHistory",
+        snapshotKey: "totalViews"
+      },
+      viewsShowcase: {
+        key: "viewsShowcase",
+        label: "Showcase Views",
+        shortLabel: "Showcase",
+        currentField: "lastViewsShowcase",
+        historyKey: "viewsShowcase",
+        totalHistoryKey: "totalViewsShowcaseHistory",
+        snapshotKey: "totalViewsShowcase"
+      },
+      likes: {
+        key: "likes",
+        label: "Likes",
+        shortLabel: "Likes",
+        currentField: "lastLikes",
+        historyKey: "likes",
+        totalHistoryKey: "totalLikesHistory",
+        snapshotKey: "totalLikes"
+      }
     };
 
     const STATUS_LABELS = {
-      hot: "Горячий",
-      rising: "Растёт",
-      stagnant: "Стагнирует",
-      zero: "Ноль",
-      removed: "Удалён"
+      hot: "Hot",
+      rising: "Rising",
+      stable: "Stable",
+      stagnant: "Stagnant",
+      "newly-active": "Newly active",
+      zero: "Zero",
+      dominant: "Dominant",
+      removed: "Removed"
     };
 
     const PERIOD_LABELS = {
-      update: "обновление",
-      day: "день",
-      week: "неделя",
-      month: "месяц",
-      all: "всё время"
+      update: "update",
+      week: "week",
+      month: "month",
+      all: "all"
     };
 
+    // 2. state
+    const state = {
+      currentBundle: null,
+      analyticsCache: [],
+      filteredAnalytics: [],
+      currentTab: "overview",
+      currentPeriod: "update",
+      currentSort: "current_desc",
+      currentStatusFilter: "all",
+      currentTypeFilter: "all",
+      activeMetric: "views",
+      currentChartMode: "days",
+      currentChartEntry: null,
+      currentFileLabel: "не открыт",
+      currentModeLabel: "ожидание",
+      availableTypes: [],
+      exportMenuOpen: false
+    };
+
+    const charts = {
+      hero: null,
+      overviewTrend: null,
+      overviewSnapshot: null,
+      topObjects: null,
+      histogram: null,
+      pareto: null,
+      snapshotsTotal: null,
+      snapshotsDelta: null,
+      detail: null
+    };
+
+    // 3. dom refs
     const els = {
+      currentFileText: document.getElementById("currentFileText"),
+      currentSourceText: document.getElementById("currentSourceText"),
+      ownerIndicatorText: document.getElementById("ownerIndicatorText"),
       lastUpdatedText: document.getElementById("lastUpdatedText"),
+      modeChip: document.getElementById("modeChip"),
+      metricChip: document.getElementById("metricChip"),
       downloadBtn: document.getElementById("downloadBtn"),
       openBtn: document.getElementById("openBtn"),
       updateBtn: document.getElementById("updateBtn"),
-      exportCsvBtn: document.getElementById("exportCsvBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      resetFiltersBtn: document.getElementById("resetFiltersBtn"),
+      exportMenu: document.getElementById("exportMenu"),
+      exportCurrentBtn: document.getElementById("exportCurrentBtn"),
+      exportFullBtn: document.getElementById("exportFullBtn"),
+      exportSnapshotsBtn: document.getElementById("exportSnapshotsBtn"),
       fileInput: document.getElementById("fileInput"),
-      searchInput: document.getElementById("searchInput"),
-      periodSelect: document.getElementById("periodSelect"),
-      sortSelect: document.getElementById("sortSelect"),
-      statusFilterSelect: document.getElementById("statusFilterSelect"),
-      tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
-      tableSortButtons: Array.from(document.querySelectorAll(".sort-btn")),
-
-      heroTotalViews: document.getElementById("heroTotalViews"),
+      metricSwitchButtons: Array.from(document.querySelectorAll(".metric-btn")),
+      heroPrimaryValue: document.getElementById("heroPrimaryValue"),
       heroSummaryText: document.getElementById("heroSummaryText"),
-      heroGrowth: document.getElementById("heroGrowth"),
-      heroGrowthSub: document.getElementById("heroGrowthSub"),
-      heroObjects: document.getElementById("heroObjects"),
-      heroZero: document.getElementById("heroZero"),
-      heroRemoved: document.getElementById("heroRemoved"),
+      heroChartTitle: document.getElementById("heroChartTitle"),
       heroChartMeta: document.getElementById("heroChartMeta"),
-
+      kpiCurrentTotal: document.getElementById("kpiCurrentTotal"),
+      kpiCurrentTotalSub: document.getElementById("kpiCurrentTotalSub"),
+      kpiDeltaUpdate: document.getElementById("kpiDeltaUpdate"),
+      kpiDeltaUpdateSub: document.getElementById("kpiDeltaUpdateSub"),
+      kpiTrackedObjects: document.getElementById("kpiTrackedObjects"),
+      kpiTrackedObjectsSub: document.getElementById("kpiTrackedObjectsSub"),
+      kpiZeroCount: document.getElementById("kpiZeroCount"),
+      kpiZeroCountSub: document.getElementById("kpiZeroCountSub"),
+      kpiRemovedCount: document.getElementById("kpiRemovedCount"),
+      kpiRemovedCountSub: document.getElementById("kpiRemovedCountSub"),
       insightTopGrowth: document.getElementById("insightTopGrowth"),
       insightTopGrowthSub: document.getElementById("insightTopGrowthSub"),
       insightBiggestDelta: document.getElementById("insightBiggestDelta"),
       insightBiggestDeltaSub: document.getElementById("insightBiggestDeltaSub"),
-      insightZeroCount: document.getElementById("insightZeroCount"),
-      insightRemovedCount: document.getElementById("insightRemovedCount"),
+      insightRelativeGrowth: document.getElementById("insightRelativeGrowth"),
+      insightRelativeGrowthSub: document.getElementById("insightRelativeGrowthSub"),
+      insightNewlyActive: document.getElementById("insightNewlyActive"),
+      insightNewlyActiveSub: document.getElementById("insightNewlyActiveSub"),
+      insightStagnant: document.getElementById("insightStagnant"),
+      insightStagnantSub: document.getElementById("insightStagnantSub"),
       insightTopShare: document.getElementById("insightTopShare"),
       insightTopShareSub: document.getElementById("insightTopShareSub"),
-
-      fileChip: document.getElementById("fileChip"),
-      modeChip: document.getElementById("modeChip"),
+      searchInput: document.getElementById("searchInput"),
+      periodSelect: document.getElementById("periodSelect"),
+      sortSelect: document.getElementById("sortSelect"),
+      statusFilterSelect: document.getElementById("statusFilterSelect"),
+      typeFilterSelect: document.getElementById("typeFilterSelect"),
+      tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
+      tableSortButtons: Array.from(document.querySelectorAll(".sort-btn")),
       filterChip: document.getElementById("filterChip"),
-      status: document.getElementById("status"),
-
+      datasetChip: document.getElementById("datasetChip"),
+      statusText: document.getElementById("statusText"),
       overviewTab: document.getElementById("overviewTab"),
       tableTab: document.getElementById("tableTab"),
       cardsTab: document.getElementById("cardsTab"),
+      distributionTab: document.getElementById("distributionTab"),
+      snapshotsTab: document.getElementById("snapshotsTab"),
       emptyState: document.getElementById("emptyState"),
-      topGainersList: document.getElementById("topGainersList"),
-      topViewedList: document.getElementById("topViewedList"),
-      overviewTotalViewsMeta: document.getElementById("overviewTotalViewsMeta"),
-      overviewGrowthMeta: document.getElementById("overviewGrowthMeta"),
+      overviewTrendTitle: document.getElementById("overviewTrendTitle"),
+      overviewTrendMeta: document.getElementById("overviewTrendMeta"),
       overviewPeriodDeltaValue: document.getElementById("overviewPeriodDeltaValue"),
       overviewPeriodDeltaSub: document.getElementById("overviewPeriodDeltaSub"),
+      overviewSnapshotTitle: document.getElementById("overviewSnapshotTitle"),
+      overviewSnapshotMeta: document.getElementById("overviewSnapshotMeta"),
+      topGainersTitle: document.getElementById("topGainersTitle"),
+      topGainersList: document.getElementById("topGainersList"),
+      topObjectsTitle: document.getElementById("topObjectsTitle"),
+      topObjectsMeta: document.getElementById("topObjectsMeta"),
+      newlyActiveList: document.getElementById("newlyActiveList"),
+      stagnantList: document.getElementById("stagnantList"),
       tableBody: document.getElementById("tableBody"),
       cardsGrid: document.getElementById("cardsGrid"),
-
+      histogramTitle: document.getElementById("histogramTitle"),
+      histogramMeta: document.getElementById("histogramMeta"),
+      paretoTitle: document.getElementById("paretoTitle"),
+      paretoMeta: document.getElementById("paretoMeta"),
+      distributionTopShare: document.getElementById("distributionTopShare"),
+      distributionTopShareSub: document.getElementById("distributionTopShareSub"),
+      distributionHeadTail: document.getElementById("distributionHeadTail"),
+      distributionHeadTailSub: document.getElementById("distributionHeadTailSub"),
+      distributionPercentiles: document.getElementById("distributionPercentiles"),
+      distributionPercentilesSub: document.getElementById("distributionPercentilesSub"),
+      snapshotsTotalTitle: document.getElementById("snapshotsTotalTitle"),
+      snapshotsTotalMeta: document.getElementById("snapshotsTotalMeta"),
+      snapshotsDeltaTitle: document.getElementById("snapshotsDeltaTitle"),
+      snapshotsDeltaMeta: document.getElementById("snapshotsDeltaMeta"),
+      snapshotCountValue: document.getElementById("snapshotCountValue"),
+      snapshotCountSub: document.getElementById("snapshotCountSub"),
+      snapshotLastDeltaValue: document.getElementById("snapshotLastDeltaValue"),
+      snapshotLastDeltaSub: document.getElementById("snapshotLastDeltaSub"),
+      snapshotVisibleValue: document.getElementById("snapshotVisibleValue"),
+      snapshotVisibleSub: document.getElementById("snapshotVisibleSub"),
+      snapshotsTableBody: document.getElementById("snapshotsTableBody"),
       loader: document.getElementById("loader"),
       loaderTitle: document.getElementById("loaderTitle"),
       loaderText: document.getElementById("loaderText"),
       loaderBar: document.getElementById("loaderBar"),
       loaderStep: document.getElementById("loaderStep"),
       loaderPercent: document.getElementById("loaderPercent"),
-
       detailModal: document.getElementById("detailModal"),
       modalTitle: document.getElementById("modalTitle"),
       modalSub: document.getElementById("modalSub"),
       modalPreview: document.getElementById("modalPreview"),
       modalStatus: document.getElementById("modalStatus"),
+      modalGrowth: document.getElementById("modalGrowth"),
+      modalName: document.getElementById("modalName"),
+      modalTinuuid: document.getElementById("modalTinuuid"),
+      modalUuid: document.getElementById("modalUuid"),
+      modalType: document.getElementById("modalType"),
+      modalOwner: document.getElementById("modalOwner"),
       modalViews: document.getElementById("modalViews"),
+      modalShowcaseViews: document.getElementById("modalShowcaseViews"),
+      modalLikes: document.getElementById("modalLikes"),
+      modalDeltaUpdate: document.getElementById("modalDeltaUpdate"),
       modalDeltas: document.getElementById("modalDeltas"),
       modalGoLink: document.getElementById("modalGoLink"),
       modalViewerLink: document.getElementById("modalViewerLink"),
+      copyTinuuidBtn: document.getElementById("copyTinuuidBtn"),
+      exportObjectHistoryBtn: document.getElementById("exportObjectHistoryBtn"),
       closeModalBtn: document.getElementById("closeModalBtn"),
       daysBtn: document.getElementById("daysBtn"),
       monthsBtn: document.getElementById("monthsBtn"),
+      detailChartTitle: document.getElementById("detailChartTitle"),
       chartMeta: document.getElementById("chartMeta")
     };
 
-    els.downloadBtn.addEventListener("click", downloadFreshBundle);
-    els.openBtn.addEventListener("click", () => els.fileInput.click());
-    els.updateBtn.addEventListener("click", updateOpenedBundle);
-    els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
-    els.fileInput.addEventListener("change", handleFileOpen);
-    els.searchInput.addEventListener("input", renderCurrent);
-    els.periodSelect.addEventListener("change", () => {
-      currentPeriod = els.periodSelect.value;
-      renderCurrent();
-    });
-    els.sortSelect.addEventListener("change", () => {
-      currentSort = els.sortSelect.value;
-      renderCurrent();
-    });
-    els.statusFilterSelect.addEventListener("change", () => {
-      currentStatusFilter = els.statusFilterSelect.value;
-      renderCurrent();
-    });
-    els.tabButtons.forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
-    els.tableSortButtons.forEach(btn => btn.addEventListener("click", () => {
-      currentSort = btn.dataset.sort;
-      els.sortSelect.value = currentSort;
-      renderCurrent();
-    }));
-    els.closeModalBtn.addEventListener("click", closeDetailModal);
-    els.detailModal.addEventListener("click", (e) => {
-      if (e.target === els.detailModal) closeDetailModal();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeDetailModal();
-    });
-    els.daysBtn.addEventListener("click", () => {
-      currentChartMode = "days";
-      updateChartModeButtons();
-      if (currentChartEntry) drawDetailChart(currentChartEntry);
-    });
-    els.monthsBtn.addEventListener("click", () => {
-      currentChartMode = "months";
-      updateChartModeButtons();
-      if (currentChartEntry) drawDetailChart(currentChartEntry);
-    });
-
-    function setStatus(text) {
-      els.status.textContent = text;
-    }
-
-    function setMode(text) {
-      const value = `Режим: ${text}`;
-      els.modeChip.textContent = value;
-      els.modeChip.title = value;
-    }
-
-    function setFileChip(text) {
-      els.fileChip.textContent = text;
-      els.fileChip.title = text;
-    }
-
-    function getPeriodLabel(period) {
-      return PERIOD_LABELS[period] || period;
-    }
-
-    function getStatusLabel(status) {
-      return STATUS_LABELS[status] || status;
-    }
-
-    function getStatusFilterLabel(status) {
-      return status === "all" ? "все статусы" : getStatusLabel(status);
-    }
-
-    function setFilterChip() {
-      const value = `Фильтр: ${getPeriodLabel(currentPeriod)} / ${getStatusFilterLabel(currentStatusFilter)}`;
-      els.filterChip.textContent = value;
-      els.filterChip.title = value;
+    // 4. utils
+    function nowIso() {
+      return new Date().toISOString();
     }
 
     function formatNum(value) {
-      return Number(value || 0).toLocaleString("ru-RU");
+      return Number(value || 0).toLocaleString("en-US");
     }
 
     function formatSignedNum(value) {
@@ -1266,7 +1544,7 @@
       if (!iso) return "—";
       const d = new Date(iso);
       if (Number.isNaN(+d)) return "—";
-      return d.toLocaleString("ru-RU");
+      return d.toLocaleString("en-US");
     }
 
     function formatFileDate(date = new Date()) {
@@ -1274,8 +1552,11 @@
       return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}_${p(date.getHours())}-${p(date.getMinutes())}-${p(date.getSeconds())}`;
     }
 
-    function nowIso() {
-      return new Date().toISOString();
+    function formatPointLabel(iso) {
+      const d = new Date(iso);
+      if (Number.isNaN(+d)) return "—";
+      const p = n => String(n).padStart(2, "0");
+      return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
 
     function escapeHtml(str) {
@@ -1285,6 +1566,42 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+    }
+
+    function truncate(text, max = 28) {
+      const str = String(text || "");
+      return str.length > max ? `${str.slice(0, max - 1)}…` : str;
+    }
+
+    function percentile(values, fraction) {
+      if (!values.length) return 0;
+      const sorted = [...values].sort((a, b) => a - b);
+      const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * fraction)));
+      return sorted[index];
+    }
+
+    function average(values) {
+      if (!values.length) return 0;
+      return values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length;
+    }
+
+    function median(values) {
+      if (!values.length) return 0;
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function sum(values) {
+      return values.reduce((acc, value) => acc + Number(value || 0), 0);
+    }
+
+    function buildGoUrl(tinuuid) {
+      return tinuuid ? `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}` : "";
+    }
+
+    function buildViewerUrl(tinuuid) {
+      return tinuuid ? `https://viewer.vizbl.com/${encodeURIComponent(tinuuid)}` : "";
     }
 
     function showLoader(title, text, percent = 0, step = "") {
@@ -1307,299 +1624,233 @@
       els.loader.classList.add("hidden");
     }
 
-    function downloadJson(data, filename) {
-      try {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 500);
-        return true;
-      } catch (error) {
-        console.error(error);
-        return false;
-      }
+    function setStatus(text) {
+      els.statusText.textContent = text;
     }
 
-    function downloadText(text, filename, mime = "text/plain;charset=utf-8") {
-      try {
-        const blob = new Blob([text], { type: mime });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 500);
-        return true;
-      } catch (error) {
-        console.error(error);
-        return false;
-      }
+    function setMode(text) {
+      state.currentModeLabel = text;
+      els.modeChip.textContent = `Режим: ${text}`;
+    }
+
+    function getMetricDef(metricKey = state.activeMetric) {
+      return METRIC_DEFS[metricKey] || METRIC_DEFS.views;
+    }
+
+    function getMetricLabel(metricKey = state.activeMetric) {
+      return getMetricDef(metricKey).label;
+    }
+
+    function getStatusLabel(status) {
+      return STATUS_LABELS[status] || status;
+    }
+
+    function renderStatusPill(status) {
+      return `<span class="status-pill status-${escapeHtml(status)}">${escapeHtml(getStatusLabel(status))}</span>`;
+    }
+
+    function toggleExportMenu(force) {
+      state.exportMenuOpen = typeof force === "boolean" ? force : !state.exportMenuOpen;
+      els.exportMenu.classList.toggle("hidden", !state.exportMenuOpen);
+    }
+
+    // 5. normalization
+    function buildApiRequestBody(page) {
+      return APP_CONFIG.useOwnersFilter ? { page, owners: APP_CONFIG.owners } : { page };
     }
 
     function getTinuuid(obj) {
       return obj?.tinuuid || obj?.tinUuid || obj?.tinUUID || obj?.uuid || obj?.id || "";
     }
 
-    function getName(obj) {
-      return obj?.name || obj?.title || "Без названия";
-    }
-
-    function getViews(obj) {
-      return Number(obj?.views || obj?.lastViews || 0);
+    function normalizeOwner(obj) {
+      const owner = obj?.owner || {};
+      return {
+        ownerUuid: owner.uuid || owner.id || obj?.ownerUuid || "",
+        ownerName: owner.name || owner.username || obj?.ownerName || obj?.ownerUsername || "—",
+        ownerUsername: owner.username || obj?.ownerUsername || ""
+      };
     }
 
     function getPreview(obj) {
       return obj?.mainPreview || obj?.preview || obj?.image || "";
     }
 
-    function buildGoUrl(tinuuid) {
-      return tinuuid ? `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}` : "";
+    function getNumeric(value) {
+      return Number(value || 0);
     }
 
-    function buildViewerUrl(tinuuid) {
-      return tinuuid ? `https://viewer.vizbl.com/${encodeURIComponent(tinuuid)}` : "";
-    }
-
-    function validateBundle(bundle) {
-      if (!bundle || typeof bundle !== "object") throw new Error("JSON должен быть объектом.");
-      if (!Array.isArray(bundle.objects)) throw new Error("В JSON отсутствует массив objects.");
-      if (!Array.isArray(bundle.snapshots)) bundle.snapshots = [];
-      if (!Array.isArray(bundle.totalViewsHistory)) bundle.totalViewsHistory = [];
-      return true;
-    }
-
-    async function fetchAllObjectsWithProgress(title = "Загрузка объектов") {
-      showLoader(title, "Подключение к API…", 2, "Шаг 1");
-      let page = 1;
-      let pagesLoaded = 0;
-      let all = [];
-      const hardLimit = 2000;
-
-      while (page <= hardLimit) {
-        updateLoader(`Загрузка страницы ${page}…`, Math.min(8 + pagesLoaded * 2, 82), `Страница ${page}`);
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ page })
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status} на странице ${page}`);
-        const data = await res.json();
-        const objs = Array.isArray(data?.objs) ? data.objs : [];
-        if (!objs.length) break;
-        all = all.concat(objs);
-        pagesLoaded += 1;
-        page += 1;
-      }
-
-      updateLoader(`Получено объектов: ${all.length}. Подготовка…`, 88, "Подготовка данных");
-      return all;
+    function normalizeHistoryPoint(point) {
+      return {
+        capturedAt: point?.capturedAt || point?.updatedAt || nowIso(),
+        views: getNumeric(point?.views),
+        viewsShowcase: getNumeric(point?.viewsShowcase),
+        likes: getNumeric(point?.likes)
+      };
     }
 
     function sortHistory(history) {
-      return [...(Array.isArray(history) ? history : [])].sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
+      return [...(Array.isArray(history) ? history : [])]
+        .map(normalizeHistoryPoint)
+        .sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
     }
 
     function dedupeHistory(history) {
-      const sorted = sortHistory(history);
       const map = new Map();
-      sorted.forEach(entry => {
-        if (!entry || !entry.capturedAt) return;
-        map.set(entry.capturedAt, { capturedAt: entry.capturedAt, views: Number(entry.views || 0) });
+      sortHistory(history).forEach(point => {
+        if (!point.capturedAt) return;
+        map.set(point.capturedAt, point);
       });
       return Array.from(map.values()).sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
     }
 
-    function normalizeApiObjects(rawObjects) {
-      return rawObjects.map(obj => ({
-        tinuuid: getTinuuid(obj),
-        name: getName(obj),
-        mainPreview: getPreview(obj),
-        lastViews: getViews(obj),
-        removed: false,
-        history: []
-      })).filter(obj => obj.tinuuid);
-    }
-
-    function createBundleFromFreshApi(rawObjects) {
-      const capturedAt = nowIso();
-      const normalized = normalizeApiObjects(rawObjects);
-      normalized.forEach(item => {
-        item.history = [{ capturedAt, views: Number(item.lastViews || 0) }];
-      });
-      normalized.sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
-
-      const totalViews = normalized.reduce((sum, item) => sum + Number(item.lastViews || 0), 0);
+    function normalizeObject(raw) {
+      const owner = normalizeOwner(raw);
+      const history = dedupeHistory(
+        (raw?.history || []).map(entry => ({
+          capturedAt: entry.capturedAt,
+          views: entry.views,
+          viewsShowcase: entry.viewsShowcase,
+          likes: entry.likes
+        }))
+      );
+      const fallbackPoint = history[history.length - 1] || { views: 0, viewsShowcase: 0, likes: 0 };
       return {
-        version: 1,
-        source: API_URL,
-        createdAt: capturedAt,
-        updatedAt: capturedAt,
-        totalViewsHistory: [{ capturedAt, views: totalViews }],
-        snapshots: [{
-          capturedAt,
-          totalObjects: normalized.length,
-          visibleObjects: normalized.filter(item => Number(item.lastViews || 0) > 0).length,
-          totalViews
-        }],
-        objects: normalized
+        uuid: raw?.uuid || raw?.id || "",
+        tinuuid: getTinuuid(raw),
+        name: raw?.name || raw?.title || "Untitled Object",
+        type: raw?.type || raw?.objectType || "—",
+        mainPreview: getPreview(raw),
+        updatedAt: raw?.updatedAt || "",
+        ownerName: owner.ownerName,
+        ownerUuid: owner.ownerUuid,
+        ownerUsername: owner.ownerUsername,
+        lastViews: getNumeric(raw?.lastViews ?? raw?.views ?? fallbackPoint.views),
+        lastViewsShowcase: getNumeric(raw?.lastViewsShowcase ?? raw?.viewsShowcase ?? fallbackPoint.viewsShowcase),
+        lastLikes: getNumeric(raw?.lastLikes ?? raw?.likes ?? fallbackPoint.likes),
+        removed: Boolean(raw?.removed),
+        history
       };
     }
 
-    function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
-      validateBundle(bundle);
-      const capturedAt = nowIso();
-      const fresh = normalizeApiObjects(rawObjects);
-      const freshMap = new Map(fresh.map(item => [item.tinuuid, item]));
-      const mergedMap = new Map();
+    function normalizeSnapshot(snapshot) {
+      return {
+        capturedAt: snapshot?.capturedAt || nowIso(),
+        totalObjects: getNumeric(snapshot?.totalObjects),
+        visibleObjects: getNumeric(snapshot?.visibleObjects),
+        totalViews: getNumeric(snapshot?.totalViews),
+        totalViewsShowcase: getNumeric(snapshot?.totalViewsShowcase),
+        totalLikes: getNumeric(snapshot?.totalLikes)
+      };
+    }
 
-      bundle.objects.forEach(item => {
-        const cloned = JSON.parse(JSON.stringify(item));
-        cloned.lastViews = Number(cloned.lastViews || 0);
-        cloned.removed = Boolean(cloned.removed);
-        cloned.history = dedupeHistory(cloned.history || []);
-        if (cloned.tinuuid) mergedMap.set(cloned.tinuuid, cloned);
-      });
-
-      for (const [tinuuid, freshItem] of freshMap.entries()) {
-        if (!mergedMap.has(tinuuid)) {
-          mergedMap.set(tinuuid, {
-            tinuuid,
-            name: freshItem.name,
-            mainPreview: freshItem.mainPreview,
-            lastViews: Number(freshItem.lastViews || 0),
-            removed: false,
-            history: [{ capturedAt, views: Number(freshItem.lastViews || 0) }]
-          });
+    function ensureTotalHistory(bundle, metricKey, fallbackFromSnapshots = true) {
+      const metric = getMetricDef(metricKey);
+      if (!Array.isArray(bundle[metric.totalHistoryKey])) {
+        if (fallbackFromSnapshots && Array.isArray(bundle.snapshots) && bundle.snapshots.length) {
+          bundle[metric.totalHistoryKey] = bundle.snapshots.map(snapshot => ({
+            capturedAt: snapshot.capturedAt,
+            [metric.historyKey]: getNumeric(snapshot[metric.snapshotKey]),
+            views: metricKey === "views" ? getNumeric(snapshot.totalViews) : 0,
+            viewsShowcase: metricKey === "viewsShowcase" ? getNumeric(snapshot.totalViewsShowcase) : 0,
+            likes: metricKey === "likes" ? getNumeric(snapshot.totalLikes) : 0
+          })).map(point => ({ capturedAt: point.capturedAt, views: point.views, viewsShowcase: point.viewsShowcase, likes: point.likes }));
         } else {
-          const existing = mergedMap.get(tinuuid);
-          existing.name = freshItem.name;
-          existing.mainPreview = freshItem.mainPreview;
-          existing.lastViews = Number(freshItem.lastViews || 0);
-          existing.removed = false;
-          existing.history = dedupeHistory([...(existing.history || []), { capturedAt, views: Number(freshItem.lastViews || 0) }]);
+          bundle[metric.totalHistoryKey] = [];
         }
       }
+      bundle[metric.totalHistoryKey] = dedupeHistory(bundle[metric.totalHistoryKey]);
+    }
 
-      for (const [tinuuid, item] of mergedMap.entries()) {
-        if (!freshMap.has(tinuuid)) item.removed = true;
-      }
+    function validateBundle(bundle) {
+      if (!bundle || typeof bundle !== "object") throw new Error("JSON must be an object.");
+      if (!Array.isArray(bundle.objects)) throw new Error("Missing objects array.");
+      bundle.snapshots = Array.isArray(bundle.snapshots) ? bundle.snapshots.map(normalizeSnapshot) : [];
+      bundle.objects = bundle.objects.map(normalizeObject);
+      ensureTotalHistory(bundle, "views");
+      ensureTotalHistory(bundle, "viewsShowcase");
+      ensureTotalHistory(bundle, "likes");
+      return bundle;
+    }
 
-      const objects = Array.from(mergedMap.values()).sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
-      const totalViews = objects.reduce((sum, item) => sum + Number(item.lastViews || 0), 0);
-      const updated = JSON.parse(JSON.stringify(bundle));
-      updated.updatedAt = capturedAt;
-      updated.snapshots = Array.isArray(updated.snapshots) ? updated.snapshots : [];
-      updated.totalViewsHistory = dedupeHistory([...(updated.totalViewsHistory || []), { capturedAt, views: totalViews }]);
-      updated.snapshots.push({
+    function normalizeApiObjects(rawObjects) {
+      return rawObjects.map(obj => {
+        const owner = normalizeOwner(obj);
+        return {
+          uuid: obj?.uuid || obj?.id || "",
+          tinuuid: getTinuuid(obj),
+          name: obj?.name || obj?.title || "Untitled Object",
+          type: obj?.type || "—",
+          mainPreview: getPreview(obj),
+          updatedAt: obj?.updatedAt || "",
+          ownerName: owner.ownerName,
+          ownerUuid: owner.ownerUuid,
+          ownerUsername: owner.ownerUsername,
+          lastViews: getNumeric(obj?.views),
+          lastViewsShowcase: getNumeric(obj?.viewsShowcase),
+          lastLikes: getNumeric(obj?.likes),
+          removed: false,
+          history: []
+        };
+      }).filter(obj => obj.tinuuid);
+    }
+
+    function buildTotalsSummary(objects) {
+      return {
+        totalViews: sum(objects.map(item => item.lastViews)),
+        totalViewsShowcase: sum(objects.map(item => item.lastViewsShowcase)),
+        totalLikes: sum(objects.map(item => item.lastLikes)),
+        totalObjects: objects.length,
+        visibleObjects: objects.filter(item => item.lastViews > 0 || item.lastViewsShowcase > 0 || item.lastLikes > 0).length
+      };
+    }
+
+    function appendTotalHistory(bundle, capturedAt, totals) {
+      bundle.totalViewsHistory = dedupeHistory([...(bundle.totalViewsHistory || []), { capturedAt, views: totals.totalViews, viewsShowcase: 0, likes: 0 }]);
+      bundle.totalViewsShowcaseHistory = dedupeHistory([...(bundle.totalViewsShowcaseHistory || []), { capturedAt, views: 0, viewsShowcase: totals.totalViewsShowcase, likes: 0 }]);
+      bundle.totalLikesHistory = dedupeHistory([...(bundle.totalLikesHistory || []), { capturedAt, views: 0, viewsShowcase: 0, likes: totals.totalLikes }]);
+    }
+
+    function appendSnapshot(bundle, capturedAt, totals) {
+      bundle.snapshots = Array.isArray(bundle.snapshots) ? bundle.snapshots : [];
+      bundle.snapshots.push({
         capturedAt,
-        totalObjects: fresh.length,
-        visibleObjects: fresh.filter(item => Number(item.lastViews || 0) > 0).length,
-        totalViews
+        totalObjects: totals.totalObjects,
+        visibleObjects: totals.visibleObjects,
+        totalViews: totals.totalViews,
+        totalViewsShowcase: totals.totalViewsShowcase,
+        totalLikes: totals.totalLikes
       });
-      updated.objects = objects;
-      return updated;
     }
 
-    async function downloadFreshBundle() {
-      try {
-        setMode("загрузка нового bundle");
-        const raw = await fetchAllObjectsWithProgress("Создание bundle");
-        updateLoader("Сборка bundle…", 94, "Формирование файла");
-        const bundle = createBundleFromFreshApi(raw);
-        currentBundle = bundle;
-        applyBundleToUI(bundle, `bundle_${formatFileDate()}.json`, "новый bundle готов");
-        const filename = `bundle_${formatFileDate()}.json`;
-        if (!downloadJson(bundle, filename)) throw new Error("Не удалось скачать файл.");
-        setStatus(`Новый bundle скачан: ${filename}.`);
-      } catch (error) {
-        console.error(error);
-        setMode("ошибка");
-        setStatus(`Ошибка скачивания: ${error.message}`);
-      } finally {
-        hideLoader();
-      }
+    // 6. analytics helpers
+    function getMetricValueFromPoint(point, metricKey) {
+      const metric = getMetricDef(metricKey);
+      return getNumeric(point?.[metric.historyKey]);
     }
 
-    async function handleFileOpen(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      try {
-        setMode("открытие локального bundle");
-        showLoader("Открытие JSON", "Чтение локального файла…", 20, "Чтение");
-        const text = await file.text();
-        updateLoader("Парсинг JSON…", 48, "Парсинг");
-        const parsed = JSON.parse(text);
-        validateBundle(parsed);
-        updateLoader("Подготовка дашборда…", 82, "Отрисовка");
-        currentBundle = parsed;
-        applyBundleToUI(parsed, file.name, "локальный bundle открыт");
-        setStatus(`Открыт файл: ${file.name}.`);
-      } catch (error) {
-        console.error(error);
-        setMode("ошибка");
-        setStatus(`Ошибка открытия: ${error.message}`);
-      } finally {
-        hideLoader();
-        event.target.value = "";
-      }
+    function getObjectCurrentValue(objectItem, metricKey) {
+      const metric = getMetricDef(metricKey);
+      return getNumeric(objectItem?.[metric.currentField]);
     }
 
-    async function updateOpenedBundle() {
-      if (!currentBundle) {
-        setStatus("Сначала откройте bundle.");
-        return;
-      }
-      try {
-        setMode("обновление bundle");
-        showLoader("Обновление bundle", "Получение последнего снимка API…", 8, "Подготовка");
-        const raw = await fetchAllObjectsWithProgress("Обновление bundle");
-        updateLoader("Объединение истории и snapshots…", 90, "Слияние");
-        const updated = mergeOpenedBundleWithFreshApi(currentBundle, raw);
-        currentBundle = updated;
-        applyBundleToUI(updated, `bundle_updated_${formatFileDate()}.json`, "bundle обновлён");
-        const filename = `bundle_updated_${formatFileDate()}.json`;
-        if (!downloadJson(updated, filename)) throw new Error("Не удалось скачать файл.");
-        setStatus(`Bundle обновлён и скачан: ${filename}.`);
-      } catch (error) {
-        console.error(error);
-        setMode("ошибка");
-        setStatus(`Ошибка обновления: ${error.message}`);
-      } finally {
-        hideLoader();
-      }
+    function getBundleMetricHistory(bundle, metricKey) {
+      const metric = getMetricDef(metricKey);
+      return dedupeHistory(bundle?.[metric.totalHistoryKey] || []);
     }
 
-    function getPeriodBaseline(history, period) {
+    function getPeriodBaseline(history, metricKey, period) {
       const sorted = sortHistory(history);
       if (!sorted.length) return null;
       if (period === "all") return sorted[0];
+      if (period === "update") return sorted.length > 1 ? sorted[sorted.length - 2] : sorted[0];
       const last = sorted[sorted.length - 1];
-      const lastDate = new Date(last.capturedAt);
-      const fromDate = new Date(lastDate);
-      if (period === "update") {
-        return sorted.length >= 2 ? sorted[sorted.length - 2] : sorted[0];
-      }
-      if (period === "day") fromDate.setDate(fromDate.getDate() - 1);
-      if (period === "week") fromDate.setDate(fromDate.getDate() - 7);
-      if (period === "month") fromDate.setMonth(fromDate.getMonth() - 1);
+      const target = new Date(last.capturedAt);
+      if (period === "week") target.setDate(target.getDate() - 7);
+      if (period === "month") target.setMonth(target.getMonth() - 1);
       let baseline = sorted[0];
       for (let i = sorted.length - 1; i >= 0; i -= 1) {
-        const pointDate = new Date(sorted[i].capturedAt);
-        if (pointDate <= fromDate) {
+        if (new Date(sorted[i].capturedAt) <= target) {
           baseline = sorted[i];
           break;
         }
@@ -1607,444 +1858,463 @@
       return baseline;
     }
 
-    function getDeltaForPeriod(history, period) {
-      const sorted = sortHistory(history);
-      if (!sorted.length) return 0;
-      const last = sorted[sorted.length - 1];
-      const baseline = getPeriodBaseline(sorted, period);
-      return Number(last.views || 0) - Number(baseline?.views || 0);
-    }
-
-    function getHistoryForPeriod(history, period) {
+    function getHistoryForPeriod(history, metricKey, period) {
       const sorted = sortHistory(history);
       if (!sorted.length) return [];
-      const baseline = getPeriodBaseline(sorted, period);
-      const baselineIndex = Math.max(sorted.findIndex(point => point.capturedAt === baseline?.capturedAt), 0);
-      return sorted.slice(baselineIndex);
+      const baseline = getPeriodBaseline(sorted, metricKey, period);
+      const startIndex = Math.max(sorted.findIndex(point => point.capturedAt === baseline?.capturedAt), 0);
+      return sorted.slice(startIndex);
     }
 
-    function getBundleOverviewPeriodData(bundle, period) {
-      const totalHistory = dedupeHistory(bundle?.totalViewsHistory || []);
-      const periodHistory = getHistoryForPeriod(totalHistory, period);
-      const periodDelta = getDeltaForPeriod(totalHistory, period);
-      const lastPoint = periodHistory[periodHistory.length - 1] || totalHistory[totalHistory.length - 1] || null;
-      const totalViews = Number(lastPoint?.views || 0);
-      const growthPercent = getGrowthPercent(totalViews, periodDelta);
-      return {
-        totalHistory,
-        periodHistory,
-        periodDelta,
-        totalViews,
-        growthPercent
-      };
+    function getDeltaForPeriod(history, metricKey, period) {
+      const sorted = sortHistory(history);
+      if (!sorted.length) return 0;
+      const baseline = getPeriodBaseline(sorted, metricKey, period);
+      const last = sorted[sorted.length - 1];
+      return getMetricValueFromPoint(last, metricKey) - getMetricValueFromPoint(baseline, metricKey);
     }
 
-    function getGrowthPercent(totalViews, delta) {
-      const previous = Number(totalViews || 0) - Number(delta || 0);
-      if (previous <= 0) return totalViews > 0 ? 100 : 0;
+    function getGrowthPercent(currentValue, delta) {
+      const previous = Number(currentValue || 0) - Number(delta || 0);
+      if (previous <= 0) return currentValue > 0 ? 100 : 0;
       return (Number(delta || 0) / previous) * 100;
     }
 
-    function getStatus(totalViews, deltaUpdate, deltaWeek, deltaMonth, removed) {
+    function buildMetricStats(objects, metricKey) {
+      const values = objects.map(item => getObjectCurrentValue(item, metricKey));
+      return {
+        values,
+        average: average(values),
+        median: median(values),
+        p75: percentile(values, 0.75),
+        p90: percentile(values, 0.9),
+        max: Math.max(0, ...values),
+        total: sum(values)
+      };
+    }
+
+    function computeStatus(metricData, stats, removed) {
       if (removed) return "removed";
-      if (totalViews <= 0) return "zero";
-      if (deltaWeek <= 0 && deltaMonth <= 0) return "stagnant";
-      if (deltaUpdate > 0 && deltaWeek > 0 && getGrowthPercent(totalViews, deltaWeek) >= 15) return "hot";
-      if (deltaWeek > 0 || deltaMonth > 0) return "rising";
-      return "stagnant";
+      if (metricData.currentValue <= 0) return "zero";
+      if (metricData.currentValue >= stats.p90 && metricData.currentValue > 0) return "dominant";
+      if (metricData.prevUpdateValue <= 1 && metricData.currentValue > 1 && metricData.deltaUpdate > 0) return "newly-active";
+      if (metricData.deltaWeek > 0 && metricData.momentumScore >= 12 && metricData.growthPercent >= 20) return "hot";
+      if (metricData.currentValue >= stats.p75 && metricData.deltaMonth <= 0) return "stagnant";
+      if (metricData.deltaWeek > 0 || metricData.deltaMonth > 0 || metricData.deltaUpdate > 0) return "rising";
+      return "stable";
+    }
+
+    function deriveMetricAnalytics(item, metricKey, stats) {
+      const history = dedupeHistory(item.history || []);
+      const currentValue = getObjectCurrentValue(item, metricKey);
+      const deltaUpdate = getDeltaForPeriod(history, metricKey, "update");
+      const deltaWeek = getDeltaForPeriod(history, metricKey, "week");
+      const deltaMonth = getDeltaForPeriod(history, metricKey, "month");
+      const deltaAll = getDeltaForPeriod(history, metricKey, "all");
+      const prevUpdatePoint = getPeriodBaseline(history, metricKey, "update");
+      const prevUpdateValue = getMetricValueFromPoint(prevUpdatePoint, metricKey);
+      const growthPercent = getGrowthPercent(currentValue, deltaWeek || deltaUpdate);
+      const momentumScore = ((deltaUpdate * 0.55) + (deltaWeek * 0.3) + (deltaMonth * 0.15)) / Math.max(currentValue || 1, 1) * 100;
+      const metricData = {
+        currentValue,
+        deltaUpdate,
+        deltaWeek,
+        deltaMonth,
+        deltaAll,
+        prevUpdateValue,
+        growthPercent,
+        momentumScore,
+        history,
+        status: "stable"
+      };
+      metricData.status = computeStatus(metricData, stats, Boolean(item.removed));
+      return metricData;
     }
 
     function buildAnalytics(bundle) {
-      return (bundle?.objects || []).map((item, index) => {
-        const history = dedupeHistory(item.history || []);
-        const totalViews = Number(item.lastViews || 0);
-        const deltaUpdate = getDeltaForPeriod(history, "update");
-        const deltaWeek = getDeltaForPeriod(history, "week");
-        const deltaMonth = getDeltaForPeriod(history, "month");
-        const deltaDay = getDeltaForPeriod(history, "day");
-        const deltaAll = getDeltaForPeriod(history, "all");
-        const growth = getGrowthPercent(totalViews, deltaWeek || deltaUpdate);
-        const status = getStatus(totalViews, deltaUpdate, deltaWeek, deltaMonth, Boolean(item.removed));
-        return {
-          item,
-          index,
-          history,
-          totalViews,
-          deltaUpdate,
-          deltaDay,
-          deltaWeek,
-          deltaMonth,
-          deltaAll,
-          growth,
-          status,
-          goUrl: buildGoUrl(item.tinuuid),
-          viewerUrl: buildViewerUrl(item.tinuuid)
-        };
-      });
+      const objects = bundle?.objects || [];
+      const statsByMetric = {
+        views: buildMetricStats(objects, "views"),
+        viewsShowcase: buildMetricStats(objects, "viewsShowcase"),
+        likes: buildMetricStats(objects, "likes")
+      };
+
+      return objects.map((item, index) => ({
+        item,
+        index,
+        goUrl: buildGoUrl(item.tinuuid),
+        viewerUrl: buildViewerUrl(item.tinuuid),
+        metrics: {
+          views: deriveMetricAnalytics(item, "views", statsByMetric.views),
+          viewsShowcase: deriveMetricAnalytics(item, "viewsShowcase", statsByMetric.viewsShowcase),
+          likes: deriveMetricAnalytics(item, "likes", statsByMetric.likes)
+        }
+      }));
     }
 
-    function getPeriodDelta(entry) {
-      if (currentPeriod === "day") return entry.deltaDay;
-      if (currentPeriod === "week") return entry.deltaWeek;
-      if (currentPeriod === "month") return entry.deltaMonth;
-      if (currentPeriod === "all") return entry.deltaAll;
-      return entry.deltaUpdate;
+    // 7. metric-mode helpers
+    function getEntryMetric(entry, metricKey = state.activeMetric) {
+      return entry?.metrics?.[metricKey] || {
+        currentValue: 0,
+        deltaUpdate: 0,
+        deltaWeek: 0,
+        deltaMonth: 0,
+        deltaAll: 0,
+        growthPercent: 0,
+        momentumScore: 0,
+        history: [],
+        status: entry?.item?.removed ? "removed" : "stable"
+      };
     }
 
-    function getPeriodGrowth(entry) {
-      return getGrowthPercent(entry.totalViews, getPeriodDelta(entry));
+    function getSelectedPeriodDelta(metricData) {
+      if (state.currentPeriod === "week") return metricData.deltaWeek;
+      if (state.currentPeriod === "month") return metricData.deltaMonth;
+      if (state.currentPeriod === "all") return metricData.deltaAll;
+      return metricData.deltaUpdate;
     }
 
-    function applyFilters(list) {
-      const q = String(els.searchInput.value || "").trim().toLowerCase();
-      return list.filter(entry => {
-        const hay = `${entry.item.name || ""} ${entry.item.tinuuid || ""}`.toLowerCase();
-        const matchesQuery = !q || hay.includes(q);
-        const matchesStatus = currentStatusFilter === "all" || entry.status === currentStatusFilter;
-        return matchesQuery && matchesStatus;
+    function getSelectedPeriodGrowth(metricData) {
+      return getGrowthPercent(metricData.currentValue, getSelectedPeriodDelta(metricData));
+    }
+
+    function getActiveStats(entries) {
+      const metrics = entries.map(entry => getEntryMetric(entry));
+      const values = metrics.map(metric => metric.currentValue);
+      return {
+        total: sum(values),
+        average: average(values),
+        median: median(values),
+        p75: percentile(values, 0.75),
+        p90: percentile(values, 0.9),
+        zeroCount: metrics.filter(metric => metric.currentValue <= 0).length,
+        removedCount: entries.filter(entry => entry.item.removed).length,
+        trackedObjects: entries.length,
+        top10Share: (() => {
+          const total = sum(values);
+          const top10 = metrics.sort((a, b) => b.currentValue - a.currentValue).slice(0, 10).reduce((acc, metric) => acc + metric.currentValue, 0);
+          return total > 0 ? (top10 / total) * 100 : 0;
+        })()
+      };
+    }
+
+    function applyFilters(entries) {
+      const query = String(els.searchInput.value || "").trim().toLowerCase();
+      return entries.filter(entry => {
+        const metricData = getEntryMetric(entry);
+        const hay = `${entry.item.name || ""} ${entry.item.tinuuid || ""} ${entry.item.uuid || ""} ${entry.item.ownerName || ""}`.toLowerCase();
+        const matchesQuery = !query || hay.includes(query);
+        const matchesStatus = state.currentStatusFilter === "all" || metricData.status === state.currentStatusFilter;
+        const matchesType = state.currentTypeFilter === "all" || entry.item.type === state.currentTypeFilter;
+        return matchesQuery && matchesStatus && matchesType;
       });
     }
 
     function getStatusOrder(status) {
-      return { hot: 0, rising: 1, stagnant: 2, zero: 3, removed: 4 }[status] ?? 99;
+      return { hot: 0, dominant: 1, rising: 2, "newly-active": 3, stable: 4, stagnant: 5, zero: 6, removed: 7 }[status] ?? 99;
     }
 
-    function sortAnalytics(list) {
-      const arr = [...list];
-      if (currentSort === "name_asc") {
-        arr.sort((a, b) => String(a.item.name || "").localeCompare(String(b.item.name || ""), "ru", { sensitivity: "base" }));
-        return arr;
-      }
-      if (currentSort === "delta_desc") {
-        arr.sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a) || b.totalViews - a.totalViews);
-        return arr;
-      }
-      if (currentSort === "growth_desc") {
-        arr.sort((a, b) => getPeriodGrowth(b) - getPeriodGrowth(a) || getPeriodDelta(b) - getPeriodDelta(a));
-        return arr;
-      }
-      if (currentSort === "status_asc") {
-        arr.sort((a, b) => getStatusOrder(a.status) - getStatusOrder(b.status) || b.totalViews - a.totalViews);
-        return arr;
-      }
-      arr.sort((a, b) => b.totalViews - a.totalViews);
+    function sortAnalytics(entries) {
+      const arr = [...entries];
+      arr.sort((a, b) => {
+        const metricA = getEntryMetric(a);
+        const metricB = getEntryMetric(b);
+        if (state.currentSort === "name_asc") {
+          return String(a.item.name || "").localeCompare(String(b.item.name || ""), "en", { sensitivity: "base" });
+        }
+        if (state.currentSort === "delta_desc") {
+          return getSelectedPeriodDelta(metricB) - getSelectedPeriodDelta(metricA) || metricB.currentValue - metricA.currentValue;
+        }
+        if (state.currentSort === "growth_desc") {
+          return getSelectedPeriodGrowth(metricB) - getSelectedPeriodGrowth(metricA) || metricB.currentValue - metricA.currentValue;
+        }
+        if (state.currentSort === "momentum_desc") {
+          return metricB.momentumScore - metricA.momentumScore || metricB.currentValue - metricA.currentValue;
+        }
+        if (state.currentSort === "status_asc") {
+          return getStatusOrder(metricA.status) - getStatusOrder(metricB.status) || metricB.currentValue - metricA.currentValue;
+        }
+        return metricB.currentValue - metricA.currentValue;
+      });
       return arr;
     }
 
-    function setTab(tabName) {
-      currentTab = tabName;
-      els.tabButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabName));
-      els.overviewTab.classList.toggle("hidden", tabName !== "overview");
-      els.tableTab.classList.toggle("hidden", tabName !== "table");
-      els.cardsTab.classList.toggle("hidden", tabName !== "cards");
-    }
+    // 8. fetch helpers
+    async function fetchAllObjectsWithProgress(title = "Loading objects") {
+      showLoader(title, "Connecting to API…", 2, "Step 1");
+      let page = 1;
+      const collected = [];
 
-    function applyBundleToUI(bundle, fileLabel, modeLabel) {
-      validateBundle(bundle);
-      analyticsCache = buildAnalytics(bundle);
-      els.lastUpdatedText.textContent = `Обновлено: ${formatHumanDate(bundle.updatedAt)}`;
-      setFileChip(`Файл: ${fileLabel}`);
-      setMode(modeLabel);
-      setFilterChip();
-      els.updateBtn.disabled = false;
-      renderCurrent();
-    }
-
-    function renderCurrent() {
-      if (!currentBundle) {
-        filteredAnalytics = [];
-        setFilterChip();
-        renderHero(null);
-        renderInsights([]);
-        renderOverview([]);
-        renderTable([]);
-        renderCards([]);
-        els.emptyState.classList.remove("hidden");
-        return;
+      while (page <= APP_CONFIG.hardPageLimit) {
+        updateLoader(`Loading page ${page}…`, Math.min(8 + page * 1.8, 84), `Page ${page} · ${collected.length} objs`);
+        const response = await fetch(APP_CONFIG.apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildApiRequestBody(page))
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status} on page ${page}`);
+        const data = await response.json();
+        const objs = Array.isArray(data?.objs) ? data.objs : [];
+        if (!objs.length) break;
+        collected.push(...objs);
+        page += 1;
       }
 
-      setFilterChip();
-      filteredAnalytics = sortAnalytics(applyFilters(analyticsCache));
-      renderHero(currentBundle);
-      renderInsights(filteredAnalytics);
-      renderOverview(filteredAnalytics);
-      renderTable(filteredAnalytics);
-      renderCards(filteredAnalytics);
-      els.emptyState.classList.toggle("hidden", filteredAnalytics.length > 0);
+      updateLoader(`Collected ${collected.length} objects. Preparing…`, 90, "Preparing data");
+      return collected;
     }
 
-    function renderHero(bundle) {
-      if (!bundle) {
-        els.heroTotalViews.textContent = "0";
-        els.heroGrowth.textContent = "0%";
-        els.heroObjects.textContent = "0";
-        els.heroZero.textContent = "0";
-        els.heroRemoved.textContent = "0";
-        els.heroSummaryText.textContent = "Откройте bundle или скачайте новый, чтобы анализировать историю объектов, рост и статусы.";
-        els.heroChartMeta.textContent = "Данные не загружены";
-        drawLineChart("hero", document.getElementById("heroChartCanvas"), [], [], "Все просмотры", false);
-        return;
+    // 9. merge helpers
+    function createBundleFromFreshApi(rawObjects) {
+      const capturedAt = nowIso();
+      const objects = normalizeApiObjects(rawObjects).map(item => ({
+        ...item,
+        history: [{
+          capturedAt,
+          views: item.lastViews,
+          viewsShowcase: item.lastViewsShowcase,
+          likes: item.lastLikes
+        }]
+      })).sort((a, b) => b.lastViews - a.lastViews);
+
+      const totals = buildTotalsSummary(objects);
+      const bundle = {
+        version: 2,
+        source: APP_CONFIG.apiUrl,
+        createdAt: capturedAt,
+        updatedAt: capturedAt,
+        owners: [...APP_CONFIG.owners],
+        objects,
+        snapshots: [],
+        totalViewsHistory: [],
+        totalViewsShowcaseHistory: [],
+        totalLikesHistory: []
+      };
+      appendSnapshot(bundle, capturedAt, totals);
+      appendTotalHistory(bundle, capturedAt, totals);
+      return bundle;
+    }
+
+    function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
+      const base = validateBundle(JSON.parse(JSON.stringify(bundle)));
+      const capturedAt = nowIso();
+      const freshObjects = normalizeApiObjects(rawObjects);
+      const mergedMap = new Map();
+      const freshMap = new Map(freshObjects.map(item => [item.tinuuid, item]));
+
+      base.objects.forEach(item => {
+        mergedMap.set(item.tinuuid, {
+          ...item,
+          history: dedupeHistory(item.history || [])
+        });
+      });
+
+      for (const [tinuuid, fresh] of freshMap.entries()) {
+        const freshPoint = {
+          capturedAt,
+          views: fresh.lastViews,
+          viewsShowcase: fresh.lastViewsShowcase,
+          likes: fresh.lastLikes
+        };
+        if (!mergedMap.has(tinuuid)) {
+          mergedMap.set(tinuuid, { ...fresh, removed: false, history: [freshPoint] });
+          continue;
+        }
+        const existing = mergedMap.get(tinuuid);
+        existing.uuid = fresh.uuid;
+        existing.name = fresh.name;
+        existing.type = fresh.type;
+        existing.mainPreview = fresh.mainPreview;
+        existing.ownerName = fresh.ownerName;
+        existing.ownerUuid = fresh.ownerUuid;
+        existing.ownerUsername = fresh.ownerUsername;
+        existing.updatedAt = fresh.updatedAt;
+        existing.lastViews = fresh.lastViews;
+        existing.lastViewsShowcase = fresh.lastViewsShowcase;
+        existing.lastLikes = fresh.lastLikes;
+        existing.removed = false;
+        existing.history = dedupeHistory([...(existing.history || []), freshPoint]);
       }
 
-      const totalViews = analyticsCache.reduce((sum, entry) => sum + entry.totalViews, 0);
-      const zeroCount = analyticsCache.filter(entry => entry.status === "zero").length;
-      const removedCount = analyticsCache.filter(entry => entry.status === "removed").length;
-      const totalGrowthDelta = analyticsCache.reduce((sum, entry) => sum + entry.deltaUpdate, 0);
-      const totalGrowthPercent = getGrowthPercent(totalViews, totalGrowthDelta);
-      const history = dedupeHistory(bundle.totalViewsHistory || []);
-
-      els.heroTotalViews.textContent = formatNum(totalViews);
-      els.heroGrowth.textContent = formatPercent(totalGrowthPercent);
-      els.heroGrowthSub.textContent = `${formatSignedNum(totalGrowthDelta)} к прошлому обновлению`;
-      els.heroObjects.textContent = formatNum(analyticsCache.length);
-      els.heroZero.textContent = formatNum(zeroCount);
-      els.heroRemoved.textContent = formatNum(removedCount);
-      els.heroSummaryText.textContent = `${formatNum(analyticsCache.filter(entry => entry.status === "hot").length)} горячих, ${formatNum(analyticsCache.filter(entry => entry.status === "rising").length)} растущих, ${formatNum(analyticsCache.filter(entry => entry.status === "stagnant").length)} стагнирующих.`;
-      els.heroChartMeta.textContent = history.length ? `${history.length} точек · ${formatHumanDate(history[history.length - 1].capturedAt)}` : "Нет общей истории";
-
-      drawLineChart(
-        "hero",
-        document.getElementById("heroChartCanvas"),
-        history.map(point => formatPointLabel(point.capturedAt)),
-        history.map(point => Number(point.views || 0)),
-        "Все просмотры",
-        true
-      );
-    }
-
-    function renderInsights(list) {
-      if (!analyticsCache.length) {
-        els.insightTopGrowth.textContent = "—";
-        els.insightTopGrowthSub.textContent = "Нет данных";
-        els.insightBiggestDelta.textContent = "0";
-        els.insightBiggestDeltaSub.textContent = `Прирост за период: ${getPeriodLabel(currentPeriod)}`;
-        els.insightZeroCount.textContent = "0";
-        els.insightRemovedCount.textContent = "0";
-        els.insightTopShare.textContent = "0%";
-        els.insightTopShareSub.textContent = "Доля от всех просмотров";
-        return;
+      for (const [tinuuid, existing] of mergedMap.entries()) {
+        if (!freshMap.has(tinuuid)) {
+          existing.removed = true;
+        }
       }
 
-      const topGrowth = [...analyticsCache].sort((a, b) => getPeriodGrowth(b) - getPeriodGrowth(a))[0];
-      const biggestDelta = [...analyticsCache].sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a))[0];
-      const zeroCount = analyticsCache.filter(entry => entry.status === "zero").length;
-      const removedCount = analyticsCache.filter(entry => entry.status === "removed").length;
-      const totalViews = analyticsCache.reduce((sum, entry) => sum + entry.totalViews, 0);
-      const top10Views = [...analyticsCache].sort((a, b) => b.totalViews - a.totalViews).slice(0, 10).reduce((sum, entry) => sum + entry.totalViews, 0);
-      const top10Share = totalViews > 0 ? (top10Views / totalViews) * 100 : 0;
-
-      els.insightTopGrowth.textContent = topGrowth ? escapeText(topGrowth.item.name) : "—";
-      els.insightTopGrowthSub.textContent = topGrowth ? `${formatPercent(getPeriodGrowth(topGrowth))} · ${getStatusLabel(topGrowth.status)}` : "Нет данных";
-      els.insightBiggestDelta.textContent = biggestDelta ? formatSignedNum(getPeriodDelta(biggestDelta)) : "0";
-      els.insightBiggestDeltaSub.textContent = biggestDelta ? `${escapeText(biggestDelta.item.name)} · ${getPeriodLabel(currentPeriod)}` : `Прирост за период: ${getPeriodLabel(currentPeriod)}`;
-      els.insightZeroCount.textContent = formatNum(zeroCount);
-      els.insightRemovedCount.textContent = formatNum(removedCount);
-      els.insightTopShare.textContent = `${top10Share.toFixed(1)}%`;
-      els.insightTopShareSub.textContent = `${formatNum(top10Views)} из ${formatNum(totalViews)} всех просмотров`;
+      const objects = Array.from(mergedMap.values()).sort((a, b) => b.lastViews - a.lastViews);
+      const totals = buildTotalsSummary(objects);
+      base.objects = objects;
+      base.updatedAt = capturedAt;
+      base.owners = [...APP_CONFIG.owners];
+      appendSnapshot(base, capturedAt, totals);
+      appendTotalHistory(base, capturedAt, totals);
+      return base;
     }
 
-    function renderOverview(list) {
-      const overview = getBundleOverviewPeriodData(currentBundle, currentPeriod);
-      const chartHistory = overview.periodHistory.length ? overview.periodHistory : overview.totalHistory;
-      els.overviewTotalViewsMeta.textContent = chartHistory.length
-        ? `${chartHistory.length} точек · период: ${getPeriodLabel(currentPeriod)}`
-        : "Нет истории по всем просмотрам";
-      els.overviewPeriodDeltaValue.textContent = formatSignedNum(overview.periodDelta);
-      els.overviewPeriodDeltaSub.textContent = chartHistory.length
-        ? `${formatPercent(overview.growthPercent)} · рост по всем просмотрам за период`
-        : "Нет данных по выбранному периоду";
-      drawLineChart(
-        "overviewTotal",
-        document.getElementById("overviewTotalViewsCanvas"),
-        chartHistory.map(point => formatPointLabel(point.capturedAt)),
-        chartHistory.map(point => Number(point.views || 0)),
-        `Все просмотры · ${getPeriodLabel(currentPeriod)}`,
-        false
-      );
-
-      const growthEntries = [...analyticsCache]
-        .sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a))
-        .slice(0, 8);
-      els.overviewGrowthMeta.textContent = growthEntries.length
-        ? `Топ ${growthEntries.length} по приросту за период: ${getPeriodLabel(currentPeriod)}`
-        : "Нет данных";
-      drawBarChart(
-        "overviewGrowth",
-        document.getElementById("overviewGrowthCanvas"),
-        growthEntries.map(entry => truncate(entry.item.name || "Без названия", 20)),
-        growthEntries.map(entry => getPeriodDelta(entry)),
-        `Прирост (${getPeriodLabel(currentPeriod)})`
-      );
-
-      renderList(els.topGainersList, [...list].sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a)).slice(0, 8), entry => formatSignedNum(getPeriodDelta(entry)));
-      renderList(els.topViewedList, [...list].sort((a, b) => b.totalViews - a.totalViews).slice(0, 8), entry => formatNum(entry.totalViews));
-    }
-
-    function renderList(container, entries, valueGetter) {
-      container.innerHTML = "";
-      if (!entries.length) {
-        container.innerHTML = '<div class="muted">Нет данных для текущих фильтров.</div>';
-        return;
+    // 10. export helpers
+    function downloadBlob(blob, filename) {
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 500);
+        return true;
+      } catch (error) {
+        console.error(error);
+        return false;
       }
+    }
+
+    function downloadJson(data, filename) {
+      return downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" }), filename);
+    }
+
+    function downloadText(text, filename, mime = "text/plain;charset=utf-8") {
+      return downloadBlob(new Blob([text], { type: mime }), filename);
+    }
+
+    function csvEscape(value) {
+      return `"${String(value ?? "").replace(/"/g, '""')}"`;
+    }
+
+    function buildDatasetCsvRows(entries) {
+      const rows = [["rank", "name", "tinuuid", "uuid", "type", "owner", "views", "viewsShowcase", "likes", "deltaUpdate", "deltaWeek", "deltaMonth", "growthPercent", "status", "removed"]];
       entries.forEach((entry, index) => {
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "list-item";
-        row.innerHTML = `
-          <span class="rank">${index + 1}</span>
-          <span class="list-main">
-            <strong>${escapeHtml(entry.item.name || "Без названия")}</strong>
-            <span>${escapeHtml(entry.item.tinuuid || "—")}</span>
-          </span>
-          <span class="list-value">${escapeHtml(valueGetter(entry))}</span>
-        `;
-        row.addEventListener("click", () => openDetailModal(entry));
-        container.appendChild(row);
+        const metricData = getEntryMetric(entry);
+        rows.push([
+          index + 1,
+          entry.item.name,
+          entry.item.tinuuid,
+          entry.item.uuid,
+          entry.item.type,
+          entry.item.ownerName,
+          entry.item.lastViews,
+          entry.item.lastViewsShowcase,
+          entry.item.lastLikes,
+          metricData.deltaUpdate,
+          metricData.deltaWeek,
+          metricData.deltaMonth,
+          metricData.growthPercent.toFixed(2),
+          metricData.status,
+          entry.item.removed ? "true" : "false"
+        ]);
       });
+      return rows;
     }
 
-    function renderTable(list) {
-      els.tableBody.innerHTML = "";
-      if (!list.length) return;
-      list.forEach(entry => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>
-            <div class="table-name-wrap">
-              <span class="table-name">${escapeHtml(entry.item.name || "Без названия")}</span>
-              <span class="table-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
-            </div>
-          </td>
-          <td>${formatNum(entry.totalViews)}</td>
-          <td>${formatSignedNum(getPeriodDelta(entry))}</td>
-          <td>${formatPercent(getPeriodGrowth(entry))}</td>
-          <td>${renderStatusPill(entry.status)}</td>
-        `;
-        tr.addEventListener("click", () => openDetailModal(entry));
-        els.tableBody.appendChild(tr);
-      });
-    }
-
-    function renderCards(list) {
-      els.cardsGrid.innerHTML = "";
-      if (!list.length) return;
-      list.forEach((entry, index) => {
-        const article = document.createElement("article");
-        article.className = "card";
-        article.innerHTML = `
-          <div class="card-media">
-            ${entry.item.mainPreview
-              ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Превью объекта")}" />`
-              : `<div class="card-fallback">Нет превью</div>`}
-            <div class="card-topline">
-              <span class="badge">#${index + 1}</span>
-              ${renderStatusPill(entry.status)}
-            </div>
-          </div>
-          <div class="card-body">
-            <div>
-              <span class="card-title">${escapeHtml(entry.item.name || "Без названия")}</span>
-              <span class="card-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
-            </div>
-            <div class="card-metrics">
-              <div class="metric">
-                <div class="label">Просмотры</div>
-                <div class="value">${formatNum(entry.totalViews)}</div>
-              </div>
-              <div class="metric">
-                <div class="label">Прирост</div>
-                <div class="value">${formatSignedNum(getPeriodDelta(entry))}</div>
-              </div>
-              <div class="metric">
-                <div class="label">Рост</div>
-                <div class="value">${formatPercent(getPeriodGrowth(entry))}</div>
-              </div>
-            </div>
-            <div class="card-actions">
-              <a class="row-btn" href="${escapeHtml(entry.goUrl || "#")}" ${entry.goUrl ? 'target="_blank" rel="noopener noreferrer"' : 'aria-disabled="true"'}>${entry.goUrl ? "Страница объекта" : "Нет страницы"}</a>
-              <button type="button" class="row-btn card-detail-btn">Детали</button>
-            </div>
-          </div>
-        `;
-        article.addEventListener("click", (event) => {
-          if (event.target.closest("a")) return;
-          openDetailModal(entry);
-        });
-        article.querySelector(".card-detail-btn").addEventListener("click", (event) => {
-          event.stopPropagation();
-          openDetailModal(entry);
-        });
-        els.cardsGrid.appendChild(article);
-      });
-    }
-
-    function renderStatusPill(status) {
-      const label = getStatusLabel(status);
-      return `<span class="status-pill status-${escapeHtml(status)}">${escapeHtml(label)}</span>`;
-    }
-
-    function openDetailModal(entry) {
-      currentChartEntry = entry;
-      currentChartMode = "days";
-      updateChartModeButtons();
-      els.modalTitle.textContent = entry.item.name || "Детали объекта";
-      els.modalSub.textContent = `TINUUID: ${entry.item.tinuuid || "—"}`;
-      els.modalPreview.innerHTML = entry.item.mainPreview
-        ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Превью")}" />`
-        : `<div class="modal-preview-fallback">Нет превью</div>`;
-      els.modalStatus.innerHTML = renderStatusPill(entry.status);
-      els.modalViews.textContent = formatNum(entry.totalViews);
-      els.modalDeltas.textContent = `Обновление ${formatSignedNum(entry.deltaUpdate)} · Неделя ${formatSignedNum(entry.deltaWeek)} · Месяц ${formatSignedNum(entry.deltaMonth)}`;
-      setModalLink(els.modalGoLink, entry.goUrl, "Страница объекта");
-      setModalLink(els.modalViewerLink, entry.viewerUrl, "3D viewer");
-      els.detailModal.classList.remove("hidden");
-      drawDetailChart(entry);
-    }
-
-    function setModalLink(element, href, label) {
-      element.textContent = label;
-      if (href) {
-        element.href = href;
-        element.removeAttribute("aria-disabled");
-        element.style.pointerEvents = "auto";
-        element.style.opacity = "1";
-      } else {
-        element.href = "#";
-        element.setAttribute("aria-disabled", "true");
-        element.style.pointerEvents = "none";
-        element.style.opacity = "0.45";
+    function exportRows(rows, filename) {
+      const csv = rows.map(row => row.map(csvEscape).join(",")).join("\n");
+      if (!downloadText(csv, filename, "text/csv;charset=utf-8")) {
+        setStatus(`Export failed: ${filename}`);
+        return;
       }
+      setStatus(`Экспортирован файл: ${filename}`);
     }
 
-    function closeDetailModal() {
-      els.detailModal.classList.add("hidden");
-    }
-
-    function updateChartModeButtons() {
-      els.daysBtn.classList.toggle("active", currentChartMode === "days");
-      els.monthsBtn.classList.toggle("active", currentChartMode === "months");
-    }
-
-    function drawDetailChart(entry) {
-      const history = sortHistory(entry.history || entry.item.history || []);
-      let labels = [];
-      let values = [];
-      if (currentChartMode === "days") {
-        labels = history.map(point => formatPointLabel(point.capturedAt));
-        values = history.map(point => Number(point.views || 0));
-        els.chartMeta.textContent = `${history.length} точек · дневные снимки`;
-      } else {
-        const grouped = groupByMonth(history);
-        labels = grouped.labels;
-        values = grouped.values;
-        els.chartMeta.textContent = `${labels.length} месячных срезов`;
+    function exportCurrentFilteredCsv() {
+      if (!state.filteredAnalytics.length) {
+        setStatus("Нет строк для экспорта.");
+        return;
       }
-      drawLineChart("detail", document.getElementById("detailChartCanvas"), labels, values, "Просмотры", true);
+      exportRows(buildDatasetCsvRows(state.filteredAnalytics), `vizbl_filtered_${formatFileDate()}.csv`);
     }
 
-    function drawLineChart(key, canvas, labels, values, label, fill) {
+    function exportFullDatasetCsv() {
+      if (!state.analyticsCache.length) {
+        setStatus("Нет данных для экспорта.");
+        return;
+      }
+      exportRows(buildDatasetCsvRows(sortAnalytics(state.analyticsCache)), `vizbl_full_${formatFileDate()}.csv`);
+    }
+
+    function exportSnapshotsCsv() {
+      if (!state.currentBundle?.snapshots?.length) {
+        setStatus("Нет snapshots для экспорта.");
+        return;
+      }
+      const rows = [["capturedAt", "totalObjects", "visibleObjects", "totalViews", "totalViewsShowcase", "totalLikes", "deltaFromPrevious"]];
+      const metricKey = state.activeMetric;
+      const metric = getMetricDef(metricKey);
+      state.currentBundle.snapshots.forEach((snapshot, index, array) => {
+        const previous = array[index - 1];
+        const delta = previous ? getNumeric(snapshot[metric.snapshotKey]) - getNumeric(previous[metric.snapshotKey]) : 0;
+        rows.push([
+          snapshot.capturedAt,
+          snapshot.totalObjects,
+          snapshot.visibleObjects,
+          snapshot.totalViews,
+          snapshot.totalViewsShowcase,
+          snapshot.totalLikes,
+          delta
+        ]);
+      });
+      exportRows(rows, `vizbl_snapshots_${formatFileDate()}.csv`);
+    }
+
+    function exportObjectHistoryCsv(entry) {
+      if (!entry) return;
+      const rows = [["capturedAt", "views", "viewsShowcase", "likes"]];
+      dedupeHistory(entry.item.history || []).forEach(point => {
+        rows.push([point.capturedAt, point.views, point.viewsShowcase, point.likes]);
+      });
+      exportRows(rows, `vizbl_object_${entry.item.tinuuid || "unknown"}_${formatFileDate()}.csv`);
+    }
+
+    // 11. chart renderers
+    function baseChartOptions(showLegend = false, rightAxis = false) {
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: showLegend, labels: { color: "#edf3ff" } },
+          tooltip: {
+            backgroundColor: "rgba(12, 17, 24, 0.96)",
+            titleColor: "#fff",
+            bodyColor: "#edf3ff",
+            borderColor: "rgba(255,255,255,0.12)",
+            borderWidth: 1,
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${formatNum(ctx.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#95a2b8", maxRotation: 0, autoSkip: true },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          },
+          y: {
+            ticks: { color: "#95a2b8", callback: value => formatNum(value) },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          }
+        }
+      };
+      if (rightAxis) {
+        options.scales.y1 = {
+          position: "right",
+          ticks: { color: "#95a2b8", callback: value => `${value}%` },
+          grid: { drawOnChartArea: false }
+        };
+      }
+      return options;
+    }
+
+    function destroyChart(key) {
       if (charts[key]) charts[key].destroy();
-      const ctx = canvas.getContext("2d");
+    }
+
+    function renderLineChart(key, canvasId, labels, values, label, fill = false) {
+      destroyChart(key);
+      const ctx = document.getElementById(canvasId).getContext("2d");
       charts[key] = new Chart(ctx, {
         type: "line",
         data: {
@@ -2065,9 +2335,9 @@
       });
     }
 
-    function drawBarChart(key, canvas, labels, values, label) {
-      if (charts[key]) charts[key].destroy();
-      const ctx = canvas.getContext("2d");
+    function renderBarChart(key, canvasId, labels, values, label) {
+      destroyChart(key);
+      const ctx = document.getElementById(canvasId).getContext("2d");
       charts[key] = new Chart(ctx, {
         type: "bar",
         data: {
@@ -2085,102 +2355,708 @@
       });
     }
 
-    function baseChartOptions(showLegend = false) {
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { display: showLegend, labels: { color: "#e8eef8" } },
-          tooltip: {
-            backgroundColor: "rgba(12, 17, 24, 0.96)",
-            titleColor: "#fff",
-            bodyColor: "#e8eef8",
-            borderColor: "rgba(255,255,255,0.12)",
-            borderWidth: 1,
-            callbacks: {
-              label: (ctx) => ` ${ctx.dataset.label}: ${formatNum(ctx.parsed.y)}`
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: { color: "#95a2b8", maxRotation: 0, autoSkip: true },
-            grid: { color: "rgba(255,255,255,0.05)" }
-          },
-          y: {
-            ticks: {
-              color: "#95a2b8",
-              callback: value => formatNum(value)
+    function renderParetoChart(labels, values, total) {
+      destroyChart("pareto");
+      const cumulative = [];
+      let running = 0;
+      values.forEach(value => {
+        running += value;
+        cumulative.push(total > 0 ? (running / total) * 100 : 0);
+      });
+      const ctx = document.getElementById("paretoCanvas").getContext("2d");
+      charts.pareto = new Chart(ctx, {
+        data: {
+          labels,
+          datasets: [
+            {
+              type: "bar",
+              label: getMetricLabel(),
+              data: values,
+              backgroundColor: "rgba(99, 167, 255, 0.55)",
+              borderColor: "rgba(99, 167, 255, 1)",
+              borderWidth: 1,
+              borderRadius: 6
             },
-            grid: { color: "rgba(255,255,255,0.05)" }
-          }
-        }
-      };
+            {
+              type: "line",
+              label: "Cumulative %",
+              data: cumulative,
+              borderColor: "rgba(75, 209, 139, 1)",
+              backgroundColor: "rgba(75, 209, 139, 0.16)",
+              yAxisID: "y1",
+              tension: 0.25,
+              pointRadius: 2.5,
+              borderWidth: 2
+            }
+          ]
+        },
+        options: baseChartOptions(true, true)
+      });
     }
 
-    function formatPointLabel(iso) {
-      const d = new Date(iso);
-      if (Number.isNaN(+d)) return "—";
-      const p = n => String(n).padStart(2, "0");
-      return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
-    }
-
-    function groupByMonth(history) {
+    function groupHistoryByMonth(history, metricKey) {
       const map = new Map();
-      history.forEach(point => {
-        const d = new Date(point.capturedAt);
-        if (Number.isNaN(+d)) return;
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        map.set(key, Number(point.views || 0));
+      sortHistory(history).forEach(point => {
+        const date = new Date(point.capturedAt);
+        if (Number.isNaN(+date)) return;
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        map.set(key, getMetricValueFromPoint(point, metricKey));
       });
       const entries = Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-      return {
-        labels: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v)
-      };
+      return { labels: entries.map(([label]) => label), values: entries.map(([, value]) => value) };
     }
 
-    function exportCurrentCsv() {
-      if (!filteredAnalytics.length) {
-        setStatus("Нет строк для экспорта.");
+    // 12. kpi renderers
+    function updateHeader(bundle) {
+      els.currentFileText.textContent = `Файл: ${state.currentFileLabel}`;
+      els.currentSourceText.textContent = `Источник: ${bundle?.source || APP_CONFIG.apiUrl}`;
+      els.ownerIndicatorText.textContent = APP_CONFIG.useOwnersFilter ? `Owners: ${APP_CONFIG.owners.length}` : "Owners filter: off";
+      els.lastUpdatedText.textContent = `Обновлено: ${formatHumanDate(bundle?.updatedAt)}`;
+      els.metricChip.textContent = `Метрика: ${getMetricLabel()}`;
+      els.datasetChip.textContent = `Датасет: ${formatNum(state.filteredAnalytics.length)} / ${formatNum(state.analyticsCache.length)} объектов`;
+      els.filterChip.textContent = `Фильтр: ${PERIOD_LABELS[state.currentPeriod]} / ${state.currentStatusFilter} / ${state.currentTypeFilter}`;
+    }
+
+    function renderHero() {
+      const metricKey = state.activeMetric;
+      const metricLabel = getMetricLabel(metricKey);
+      if (!state.currentBundle) {
+        els.heroPrimaryValue.textContent = "0";
+        els.heroSummaryText.textContent = "Откройте bundle или скачайте новый, чтобы анализировать объекты Vizbl по Views, Showcase Views и Likes.";
+        els.heroChartTitle.textContent = `Тренд по ${metricLabel}`;
+        els.heroChartMeta.textContent = "Нет данных";
+        renderLineChart("hero", "heroChartCanvas", [], [], metricLabel, false);
         return;
       }
-      const rows = [["name", "tinuuid", "views", "delta", "growth_percent", "status", "removed", "viewer_url", "go_url"]];
-      filteredAnalytics.forEach(entry => {
-        rows.push([
-          entry.item.name || "",
-          entry.item.tinuuid || "",
-          entry.totalViews,
-          getPeriodDelta(entry),
-          getPeriodGrowth(entry).toFixed(2),
-          entry.status,
-          entry.item.removed ? "true" : "false",
-          entry.viewerUrl || "",
-          entry.goUrl || ""
-        ]);
+
+      const history = getBundleMetricHistory(state.currentBundle, metricKey);
+      const chartHistory = getHistoryForPeriod(history, metricKey, state.currentPeriod);
+      const usableHistory = chartHistory.length ? chartHistory : history;
+      const total = usableHistory.length ? getMetricValueFromPoint(usableHistory[usableHistory.length - 1], metricKey) : 0;
+      const deltaUpdate = getDeltaForPeriod(history, metricKey, "update");
+      els.heroPrimaryValue.textContent = formatNum(total);
+      els.heroSummaryText.textContent = `${formatSignedNum(deltaUpdate)} since previous update · ${formatNum(state.analyticsCache.length)} tracked objects`;
+      els.heroChartTitle.textContent = `Тренд по ${metricLabel}`;
+      els.heroChartMeta.textContent = usableHistory.length ? `${usableHistory.length} points · ${PERIOD_LABELS[state.currentPeriod]}` : "Нет истории";
+      renderLineChart(
+        "hero",
+        "heroChartCanvas",
+        usableHistory.map(point => formatPointLabel(point.capturedAt)),
+        usableHistory.map(point => getMetricValueFromPoint(point, metricKey)),
+        metricLabel,
+        true
+      );
+    }
+
+    function renderKpis(entries) {
+      const stats = getActiveStats(entries);
+      const totalHistory = getBundleMetricHistory(state.currentBundle, state.activeMetric);
+      const deltaUpdate = getDeltaForPeriod(totalHistory, state.activeMetric, "update");
+      els.kpiCurrentTotal.textContent = formatNum(stats.total);
+      els.kpiCurrentTotalSub.textContent = `Average ${formatNum(stats.average)} · Median ${formatNum(stats.median)}`;
+      els.kpiDeltaUpdate.textContent = formatSignedNum(deltaUpdate);
+      els.kpiDeltaUpdateSub.textContent = `Top 10 share ${stats.top10Share.toFixed(1)}%`;
+      els.kpiTrackedObjects.textContent = formatNum(stats.trackedObjects);
+      els.kpiTrackedObjectsSub.textContent = `${formatNum(entries.filter(entry => !entry.item.removed).length)} active now`;
+      els.kpiZeroCount.textContent = formatNum(stats.zeroCount);
+      els.kpiZeroCountSub.textContent = `${((stats.zeroCount / Math.max(stats.trackedObjects, 1)) * 100).toFixed(1)}% of tracked objects`;
+      els.kpiRemovedCount.textContent = formatNum(stats.removedCount);
+      els.kpiRemovedCountSub.textContent = `${formatNum(entries.filter(entry => entry.item.removed).length)} marked missing after merge`;
+    }
+
+    // 13. insights renderers
+    function renderInsights(entries) {
+      if (!entries.length) {
+        els.insightTopGrowth.textContent = "—";
+        els.insightTopGrowthSub.textContent = "Нет данных";
+        els.insightBiggestDelta.textContent = "0";
+        els.insightBiggestDeltaSub.textContent = "Нет данных";
+        els.insightRelativeGrowth.textContent = "0%";
+        els.insightRelativeGrowthSub.textContent = "Нет данных";
+        els.insightNewlyActive.textContent = "0";
+        els.insightNewlyActiveSub.textContent = "Нет данных";
+        els.insightStagnant.textContent = "0";
+        els.insightStagnantSub.textContent = "Нет данных";
+        els.insightTopShare.textContent = "0%";
+        els.insightTopShareSub.textContent = "Нет данных";
+        return;
+      }
+
+      const sortedByGrowth = [...entries].sort((a, b) => getSelectedPeriodGrowth(getEntryMetric(b)) - getSelectedPeriodGrowth(getEntryMetric(a)));
+      const sortedByDelta = [...entries].sort((a, b) => getSelectedPeriodDelta(getEntryMetric(b)) - getSelectedPeriodDelta(getEntryMetric(a)));
+      const sortedByMomentum = [...entries].sort((a, b) => getEntryMetric(b).momentumScore - getEntryMetric(a).momentumScore || getSelectedPeriodDelta(getEntryMetric(b)) - getSelectedPeriodDelta(getEntryMetric(a)));
+      const topGrowth = sortedByMomentum[0];
+      const biggestDelta = sortedByDelta[0];
+      const relative = sortedByGrowth[0];
+      const newlyActive = entries.filter(entry => getEntryMetric(entry).status === "newly-active");
+      const stagnant = entries.filter(entry => getEntryMetric(entry).status === "stagnant");
+      const total = getActiveStats(entries).total;
+      const top10Total = sum([...entries].sort((a, b) => getEntryMetric(b).currentValue - getEntryMetric(a).currentValue).slice(0, 10).map(entry => getEntryMetric(entry).currentValue));
+      const topShare = total > 0 ? (top10Total / total) * 100 : 0;
+
+      els.insightTopGrowth.textContent = truncate(topGrowth.item.name, 22);
+      els.insightTopGrowthSub.textContent = `${formatPercent(getSelectedPeriodGrowth(getEntryMetric(topGrowth)))} · ${getStatusLabel(getEntryMetric(topGrowth).status)}`;
+      els.insightBiggestDelta.textContent = formatSignedNum(getSelectedPeriodDelta(getEntryMetric(biggestDelta)));
+      els.insightBiggestDeltaSub.textContent = truncate(biggestDelta.item.name, 22);
+      els.insightRelativeGrowth.textContent = formatPercent(getSelectedPeriodGrowth(getEntryMetric(relative)));
+      els.insightRelativeGrowthSub.textContent = truncate(relative.item.name, 22);
+      els.insightNewlyActive.textContent = formatNum(newlyActive.length);
+      els.insightNewlyActiveSub.textContent = newlyActive.length ? `${truncate(newlyActive[0].item.name, 20)} leads the activation set` : "Нет новых активных";
+      els.insightStagnant.textContent = formatNum(stagnant.length);
+      els.insightStagnantSub.textContent = stagnant.length ? `${truncate(stagnant[0].item.name, 20)} has value but flat trend` : "Нет стагнирующих high-value";
+      els.insightTopShare.textContent = `${topShare.toFixed(1)}%`;
+      els.insightTopShareSub.textContent = `${formatNum(top10Total)} of ${formatNum(total)} current total`;
+    }
+
+    // 14. table renderer
+    function renderTable(entries) {
+      els.tableBody.innerHTML = "";
+      if (!entries.length) return;
+      entries.forEach((entry, index) => {
+        const metricData = getEntryMetric(entry);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${entry.item.mainPreview ? `<img class="preview-thumb" src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name)}" />` : '<div class="preview-fallback">No preview</div>'}</td>
+          <td>${index + 1}</td>
+          <td><div class="table-name-wrap"><span class="table-name">${escapeHtml(entry.item.name)}</span><span class="table-sub">${escapeHtml(entry.item.uuid || "—")}</span></div></td>
+          <td>${escapeHtml(entry.item.tinuuid || "—")}</td>
+          <td>${escapeHtml(entry.item.type || "—")}</td>
+          <td>${escapeHtml(entry.item.ownerName || "—")}</td>
+          <td>${formatNum(metricData.currentValue)}</td>
+          <td>${formatSignedNum(metricData.deltaUpdate)}</td>
+          <td>${formatSignedNum(metricData.deltaWeek)}</td>
+          <td>${formatSignedNum(metricData.deltaMonth)}</td>
+          <td>${formatPercent(metricData.growthPercent)}</td>
+          <td>${renderStatusPill(metricData.status)}</td>
+          <td>${entry.item.removed ? "true" : "false"}</td>
+        `;
+        tr.addEventListener("click", () => openDetailModal(entry));
+        els.tableBody.appendChild(tr);
       });
-      const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
-      const filename = `vizbl_export_${formatFileDate()}.csv`;
-      if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
-        setStatus(`CSV экспортирован: ${filename}.`);
+    }
+
+    // 15. cards renderer
+    function renderCards(entries) {
+      els.cardsGrid.innerHTML = "";
+      if (!entries.length) return;
+      entries.forEach((entry, index) => {
+        const metricData = getEntryMetric(entry);
+        const article = document.createElement("article");
+        article.className = "card";
+        article.innerHTML = `
+          <div class="card-media">
+            ${entry.item.mainPreview ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name)}" />` : '<div class="card-fallback">No preview</div>'}
+            <div class="card-topline">
+              <span class="badge">#${index + 1}</span>
+              ${renderStatusPill(metricData.status)}
+            </div>
+          </div>
+          <div class="card-body">
+            <div>
+              <span class="card-title">${escapeHtml(entry.item.name)}</span>
+              <span class="card-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
+            </div>
+            <div class="card-metrics">
+              <div class="metric">
+                <div class="metric-label">${escapeHtml(getMetricLabel())}</div>
+                <div class="metric-value">${formatNum(metricData.currentValue)}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Delta</div>
+                <div class="metric-value">${formatSignedNum(getSelectedPeriodDelta(metricData))}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Growth</div>
+                <div class="metric-value">${formatPercent(getSelectedPeriodGrowth(metricData))}</div>
+              </div>
+            </div>
+            <div class="card-meta">
+              <div class="summary-box"><div class="panel-label">Type</div><div>${escapeHtml(entry.item.type || "—")}</div></div>
+              <div class="summary-box"><div class="panel-label">Owner</div><div>${escapeHtml(entry.item.ownerName || "—")}</div></div>
+            </div>
+            <div class="card-actions">
+              <button type="button" class="row-btn card-open-btn">Details</button>
+              <a class="row-btn" href="${escapeHtml(entry.goUrl || "#")}" ${entry.goUrl ? 'target="_blank" rel="noopener noreferrer"' : 'aria-disabled="true"'}>${entry.goUrl ? "Object page" : "No page"}</a>
+            </div>
+          </div>
+        `;
+        article.addEventListener("click", event => {
+          if (event.target.closest("a")) return;
+          openDetailModal(entry);
+        });
+        article.querySelector(".card-open-btn").addEventListener("click", event => {
+          event.stopPropagation();
+          openDetailModal(entry);
+        });
+        els.cardsGrid.appendChild(article);
+      });
+    }
+
+    // 16. drilldown renderer
+    function setModalLink(element, href, label) {
+      element.textContent = label;
+      if (href) {
+        element.href = href;
+        element.removeAttribute("aria-disabled");
+        element.style.pointerEvents = "auto";
+        element.style.opacity = "1";
       } else {
-        setStatus("Ошибка экспорта CSV.");
+        element.href = "#";
+        element.setAttribute("aria-disabled", "true");
+        element.style.pointerEvents = "none";
+        element.style.opacity = "0.45";
       }
     }
 
-    function truncate(text, max) {
-      const str = String(text || "");
-      return str.length > max ? `${str.slice(0, max - 1)}…` : str;
+    function drawDetailChart(entry) {
+      const metricKey = state.activeMetric;
+      const history = dedupeHistory(entry.item.history || []);
+      let labels = [];
+      let values = [];
+      if (state.currentChartMode === "days") {
+        labels = history.map(point => formatPointLabel(point.capturedAt));
+        values = history.map(point => getMetricValueFromPoint(point, metricKey));
+        els.chartMeta.textContent = `${history.length} points · ${getMetricLabel(metricKey)}`;
+      } else {
+        const grouped = groupHistoryByMonth(history, metricKey);
+        labels = grouped.labels;
+        values = grouped.values;
+        els.chartMeta.textContent = `${labels.length} month buckets · ${getMetricLabel(metricKey)}`;
+      }
+      els.detailChartTitle.textContent = `История ${getMetricLabel(metricKey)}`;
+      renderLineChart("detail", "detailChartCanvas", labels, values, getMetricLabel(metricKey), true);
     }
 
-    function escapeText(text) {
-      return truncate(String(text || "—"), 26);
+    async function copyCurrentTinuuid() {
+      if (!state.currentChartEntry?.item?.tinuuid) return;
+      try {
+        await navigator.clipboard.writeText(state.currentChartEntry.item.tinuuid);
+        setStatus(`TINUUID copied: ${state.currentChartEntry.item.tinuuid}`);
+      } catch (error) {
+        console.error(error);
+        setStatus("Clipboard copy failed.");
+      }
     }
 
-    setTab("overview");
-    setFilterChip();
-    setMode("idle");
+    function openDetailModal(entry) {
+      state.currentChartEntry = entry;
+      state.currentChartMode = "days";
+      const activeMetric = getEntryMetric(entry);
+      els.modalTitle.textContent = entry.item.name || "Object detail";
+      els.modalSub.textContent = `${getMetricLabel()} · ${formatNum(activeMetric.currentValue)}`;
+      els.modalPreview.innerHTML = entry.item.mainPreview
+        ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Preview")}" />`
+        : '<div class="modal-preview-fallback">No preview</div>';
+      els.modalStatus.innerHTML = renderStatusPill(activeMetric.status);
+      els.modalGrowth.textContent = formatPercent(activeMetric.growthPercent);
+      els.modalName.textContent = entry.item.name || "—";
+      els.modalTinuuid.textContent = entry.item.tinuuid || "—";
+      els.modalUuid.textContent = entry.item.uuid || "—";
+      els.modalType.textContent = entry.item.type || "—";
+      els.modalOwner.textContent = entry.item.ownerName || "—";
+      els.modalViews.textContent = formatNum(entry.item.lastViews);
+      els.modalShowcaseViews.textContent = formatNum(entry.item.lastViewsShowcase);
+      els.modalLikes.textContent = formatNum(entry.item.lastLikes);
+      els.modalDeltaUpdate.textContent = formatSignedNum(activeMetric.deltaUpdate);
+      els.modalDeltas.textContent = `Update ${formatSignedNum(activeMetric.deltaUpdate)} · Week ${formatSignedNum(activeMetric.deltaWeek)} · Month ${formatSignedNum(activeMetric.deltaMonth)}`;
+      setModalLink(els.modalGoLink, entry.goUrl, "Object page");
+      setModalLink(els.modalViewerLink, entry.viewerUrl, "3D viewer");
+      els.detailModal.classList.remove("hidden");
+      updateChartModeButtons();
+      drawDetailChart(entry);
+    }
+
+    function closeDetailModal() {
+      els.detailModal.classList.add("hidden");
+    }
+
+    function updateChartModeButtons() {
+      els.daysBtn.classList.toggle("active", state.currentChartMode === "days");
+      els.monthsBtn.classList.toggle("active", state.currentChartMode === "months");
+    }
+
+    // 12b/13b/overview/distribution/snapshots renderers
+    function renderList(container, entries, getValue, emptyText) {
+      container.innerHTML = "";
+      if (!entries.length) {
+        container.innerHTML = `<div class="muted">${escapeHtml(emptyText)}</div>`;
+        return;
+      }
+      entries.forEach((entry, index) => {
+        const metricData = getEntryMetric(entry);
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "list-item";
+        row.innerHTML = `
+          <span class="rank">${index + 1}</span>
+          <span class="list-main">
+            <strong>${escapeHtml(entry.item.name)}</strong>
+            <span>${escapeHtml(entry.item.tinuuid || "—")}</span>
+          </span>
+          <span>${escapeHtml(getValue(entry, metricData))}</span>
+        `;
+        row.addEventListener("click", () => openDetailModal(entry));
+        container.appendChild(row);
+      });
+    }
+
+    function renderOverview(entries) {
+      const metricKey = state.activeMetric;
+      const totalHistory = getBundleMetricHistory(state.currentBundle, metricKey);
+      const periodHistory = getHistoryForPeriod(totalHistory, metricKey, state.currentPeriod);
+      const chartHistory = periodHistory.length ? periodHistory : totalHistory;
+      const periodDelta = getDeltaForPeriod(totalHistory, metricKey, state.currentPeriod);
+      const growthPoints = totalHistory.map((point, index, array) => index === 0 ? 0 : getMetricValueFromPoint(point, metricKey) - getMetricValueFromPoint(array[index - 1], metricKey));
+      const snapshotLabels = totalHistory.map(point => formatPointLabel(point.capturedAt));
+      const topCurrent = [...entries].sort((a, b) => getEntryMetric(b).currentValue - getEntryMetric(a).currentValue).slice(0, 8);
+      const topGainers = [...entries].sort((a, b) => getSelectedPeriodDelta(getEntryMetric(b)) - getSelectedPeriodDelta(getEntryMetric(a))).slice(0, 8);
+      const newlyActive = entries.filter(entry => getEntryMetric(entry).status === "newly-active").slice(0, 8);
+      const stagnant = entries.filter(entry => getEntryMetric(entry).status === "stagnant").sort((a, b) => getEntryMetric(b).currentValue - getEntryMetric(a).currentValue).slice(0, 8);
+
+      els.overviewTrendTitle.textContent = `Trend chart · ${getMetricLabel(metricKey)}`;
+      els.overviewTrendMeta.textContent = chartHistory.length ? `${chartHistory.length} points · ${PERIOD_LABELS[state.currentPeriod]}` : "Нет истории";
+      els.overviewPeriodDeltaValue.textContent = formatSignedNum(periodDelta);
+      els.overviewPeriodDeltaSub.textContent = chartHistory.length ? `${formatPercent(getGrowthPercent(getMetricValueFromPoint(chartHistory[chartHistory.length - 1], metricKey), periodDelta))} growth for selected period` : "Нет данных";
+      renderLineChart(
+        "overviewTrend",
+        "overviewTrendCanvas",
+        chartHistory.map(point => formatPointLabel(point.capturedAt)),
+        chartHistory.map(point => getMetricValueFromPoint(point, metricKey)),
+        getMetricLabel(metricKey),
+        false
+      );
+
+      els.overviewSnapshotTitle.textContent = `Growth per snapshot · ${getMetricLabel(metricKey)}`;
+      els.overviewSnapshotMeta.textContent = snapshotLabels.length ? `${snapshotLabels.length} snapshots` : "Нет snapshots";
+      renderBarChart("overviewSnapshot", "overviewSnapshotCanvas", snapshotLabels, growthPoints, `Delta ${getMetricLabel(metricKey)}`);
+
+      els.topObjectsTitle.textContent = `Top objects · ${getMetricLabel(metricKey)}`;
+      els.topObjectsMeta.textContent = topCurrent.length ? `${topCurrent.length} лидеров по current value` : "Нет данных";
+      renderBarChart(
+        "topObjects",
+        "topObjectsCanvas",
+        topCurrent.map(entry => truncate(entry.item.name, 20)),
+        topCurrent.map(entry => getEntryMetric(entry).currentValue),
+        getMetricLabel(metricKey)
+      );
+
+      renderList(els.topGainersList, topGainers, (entry, metricData) => formatSignedNum(getSelectedPeriodDelta(metricData)), "Нет роста по текущим фильтрам.");
+      renderList(els.newlyActiveList, newlyActive, () => "Newly active", "Нет newly active объектов.");
+      renderList(els.stagnantList, stagnant, (entry, metricData) => formatNum(metricData.currentValue), "Нет стагнирующих high-value объектов.");
+    }
+
+    function renderDistribution(entries) {
+      const metricKey = state.activeMetric;
+      const values = entries.map(entry => getEntryMetric(entry).currentValue).filter(value => value >= 0).sort((a, b) => a - b);
+      if (!values.length) {
+        renderBarChart("histogram", "histogramCanvas", [], [], "Histogram");
+        renderParetoChart([], [], 0);
+        els.histogramMeta.textContent = "Нет данных";
+        els.paretoMeta.textContent = "Нет данных";
+        els.distributionTopShare.textContent = "0%";
+        els.distributionTopShareSub.textContent = "Нет данных";
+        els.distributionHeadTail.textContent = "0 / 0";
+        els.distributionHeadTailSub.textContent = "Нет данных";
+        els.distributionPercentiles.textContent = "P50 0";
+        els.distributionPercentilesSub.textContent = "Нет данных";
+        return;
+      }
+
+      const maxValue = Math.max(...values, 1);
+      const bucketCount = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(values.length))));
+      const bucketSize = Math.ceil(maxValue / bucketCount) || 1;
+      const bucketLabels = [];
+      const bucketValues = new Array(bucketCount).fill(0);
+      for (let i = 0; i < bucketCount; i += 1) {
+        const from = i * bucketSize;
+        const to = i === bucketCount - 1 ? maxValue : (i + 1) * bucketSize - 1;
+        bucketLabels.push(`${formatNum(from)}-${formatNum(to)}`);
+      }
+      values.forEach(value => {
+        const index = Math.min(bucketCount - 1, Math.floor(value / bucketSize));
+        bucketValues[index] += 1;
+      });
+
+      renderBarChart("histogram", "histogramCanvas", bucketLabels, bucketValues, "Objects per bucket");
+      els.histogramTitle.textContent = `Histogram · ${getMetricLabel(metricKey)}`;
+      els.histogramMeta.textContent = `${bucketCount} buckets · max ${formatNum(maxValue)}`;
+
+      const topEntries = [...entries].sort((a, b) => getEntryMetric(b).currentValue - getEntryMetric(a).currentValue).slice(0, 12);
+      const total = sum(entries.map(entry => getEntryMetric(entry).currentValue));
+      renderParetoChart(topEntries.map(entry => truncate(entry.item.name, 16)), topEntries.map(entry => getEntryMetric(entry).currentValue), total);
+      els.paretoTitle.textContent = `Pareto chart · ${getMetricLabel(metricKey)}`;
+      els.paretoMeta.textContent = `${topEntries.length} top objects`;
+
+      const top10 = [...entries].sort((a, b) => getEntryMetric(b).currentValue - getEntryMetric(a).currentValue).slice(0, 10);
+      const top10Total = sum(top10.map(entry => getEntryMetric(entry).currentValue));
+      const head = [...entries].sort((a, b) => getEntryMetric(b).currentValue - getEntryMetric(a).currentValue).slice(0, Math.max(1, Math.ceil(entries.length * 0.2)));
+      const tail = [...entries].sort((a, b) => getEntryMetric(a).currentValue - getEntryMetric(b).currentValue).slice(0, Math.max(1, Math.ceil(entries.length * 0.8)));
+      els.distributionTopShare.textContent = `${(total > 0 ? (top10Total / total) * 100 : 0).toFixed(1)}%`;
+      els.distributionTopShareSub.textContent = `${formatNum(top10Total)} of ${formatNum(total)} total ${getMetricLabel(metricKey)}`;
+      els.distributionHeadTail.textContent = `${formatNum(sum(head.map(entry => getEntryMetric(entry).currentValue)))} / ${formatNum(sum(tail.map(entry => getEntryMetric(entry).currentValue)))}`;
+      els.distributionHeadTailSub.textContent = `Head 20% vs tail 80% for ${getMetricLabel(metricKey)}`;
+      els.distributionPercentiles.textContent = `P50 ${formatNum(percentile(values, 0.5))}`;
+      els.distributionPercentilesSub.textContent = `P75 ${formatNum(percentile(values, 0.75))} · P90 ${formatNum(percentile(values, 0.9))}`;
+    }
+
+    function renderSnapshots() {
+      const metricKey = state.activeMetric;
+      const metric = getMetricDef(metricKey);
+      const snapshots = (state.currentBundle?.snapshots || []).map(normalizeSnapshot);
+      const labels = snapshots.map(snapshot => formatPointLabel(snapshot.capturedAt));
+      const totals = snapshots.map(snapshot => getNumeric(snapshot[metric.snapshotKey]));
+      const deltas = totals.map((value, index) => index === 0 ? 0 : value - totals[index - 1]);
+      els.snapshotsTotalTitle.textContent = `Total metric over time · ${getMetricLabel(metricKey)}`;
+      els.snapshotsDeltaTitle.textContent = `Delta per snapshot · ${getMetricLabel(metricKey)}`;
+      els.snapshotsTotalMeta.textContent = labels.length ? `${labels.length} snapshots` : "Нет данных";
+      els.snapshotsDeltaMeta.textContent = labels.length ? `${labels.length} delta points` : "Нет данных";
+      renderLineChart("snapshotsTotal", "snapshotsTotalCanvas", labels, totals, getMetricLabel(metricKey), false);
+      renderBarChart("snapshotsDelta", "snapshotsDeltaCanvas", labels, deltas, `Delta ${getMetricLabel(metricKey)}`);
+
+      els.snapshotCountValue.textContent = formatNum(snapshots.length);
+      els.snapshotCountSub.textContent = snapshots.length ? `Last ${formatHumanDate(snapshots[snapshots.length - 1].capturedAt)}` : "Нет snapshots";
+      els.snapshotLastDeltaValue.textContent = formatSignedNum(deltas[deltas.length - 1] || 0);
+      els.snapshotLastDeltaSub.textContent = `Selected metric: ${getMetricLabel(metricKey)}`;
+      els.snapshotVisibleValue.textContent = formatNum(snapshots[snapshots.length - 1]?.visibleObjects || 0);
+      els.snapshotVisibleSub.textContent = "Visible objects in last snapshot";
+
+      els.snapshotsTableBody.innerHTML = "";
+      snapshots.forEach((snapshot, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${formatHumanDate(snapshot.capturedAt)}</td>
+          <td>${formatNum(snapshot.totalObjects)}</td>
+          <td>${formatNum(snapshot.visibleObjects)}</td>
+          <td>${formatNum(snapshot.totalViews)}</td>
+          <td>${formatNum(snapshot.totalViewsShowcase)}</td>
+          <td>${formatNum(snapshot.totalLikes)}</td>
+          <td>${formatSignedNum(deltas[index] || 0)}</td>
+        `;
+        els.snapshotsTableBody.appendChild(tr);
+      });
+    }
+
+    function renderEmptyState(entries) {
+      els.emptyState.classList.toggle("hidden", entries.length > 0 || !state.currentBundle);
+    }
+
+    function hasActiveFilters() {
+      return Boolean((els.searchInput.value || "").trim()) || state.currentStatusFilter !== "all" || state.currentTypeFilter !== "all";
+    }
+
+    function renderCurrent() {
+      if (!state.currentBundle) {
+        state.filteredAnalytics = [];
+        updateHeader(null);
+        renderHero();
+        renderKpis([]);
+        renderInsights([]);
+        renderOverview([]);
+        renderTable([]);
+        renderCards([]);
+        renderDistribution([]);
+        renderSnapshots();
+        renderEmptyState([]);
+        return;
+      }
+
+      state.filteredAnalytics = sortAnalytics(applyFilters(state.analyticsCache));
+      const visibleEntries = state.filteredAnalytics.length
+        ? state.filteredAnalytics
+        : hasActiveFilters()
+          ? []
+          : state.analyticsCache;
+      updateHeader(state.currentBundle);
+      renderHero();
+      renderKpis(visibleEntries);
+      renderInsights(visibleEntries);
+      renderOverview(visibleEntries);
+      renderTable(state.filteredAnalytics);
+      renderCards(state.filteredAnalytics);
+      renderDistribution(visibleEntries);
+      renderSnapshots();
+      renderEmptyState(state.filteredAnalytics);
+      if (state.currentChartEntry) drawDetailChart(state.currentChartEntry);
+    }
+
+    function refreshTypeOptions() {
+      const types = Array.from(new Set((state.currentBundle?.objects || []).map(item => item.type || "—"))).sort((a, b) => a.localeCompare(b));
+      state.availableTypes = types;
+      const currentValue = state.currentTypeFilter;
+      els.typeFilterSelect.innerHTML = `<option value="all">Type: all</option>${types.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("")}`;
+      if (types.includes(currentValue)) {
+        els.typeFilterSelect.value = currentValue;
+      } else {
+        state.currentTypeFilter = "all";
+        els.typeFilterSelect.value = "all";
+      }
+    }
+
+    function setCurrentBundle(bundle, fileLabel, modeLabel) {
+      state.currentBundle = validateBundle(bundle);
+      state.currentFileLabel = fileLabel;
+      state.currentModeLabel = modeLabel;
+      state.analyticsCache = buildAnalytics(state.currentBundle);
+      els.updateBtn.disabled = false;
+      refreshTypeOptions();
+      setMode(modeLabel);
+      renderCurrent();
+    }
+
+    async function downloadFreshBundle() {
+      try {
+        setMode("downloading fresh bundle");
+        const raw = await fetchAllObjectsWithProgress("Creating bundle");
+        updateLoader("Building bundle…", 94, "Assembling bundle");
+        const bundle = createBundleFromFreshApi(raw);
+        setCurrentBundle(bundle, `bundle_${formatFileDate()}.json`, "fresh bundle ready");
+        const filename = `bundle_${formatFileDate()}.json`;
+        if (!downloadJson(bundle, filename)) throw new Error("Download failed.");
+        setStatus(`Fresh bundle downloaded: ${filename}.`);
+      } catch (error) {
+        console.error(error);
+        setMode("error");
+        setStatus(`Download failed: ${error.message}`);
+      } finally {
+        hideLoader();
+      }
+    }
+
+    async function handleFileOpen(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        setMode("opening local bundle");
+        showLoader("Opening JSON", "Reading local file…", 18, "Reading");
+        const text = await file.text();
+        updateLoader("Parsing JSON…", 48, "Parsing");
+        const bundle = JSON.parse(text);
+        updateLoader("Preparing dashboard…", 82, "Rendering");
+        setCurrentBundle(bundle, file.name, "local bundle opened");
+        setStatus(`Opened ${file.name}.`);
+      } catch (error) {
+        console.error(error);
+        setMode("error");
+        setStatus(`Open failed: ${error.message}`);
+      } finally {
+        hideLoader();
+        event.target.value = "";
+      }
+    }
+
+    async function updateOpenedBundle() {
+      if (!state.currentBundle) {
+        setStatus("Open a bundle first.");
+        return;
+      }
+      try {
+        setMode("updating bundle");
+        showLoader("Updating bundle", "Fetching latest API snapshot…", 8, "Preparing");
+        const raw = await fetchAllObjectsWithProgress("Updating bundle");
+        updateLoader("Merging history, snapshots and totals…", 92, "Merging");
+        const updated = mergeOpenedBundleWithFreshApi(state.currentBundle, raw);
+        setCurrentBundle(updated, `bundle_updated_${formatFileDate()}.json`, "bundle updated");
+        const filename = `bundle_updated_${formatFileDate()}.json`;
+        if (!downloadJson(updated, filename)) throw new Error("Download failed.");
+        setStatus(`Bundle updated and downloaded: ${filename}.`);
+      } catch (error) {
+        console.error(error);
+        setMode("error");
+        setStatus(`Update failed: ${error.message}`);
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function resetFilters() {
+      state.currentPeriod = "update";
+      state.currentSort = "current_desc";
+      state.currentStatusFilter = "all";
+      state.currentTypeFilter = "all";
+      state.currentTab = "overview";
+      els.searchInput.value = "";
+      els.periodSelect.value = "update";
+      els.sortSelect.value = "current_desc";
+      els.statusFilterSelect.value = "all";
+      els.typeFilterSelect.value = "all";
+      els.tabButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === "overview"));
+      showTab("overview");
+      renderCurrent();
+      setStatus("Фильтры сброшены.");
+    }
+
+    function showTab(tabName) {
+      state.currentTab = tabName;
+      els.overviewTab.classList.toggle("hidden", tabName !== "overview");
+      els.tableTab.classList.toggle("hidden", tabName !== "table");
+      els.cardsTab.classList.toggle("hidden", tabName !== "cards");
+      els.distributionTab.classList.toggle("hidden", tabName !== "distribution");
+      els.snapshotsTab.classList.toggle("hidden", tabName !== "snapshots");
+    }
+
+    // 17. event binding
+    els.downloadBtn.addEventListener("click", downloadFreshBundle);
+    els.openBtn.addEventListener("click", () => els.fileInput.click());
+    els.updateBtn.addEventListener("click", updateOpenedBundle);
+    els.fileInput.addEventListener("change", handleFileOpen);
+    els.exportBtn.addEventListener("click", event => {
+      event.stopPropagation();
+      toggleExportMenu();
+    });
+    els.resetFiltersBtn.addEventListener("click", resetFilters);
+    els.exportCurrentBtn.addEventListener("click", () => { exportCurrentFilteredCsv(); toggleExportMenu(false); });
+    els.exportFullBtn.addEventListener("click", () => { exportFullDatasetCsv(); toggleExportMenu(false); });
+    els.exportSnapshotsBtn.addEventListener("click", () => { exportSnapshotsCsv(); toggleExportMenu(false); });
+    document.addEventListener("click", event => {
+      if (!event.target.closest("#exportMenu") && !event.target.closest("#exportBtn")) toggleExportMenu(false);
+    });
+
+    els.metricSwitchButtons.forEach(button => button.addEventListener("click", () => {
+      state.activeMetric = button.dataset.metric;
+      els.metricSwitchButtons.forEach(btn => btn.classList.toggle("active", btn === button));
+      renderCurrent();
+    }));
+
+    els.searchInput.addEventListener("input", renderCurrent);
+    els.periodSelect.addEventListener("change", () => { state.currentPeriod = els.periodSelect.value; renderCurrent(); });
+    els.sortSelect.addEventListener("change", () => { state.currentSort = els.sortSelect.value; renderCurrent(); });
+    els.statusFilterSelect.addEventListener("change", () => { state.currentStatusFilter = els.statusFilterSelect.value; renderCurrent(); });
+    els.typeFilterSelect.addEventListener("change", () => { state.currentTypeFilter = els.typeFilterSelect.value; renderCurrent(); });
+
+    els.tabButtons.forEach(button => button.addEventListener("click", () => {
+      els.tabButtons.forEach(btn => btn.classList.toggle("active", btn === button));
+      showTab(button.dataset.tab);
+    }));
+
+    els.tableSortButtons.forEach(button => button.addEventListener("click", () => {
+      state.currentSort = button.dataset.sort;
+      els.sortSelect.value = state.currentSort;
+      renderCurrent();
+    }));
+
+    els.closeModalBtn.addEventListener("click", closeDetailModal);
+    els.detailModal.addEventListener("click", event => {
+      if (event.target === els.detailModal) closeDetailModal();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeDetailModal();
+    });
+    els.daysBtn.addEventListener("click", () => {
+      state.currentChartMode = "days";
+      updateChartModeButtons();
+      if (state.currentChartEntry) drawDetailChart(state.currentChartEntry);
+    });
+    els.monthsBtn.addEventListener("click", () => {
+      state.currentChartMode = "months";
+      updateChartModeButtons();
+      if (state.currentChartEntry) drawDetailChart(state.currentChartEntry);
+    });
+    els.copyTinuuidBtn.addEventListener("click", copyCurrentTinuuid);
+    els.exportObjectHistoryBtn.addEventListener("click", () => exportObjectHistoryCsv(state.currentChartEntry));
+
+    // 18. bootstrap
+    showTab("overview");
+    renderCurrent();
   </script>
 </body>
 </html>
