@@ -1,943 +1,1039 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vizbl Analytics</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root{
-      --bg:#0b0f15;
-      --bg2:#121824;
-      --panel:#171f2c;
-      --panel2:#1d2635;
-      --panel3:#1b2a42;
-      --line:rgba(255,255,255,.08);
-      --line2:rgba(255,255,255,.12);
-      --text:#f3f6fb;
-      --muted:#95a2b8;
-      --accent:#5aa9ff;
-      --accent2:#368cff;
-      --green:#4cd08a;
-      --danger:#ff7b7b;
-      --shadow:0 18px 48px rgba(0,0,0,.35);
-      --shadowSoft:0 10px 26px rgba(0,0,0,.24);
-      --maxw:1720px;
-      --control-h:46px;
-      --chip-w:260px;
-      --chip-w-mode:220px;
+    :root {
+      --bg: #0a0d12;
+      --panel: #121821;
+      --panel-2: #171f2b;
+      --panel-3: #0f141c;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.14);
+      --text: #f3f6fb;
+      --muted: #93a0b5;
+      --accent: #63a7ff;
+      --accent-soft: rgba(99, 167, 255, 0.16);
+      --green: #4bd18b;
+      --yellow: #f5c76d;
+      --red: #ff7d7d;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+      --radius: 18px;
+      --maxw: 1600px;
     }
 
-    * { box-sizing:border-box; }
+    * { box-sizing: border-box; }
 
     html, body {
-      margin:0;
-      padding:0;
-      min-height:100%;
-      background:
-        radial-gradient(circle at top left, rgba(90,169,255,.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(90,169,255,.08), transparent 22%),
-        linear-gradient(180deg,var(--bg),var(--bg2));
-      color:var(--text);
-      font-family:Inter, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
     }
 
-    body { padding:24px; }
-    .page { max-width:var(--maxw); margin:0 auto; }
+    body { padding: 18px; }
+
+    .page {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 12px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      background: rgba(10, 13, 18, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar-title h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    .topbar-title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .hero,
+    .panel,
+    .insight,
+    .table-wrap,
+    .card,
+    .list,
+    .empty,
+    .overview-grid .panel,
+    .filterbar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
 
     .hero {
-      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));
-      border:1px solid var(--line);
-      border-radius:28px;
-      padding:24px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(10px);
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(300px, 430px) minmax(0, 1fr);
+      gap: 16px;
     }
 
-    h1 {
-      margin:0 0 8px;
-      font-size:34px;
-      line-height:1.02;
-      letter-spacing:-.03em;
+    .hero-main {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
     }
 
-    .sub {
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-      line-height:1.55;
-      max-width:1040px;
+    .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    .stats {
-      margin-top:18px;
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:12px;
+    .hero-value {
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 0.94;
+      font-weight: 900;
+      letter-spacing: -0.05em;
     }
 
-    .stat {
-      background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.015));
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:14px 16px;
-      min-height:94px;
-      box-shadow:var(--shadowSoft);
+    .hero-sub {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
     }
 
-    .stat .k {
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:7px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    .stat .v {
-      font-size:24px;
-      font-weight:900;
-      letter-spacing:-.03em;
-      line-height:1.1;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    .mini-stat {
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      min-width: 0;
     }
 
-    .stat .subv {
-      margin-top:6px;
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    .mini-stat .label,
+    .metric .label,
+    .insight .label,
+    .list .label,
+    .chart-head .label,
+    .modal-section .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
     }
 
-    .stat.total-views .vwrap{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:nowrap;
+    .mini-stat .value,
+    .insight .value,
+    .metric .value {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
     }
 
-    .insights {
-      margin-top:14px;
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:12px;
+    .mini-stat .subtext,
+    .insight .subtext,
+    .metric .subtext,
+    .table-note,
+    .muted {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .hero-chart {
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chart-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chart-head strong {
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .chart-canvas.large { height: 270px; }
+    .chart-canvas.medium { height: 250px; }
+    .chart-canvas.small { height: 220px; }
+
+    .insights-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
     }
 
     .insight {
-      background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.012));
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 14px;
-      min-height:78px;
+      padding: 14px;
+      min-width: 0;
     }
 
-    .insight .k {
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:6px;
+    .filterbar {
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(120px, 180px)) auto;
+      gap: 10px;
+      align-items: center;
     }
 
-    .insight .v {
-      font-size:20px;
-      font-weight:900;
-      line-height:1.1;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    .tabs {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 12px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      gap: 4px;
+      justify-self: end;
     }
 
-    .controls {
-      margin-top:18px;
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:14px;
+    .tab-btn,
+    .seg-btn,
+    .sort-btn,
+    .btn,
+    .row-btn,
+    .status-pill {
+      border: 0;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
     }
 
-    .box {
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      min-height:142px;
+    .tab-btn:hover,
+    .seg-btn:hover,
+    .sort-btn:hover,
+    .btn:hover,
+    .row-btn:hover { transform: translateY(-1px); }
+
+    .tab-btn,
+    .seg-btn {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .box h3 {
-      margin:0 0 10px;
-      font-size:15px;
-      line-height:1.2;
-    }
-
-    .box p {
-      margin:0 0 14px;
-      min-height:40px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.45;
-    }
-
-    .btn, .mini-btn, .seg-btn, .icon-btn, .filter-btn, .select, .ghost-btn {
-      border:0;
-      cursor:pointer;
-      transition:transform .16s ease, opacity .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
-      font-family:inherit;
-    }
-
-    .btn:hover, .mini-btn:hover, .seg-btn:hover, .icon-btn:hover, .filter-btn:hover, .ghost-btn:hover {
-      transform:translateY(-1px);
+    .tab-btn.active,
+    .seg-btn.active {
+      background: var(--accent);
+      color: #07111f;
     }
 
     .btn {
-      width:100%;
-      height:var(--control-h);
-      padding:0 16px;
-      border-radius:14px;
-      font-size:14px;
-      font-weight:800;
-      color:#fff;
-      white-space:nowrap;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      box-shadow:0 10px 24px rgba(54,140,255,.24);
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #07111f;
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid transparent;
     }
 
     .btn.secondary {
-      background:linear-gradient(180deg,#2a3243,#222a39);
-      border:1px solid var(--line2);
-      box-shadow:none;
+      background: var(--panel-2);
+      color: var(--text);
+      border-color: var(--border-strong);
     }
 
-    .btn:disabled, .mini-btn:disabled, .ghost-btn:disabled {
-      opacity:.45;
-      cursor:not-allowed;
-      transform:none !important;
+    .btn.ghost,
+    .row-btn {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
     }
 
-    .toolbar {
-      margin-top:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
+    .btn:disabled,
+    .row-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
     }
 
-    .toolbar-left { width:100%; }
-
-    .search-row {
-      display:grid;
-      grid-template-columns:minmax(0,1fr) 220px 180px 140px;
-      gap:10px;
-      width:100%;
+    .control,
+    .select,
+    .search {
+      width: 100%;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--border-strong);
+      background: var(--panel-3);
+      color: var(--text);
+      padding: 0 12px;
+      outline: none;
+      font-size: 13px;
     }
 
-    .search-wrap { width:100%; }
-
-    .search, .select {
-      width:100%;
-      height:52px;
-      border-radius:15px;
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      padding:0 16px;
-      outline:none;
-      font-size:14px;
-    }
-
-    .select {
-      appearance:none;
-      -webkit-appearance:none;
-      -moz-appearance:none;
-    }
-
-    .ghost-btn {
-      width:100%;
-      height:52px;
-      border-radius:15px;
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      font-size:14px;
-      font-weight:700;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .filters-panel {
-      width:100%;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      padding:14px;
-      border-radius:18px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-    }
-
-    .filters-top {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .filter-label {
-      color:var(--muted);
-      font-size:13px;
-      font-weight:700;
-      min-height:40px;
-      display:flex;
-      align-items:center;
-      white-space:nowrap;
-    }
-
-    .filter-delta {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-width:220px;
-      min-height:40px;
-      padding:0 14px;
-      border-radius:12px;
-      background:linear-gradient(180deg, rgba(8,22,14,.96), rgba(14,42,24,.96));
-      border:1px solid rgba(124,255,178,.45);
-      color:#fff;
-      font-size:13px;
-      font-weight:900;
-      white-space:nowrap;
-      text-shadow:0 1px 2px rgba(0,0,0,.6);
-    }
-
-    .filter-group {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      width:100%;
-    }
-
-    .filter-btn {
-      height:40px;
-      min-width:170px;
-      padding:0 14px;
-      border-radius:12px;
-      background:transparent;
-      color:var(--muted);
-      font-size:13px;
-      font-weight:800;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      white-space:nowrap;
-      border:1px solid rgba(255,255,255,.05);
-      flex:1 1 180px;
-    }
-
-    .filter-btn.active {
-      color:#fff;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      box-shadow:0 8px 18px rgba(54,140,255,.22);
-      border-color:transparent;
-    }
-
-    .chips {
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      width:100%;
+    .statusline {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .chip {
-      height:40px;
-      border-radius:999px;
-      padding:0 14px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:rgba(255,255,255,.04);
-      border:1px solid var(--line);
-      color:var(--muted);
-      font-size:13px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-
-    .chip.file { width:var(--chip-w); }
-    .chip.mode { width:var(--chip-w-mode); }
-    .chip.filter { width:var(--chip-w); }
 
     .status {
-      margin-top:14px;
-      color:var(--muted);
-      font-size:14px;
-      min-height:22px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
     }
 
-    .note {
-      margin-top:12px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
-    .grid {
-      margin-top:24px;
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-      gap:18px;
+    .tab-panel.hidden,
+    .hidden { display: none !important; }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
     }
 
-    .card {
-      display:flex;
-      flex-direction:column;
-      background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.015));
-      border:1px solid var(--line);
-      border-radius:22px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      min-height:100%;
+    .stack {
+      display: grid;
+      gap: 14px;
     }
 
-    .media {
-      position:relative;
-      aspect-ratio:1.35 / 1;
-      background:#0f141d;
-      border-bottom:1px solid var(--line);
-      overflow:hidden;
+    .panel {
+      padding: 14px;
+      min-width: 0;
     }
 
-    .media img {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
+    .list {
+      padding: 14px;
+    }
+
+    .list-items {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .list-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      min-width: 0;
     }
 
     .rank {
-      position:absolute;
-      top:12px;
-      left:12px;
-      background:rgba(11,15,21,.82);
-      border:1px solid rgba(255,255,255,.12);
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      backdrop-filter:blur(8px);
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--accent-soft);
+      color: var(--accent);
     }
 
-    .removed {
-      position:absolute;
-      top:12px;
-      left:72px;
-      background:rgba(255,93,93,.15);
-      border:1px solid rgba(255,93,93,.35);
-      color:#ff9b9b;
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:700;
+    .list-main {
+      min-width: 0;
     }
 
-    .delta-badge {
-      position:absolute;
-      top:12px;
-      right:12px;
-      display:flex;
-      align-items:center;
-      gap:6px;
-      background:linear-gradient(180deg, rgba(8,22,14,.98), rgba(14,42,24,.98));
-      border:1px solid rgba(124,255,178,.55);
-      color:#fff;
-      padding:8px 11px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.01em;
-      backdrop-filter:blur(8px);
-      box-shadow:
-        0 10px 24px rgba(0,0,0,.34),
-        0 0 0 1px rgba(0,0,0,.18) inset;
-      text-shadow:
-        0 1px 2px rgba(0,0,0,.7),
-        0 0 10px rgba(76,208,138,.25);
-      white-space:nowrap;
+    .list-main strong,
+    .card-title,
+    .modal-title,
+    .table-name {
+      display: block;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .body {
-      padding:16px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      flex:1;
+    .list-main span,
+    .table-sub,
+    .card-sub,
+    .modal-sub {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .title {
-      margin:0;
-      font-size:18px;
-      line-height:1.3;
-      letter-spacing:-.02em;
-      font-weight:800;
-      word-break:break-word;
-      min-height:48px;
-      display:-webkit-box;
-      -webkit-line-clamp:2;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
+    .list-value {
+      text-align: right;
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .meta {
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
+    .table-wrap {
+      overflow: hidden;
     }
 
-    .meta-box {
-      background:var(--panel2);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      min-width:0;
-      min-height:72px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
     }
 
-    .meta-box .k {
-      color:var(--muted);
-      font-size:11px;
-      margin-bottom:6px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    thead { background: var(--panel-2); }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
     }
 
-    .meta-box .v {
-      font-size:15px;
-      font-weight:800;
-      word-break:break-word;
-      line-height:1.25;
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background 0.16s ease;
     }
 
-    .actions {
-      margin-top:auto;
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
+    tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .sort-btn {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+      font-weight: inherit;
     }
 
-    .mini-btn {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      height:44px;
-      padding:0 14px;
-      border-radius:14px;
-      text-decoration:none;
-      font-size:14px;
-      font-weight:700;
-      color:#fff;
-      background:#232d40;
-      border:1px solid rgba(255,255,255,.08);
-      white-space:nowrap;
+    .table-name-wrap {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
     }
 
-    .mini-btn.primary {
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+      gap: 12px;
     }
 
-    .mini-btn.ghost {
-      background:rgba(255,255,255,.04);
-      color:var(--text);
+    .card {
+      overflow: hidden;
+      cursor: pointer;
     }
 
-    .mini-btn.small {
-      height:36px;
-      padding:0 12px;
-      font-size:12px;
-      border-radius:10px;
-      min-width:86px;
+    .card-media {
+      position: relative;
+      aspect-ratio: 1.45 / 1;
+      background: #0d1218;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
     }
 
-    .empty {
-      margin-top:24px;
-      padding:34px;
-      border-radius:20px;
-      border:1px solid var(--line);
-      background:var(--panel);
-      text-align:center;
-      color:var(--muted);
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
-    .hidden { display:none !important; }
-
-    .overlay {
-      position:fixed;
-      inset:0;
-      z-index:3000;
-      background:rgba(5,8,13,.72);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      backdrop-filter:blur(8px);
+    .card-fallback,
+    .modal-preview-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 12px;
+      background: #0d1218;
     }
 
-    .overlay.hidden { display:none; }
+    .card-topline {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .badge,
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .badge {
+      background: rgba(10, 13, 18, 0.86);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .status-pill {
+      cursor: default;
+    }
+
+    .status-hot { background: rgba(75, 209, 139, 0.18); color: #7df0ac; border-color: rgba(75, 209, 139, 0.35); }
+    .status-rising { background: rgba(99, 167, 255, 0.16); color: #8cc0ff; border-color: rgba(99, 167, 255, 0.35); }
+    .status-stagnant { background: rgba(255,255,255,0.08); color: #d1d9e6; border-color: rgba(255,255,255,0.12); }
+    .status-zero { background: rgba(245, 199, 109, 0.14); color: #ffd992; border-color: rgba(245, 199, 109, 0.32); }
+    .status-removed { background: rgba(255, 125, 125, 0.16); color: #ff9b9b; border-color: rgba(255, 125, 125, 0.34); }
+
+    .card-body {
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      min-width: 0;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .row-btn {
+      flex: 1;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay,
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(4, 7, 11, 0.76);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .overlay-card,
+    .modal-card {
+      width: min(1080px, 100%);
+      background: #0f141c;
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    }
 
     .overlay-card {
-      width:min(560px,100%);
-      background:#121926;
-      border:1px solid var(--line2);
-      border-radius:24px;
-      box-shadow:0 24px 60px rgba(0,0,0,.45);
-      padding:22px;
+      width: min(520px, 100%);
+      padding: 20px;
     }
 
-    .overlay-title {
-      margin:0 0 10px;
-      font-size:22px;
-      font-weight:800;
-      letter-spacing:-.02em;
+    .overlay-title,
+    .modal-title {
+      margin: 0;
+      font-size: 22px;
     }
 
-    .overlay-text {
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.5;
-      min-height:42px;
-      margin-bottom:14px;
-    }
+    .overlay-text { margin: 10px 0 14px; color: var(--muted); font-size: 14px; }
 
     .progress {
-      width:100%;
-      height:14px;
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      overflow:hidden;
-      border:1px solid var(--line);
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      border: 1px solid var(--border);
     }
 
     .progress-bar {
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg,var(--accent),var(--green));
-      transition:width .18s ease;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width 0.18s ease;
     }
 
     .progress-row {
-      margin-top:10px;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      font-size:13px;
-      color:var(--muted);
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
     }
 
-    .modal {
-      position:fixed;
-      inset:0;
-      z-index:2500;
-      background:rgba(5,8,13,.7);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      backdrop-filter:blur(8px);
-    }
-
-    .modal.hidden { display:none; }
-
-    .modal-card {
-      width:min(980px,100%);
-      background:#121926;
-      border:1px solid var(--line2);
-      border-radius:24px;
-      box-shadow:0 24px 60px rgba(0,0,0,.45);
-      overflow:hidden;
-    }
+    .modal-card { overflow: hidden; }
 
     .modal-head {
-      display:flex;
-      justify-content:space-between;
-      gap:16px;
-      align-items:flex-start;
-      padding:20px;
-      border-bottom:1px solid var(--line);
-    }
-
-    .modal-title {
-      margin:0;
-      font-size:22px;
-      font-weight:800;
-      letter-spacing:-.02em;
-    }
-
-    .modal-sub {
-      margin-top:8px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-      word-break:break-word;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
     }
 
     .icon-btn {
-      width:42px;
-      height:42px;
-      border-radius:12px;
-      background:rgba(255,255,255,.05);
-      color:#fff;
-      border:1px solid var(--line);
-      font-size:18px;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
     }
 
-    .modal-toolbar {
-      padding:16px 20px 0;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .modal-side {
+      padding: 18px;
+      border-right: 1px solid var(--border);
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      background: #0d1218;
+    }
+
+    .modal-preview {
+      aspect-ratio: 1.2 / 1;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #0c1118;
+    }
+
+    .modal-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .modal-details {
+      display: grid;
+      gap: 10px;
+    }
+
+    .modal-section {
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .modal-main {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      min-width: 0;
     }
 
     .seg {
-      display:inline-flex;
-      gap:8px;
-      padding:6px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-3);
     }
 
-    .seg-btn {
-      padding:10px 16px;
-      border-radius:10px;
-      background:transparent;
-      color:var(--muted);
-      font-size:13px;
-      font-weight:700;
+    .modal-chart {
+      background: var(--panel-3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 320px;
     }
 
-    .seg-btn.active {
-      color:#fff;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
+    .empty {
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
     }
 
-    .chart-meta {
-      color:var(--muted);
-      font-size:13px;
+    @media (max-width: 1280px) {
+      .hero,
+      .overview-grid,
+      .modal-grid { grid-template-columns: 1fr; }
+      .insights-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filterbar { grid-template-columns: 1fr 1fr 1fr; }
+      .tabs { justify-self: start; }
+      .modal-side { border-right: 0; border-bottom: 1px solid var(--border); }
     }
 
-    .chart-wrap {
-      padding:16px 20px 20px;
-    }
-
-    .chart-box {
-      height:460px;
-      padding:16px;
-      border-radius:18px;
-      background:#0f151f;
-      border:1px solid var(--line);
-    }
-
-    @media (max-width: 1320px){
-      .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .insights { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .controls { grid-template-columns:1fr; }
-      .search-row { grid-template-columns:1fr 1fr; }
-    }
-
-    @media (max-width: 860px){
-      body { padding:16px; }
-      .hero { padding:18px; }
-      h1 { font-size:28px; }
-      .grid { grid-template-columns:1fr; }
-      .chart-box { height:360px; }
-      .chip.file,.chip.mode,.chip.filter { width:auto; min-width:180px; }
-      .stats { grid-template-columns:1fr; }
-      .insights { grid-template-columns:1fr; }
-      .search-row { grid-template-columns:1fr; }
+    @media (max-width: 900px) {
+      body { padding: 12px; }
+      .topbar { top: 8px; padding: 12px; }
+      .topbar, .statusline { align-items: flex-start; }
+      .hero-stats,
+      .card-metrics,
+      .insights-row,
+      .filterbar { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; }
+      .topbar-actions { width: 100%; justify-content: stretch; }
+      .topbar-actions .btn { flex: 1; }
+      .cards-grid { grid-template-columns: 1fr; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="page">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>Vizbl Analytics Dashboard</h1>
+        <p id="lastUpdatedText">Last updated: —</p>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="btn" id="downloadBtn">Download</button>
+        <button type="button" class="btn secondary" id="openBtn">Open</button>
+        <button type="button" class="btn secondary" id="updateBtn" disabled>Update</button>
+        <button type="button" class="btn ghost" id="exportCsvBtn">Export</button>
+      </div>
+    </header>
+
     <section class="hero">
-      <div>
-        <h1>Vizbl Objects Analytics</h1>
-        <p class="sub">
-          Один JSON хранит объекты, историю просмотров каждого объекта и историю суммарных просмотров.
-          Без дублирующихся блоков. Всё в одном месте: открыть, обновить, скачать, фильтровать, смотреть графики.
-        </p>
-      </div>
+      <div class="hero-main">
+        <div class="eyebrow">Total views</div>
+        <div class="hero-value" id="heroTotalViews">0</div>
+        <div class="hero-sub" id="heroSummaryText">Open a bundle or download a fresh one to analyze object history, growth, and status trends.</div>
 
-      <div class="stats">
-        <div class="stat">
-          <div class="k">Всего объектов</div>
-          <div class="v" id="statTotal">0</div>
-          <div class="subv">Все записи из JSON</div>
-        </div>
-
-        <div class="stat">
-          <div class="k">С views</div>
-          <div class="v" id="statVisible">0</div>
-          <div class="subv">Только отображаемые объекты</div>
-        </div>
-
-        <div class="stat total-views">
-          <div class="k">Сумма views</div>
-          <div class="vwrap">
-            <div class="v" id="statViews">0</div>
-            <button type="button" id="totalViewsChartBtn" class="mini-btn ghost small">График</button>
+        <div class="hero-stats">
+          <div class="mini-stat">
+            <div class="label">Growth</div>
+            <div class="value" id="heroGrowth">0%</div>
+            <div class="subtext" id="heroGrowthSub">vs previous update</div>
           </div>
-          <div class="subv">Общий объём просмотров</div>
-        </div>
-
-        <div class="stat">
-          <div class="k">Последний замер</div>
-          <div class="v" id="statUpdated">—</div>
-          <div class="subv">Дата последнего обновления</div>
-        </div>
-      </div>
-
-      <div class="insights">
-        <div class="insight">
-          <div class="k">Σ с последнего обновления</div>
-          <div class="v" id="insightLastUpdate">0</div>
-        </div>
-        <div class="insight">
-          <div class="k">Σ за час</div>
-          <div class="v" id="insightHour">0</div>
-        </div>
-        <div class="insight">
-          <div class="k">Σ за неделю</div>
-          <div class="v" id="insightWeek">0</div>
-        </div>
-        <div class="insight">
-          <div class="k">Σ за месяц</div>
-          <div class="v" id="insightMonth">0</div>
-        </div>
-      </div>
-
-      <div class="controls">
-        <div class="box">
-          <h3>Скачать новый JSON</h3>
-          <p>Полная выгрузка с API. Создаёт новый bundle.json и сразу скачивает его на компьютер.</p>
-          <button type="button" class="btn" id="downloadBtn">Скачать bundle.json</button>
-        </div>
-
-        <div class="box">
-          <h3>Открыть JSON</h3>
-          <p>Загрузка локального bundle.json без CORS. После открытия кнопка обновления становится доступной.</p>
-          <button type="button" class="btn secondary" id="openBtn">Выбрать bundle.json</button>
-        </div>
-
-        <div class="box">
-          <h3>Обновить статистику</h3>
-          <p>Берёт уже открытый JSON как базу, делает новый проход по API и скачивает обновлённый bundle.json.</p>
-          <button type="button" class="btn" id="updateBtn" disabled>Обновить статистику</button>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="search-row">
-            <div class="search-wrap">
-              <input class="search" id="searchInput" type="text" placeholder="Поиск по названию, tinuuid..." />
-            </div>
-
-            <select class="select" id="sortSelect">
-              <option value="views_desc">Сортировка: views ↓</option>
-              <option value="delta_desc">Сортировка: рост ↓</option>
-              <option value="name_asc">Сортировка: имя A→Z</option>
-            </select>
-
-            <button type="button" class="ghost-btn" id="exportCsvBtn">Экспорт CSV</button>
-            <button type="button" class="ghost-btn" id="resetBtn">Сброс</button>
+          <div class="mini-stat">
+            <div class="label">Objects</div>
+            <div class="value" id="heroObjects">0</div>
+            <div class="subtext">Tracked objects</div>
           </div>
-
-          <div class="filters-panel">
-            <div class="filters-top">
-              <div class="filter-label">Фильтр изменений</div>
-              <div class="filter-delta" id="filterDeltaBadge">Σ +0</div>
-            </div>
-
-            <div class="filter-group">
-              <button type="button" class="filter-btn active" data-filter="off">Выкл</button>
-              <button type="button" class="filter-btn" data-filter="last_update">С последнего обновления</button>
-              <button type="button" class="filter-btn" data-filter="hour">За час</button>
-              <button type="button" class="filter-btn" data-filter="week">За неделю</button>
-              <button type="button" class="filter-btn" data-filter="month">За месяц</button>
-            </div>
+          <div class="mini-stat">
+            <div class="label">Zero</div>
+            <div class="value" id="heroZero">0</div>
+            <div class="subtext">No current views</div>
+          </div>
+          <div class="mini-stat">
+            <div class="label">Removed</div>
+            <div class="value" id="heroRemoved">0</div>
+            <div class="subtext">Missing from latest sync</div>
           </div>
         </div>
-
-        <div class="chips">
-          <div class="chip file" id="fileChip" title="Файл не открыт">Файл не открыт</div>
-          <div class="chip mode" id="modeChip" title="Режим: ожидание">Режим: ожидание</div>
-          <div class="chip filter" id="filterChip" title="Фильтр: выкл">Фильтр: выкл</div>
-        </div>
       </div>
 
-      <div class="status" id="status">Готово.</div>
-      <div class="note">
-        В режиме «Выкл» показываются все объекты с views. В остальных режимах показываются только объекты с ростом просмотров за выбранный период.
+      <div class="hero-chart">
+        <div class="chart-head">
+          <div>
+            <div class="label">History</div>
+            <strong>Total views history</strong>
+          </div>
+          <div class="muted" id="heroChartMeta">No data loaded</div>
+        </div>
+        <div class="chart-canvas large">
+          <canvas id="heroChartCanvas"></canvas>
+        </div>
       </div>
     </section>
 
-    <div id="grid" class="grid"></div>
-    <div id="emptyState" class="empty hidden">Нет объектов для отображения.</div>
+    <section class="insights-row">
+      <article class="insight">
+        <div class="label">Top growth object</div>
+        <div class="value" id="insightTopGrowth">—</div>
+        <div class="subtext" id="insightTopGrowthSub">No data</div>
+      </article>
+      <article class="insight">
+        <div class="label">Biggest delta</div>
+        <div class="value" id="insightBiggestDelta">0</div>
+        <div class="subtext" id="insightBiggestDeltaSub">Latest update delta</div>
+      </article>
+      <article class="insight">
+        <div class="label">Zero count</div>
+        <div class="value" id="insightZeroCount">0</div>
+        <div class="subtext">Objects at zero views</div>
+      </article>
+      <article class="insight">
+        <div class="label">Removed count</div>
+        <div class="value" id="insightRemovedCount">0</div>
+        <div class="subtext">Removed in current state</div>
+      </article>
+      <article class="insight">
+        <div class="label">Top 10 share</div>
+        <div class="value" id="insightTopShare">0%</div>
+        <div class="subtext" id="insightTopShareSub">Share of total views</div>
+      </article>
+    </section>
+
+    <section class="filterbar">
+      <input class="search" id="searchInput" type="text" placeholder="Search name or tinuuid" />
+      <select class="select" id="periodSelect">
+        <option value="update">Period: update</option>
+        <option value="day">Period: day</option>
+        <option value="week">Period: week</option>
+        <option value="month">Period: month</option>
+        <option value="all">Period: all</option>
+      </select>
+      <select class="select" id="sortSelect">
+        <option value="views_desc">Sort: views ↓</option>
+        <option value="delta_desc">Sort: delta ↓</option>
+        <option value="growth_desc">Sort: growth ↓</option>
+        <option value="name_asc">Sort: name A→Z</option>
+        <option value="status_asc">Sort: status</option>
+      </select>
+      <select class="select" id="statusFilterSelect">
+        <option value="all">Status: all</option>
+        <option value="hot">Hot</option>
+        <option value="rising">Rising</option>
+        <option value="stagnant">Stagnant</option>
+        <option value="zero">Zero</option>
+        <option value="removed">Removed</option>
+      </select>
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+        <button type="button" class="tab-btn" data-tab="table">Table</button>
+        <button type="button" class="tab-btn" data-tab="cards">Cards</button>
+      </div>
+    </section>
+
+    <div class="statusline">
+      <div class="chip" id="fileChip">File: not opened</div>
+      <div class="chip" id="modeChip">Mode: idle</div>
+      <div class="chip" id="filterChip">Filter: update / all statuses</div>
+      <div class="status" id="status">Ready.</div>
+    </div>
+
+    <main class="content">
+      <section class="tab-panel" id="overviewTab">
+        <div class="overview-grid">
+          <div class="stack">
+            <article class="panel">
+              <div class="chart-head">
+                <div>
+                  <div class="label">Overview</div>
+                  <strong>Total views chart</strong>
+                </div>
+                <div class="muted" id="overviewTotalViewsMeta">No data</div>
+              </div>
+              <div class="chart-canvas medium">
+                <canvas id="overviewTotalViewsCanvas"></canvas>
+              </div>
+            </article>
+            <article class="panel">
+              <div class="chart-head">
+                <div>
+                  <div class="label">Overview</div>
+                  <strong>Growth chart</strong>
+                </div>
+                <div class="muted" id="overviewGrowthMeta">No data</div>
+              </div>
+              <div class="chart-canvas medium">
+                <canvas id="overviewGrowthCanvas"></canvas>
+              </div>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="list">
+              <div class="label">Top gainers</div>
+              <strong id="topGainersTitle">Best movers in selected period</strong>
+              <div class="list-items" id="topGainersList"></div>
+            </article>
+            <article class="list">
+              <div class="label">Top viewed</div>
+              <strong id="topViewedTitle">Highest total views right now</strong>
+              <div class="list-items" id="topViewedList"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tableTab">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><button type="button" class="sort-btn" data-sort="name_asc">name</button></th>
+                <th><button type="button" class="sort-btn" data-sort="views_desc">views</button></th>
+                <th><button type="button" class="sort-btn" data-sort="delta_desc">delta</button></th>
+                <th><button type="button" class="sort-btn" data-sort="growth_desc">growth%</button></th>
+                <th><button type="button" class="sort-btn" data-sort="status_asc">status</button></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="cardsTab">
+        <div class="cards-grid" id="cardsGrid"></div>
+      </section>
+
+      <div id="emptyState" class="empty hidden">No objects match the current search and filters.</div>
+    </main>
   </div>
 
   <input id="fileInput" type="file" accept=".json,application/json" class="hidden" />
 
   <div id="loader" class="overlay hidden">
     <div class="overlay-card">
-      <h2 class="overlay-title" id="loaderTitle">Загрузка</h2>
-      <div class="overlay-text" id="loaderText">Подготовка...</div>
-      <div class="progress">
-        <div class="progress-bar" id="loaderBar"></div>
-      </div>
+      <h2 class="overlay-title" id="loaderTitle">Loading</h2>
+      <div class="overlay-text" id="loaderText">Preparing…</div>
+      <div class="progress"><div class="progress-bar" id="loaderBar"></div></div>
       <div class="progress-row">
-        <div id="loaderStep">Шаг 0</div>
+        <div id="loaderStep">Step 0</div>
         <div id="loaderPercent">0%</div>
       </div>
     </div>
   </div>
 
-  <div id="chartModal" class="modal hidden">
+  <div id="detailModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-head">
         <div>
-          <h2 class="modal-title" id="modalTitle">График просмотров</h2>
+          <h2 class="modal-title" id="modalTitle">Object detail</h2>
           <div class="modal-sub" id="modalSub">—</div>
         </div>
         <button type="button" class="icon-btn" id="closeModalBtn">✕</button>
       </div>
-
-      <div class="modal-toolbar">
-        <div class="seg">
-          <button type="button" class="seg-btn active" id="daysBtn">Дни</button>
-          <button type="button" class="seg-btn" id="monthsBtn">Месяцы</button>
-        </div>
-        <div class="chart-meta" id="chartMeta">—</div>
-      </div>
-
-      <div class="chart-wrap">
-        <div class="chart-box">
-          <canvas id="chartCanvas"></canvas>
-        </div>
+      <div class="modal-grid">
+        <aside class="modal-side">
+          <div class="modal-preview" id="modalPreview"></div>
+          <div class="modal-details">
+            <div class="modal-section">
+              <div class="label">Status</div>
+              <div id="modalStatus"></div>
+            </div>
+            <div class="modal-section">
+              <div class="label">Current views</div>
+              <div id="modalViews" class="value">0</div>
+            </div>
+            <div class="modal-section">
+              <div class="label">Delta / week / month</div>
+              <div id="modalDeltas" class="muted">—</div>
+            </div>
+            <div class="modal-section">
+              <div class="label">Links</div>
+              <div class="card-actions">
+                <a class="row-btn" id="modalGoLink" target="_blank" rel="noopener noreferrer">Object page</a>
+                <a class="row-btn" id="modalViewerLink" target="_blank" rel="noopener noreferrer">3D viewer</a>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <section class="modal-main">
+          <div class="chart-head">
+            <div>
+              <div class="label">History chart</div>
+              <strong>Object history</strong>
+            </div>
+            <div class="seg">
+              <button type="button" class="seg-btn active" id="daysBtn">Days</button>
+              <button type="button" class="seg-btn" id="monthsBtn">Months</button>
+            </div>
+          </div>
+          <div class="muted" id="chartMeta">—</div>
+          <div class="modal-chart">
+            <div class="chart-canvas small">
+              <canvas id="detailChartCanvas"></canvas>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -946,41 +1042,69 @@
     const API_URL = "https://api.vizbl.us/obj/GetPublic";
 
     let currentBundle = null;
-    let currentDisplayObjects = [];
-    let currentRenderedObjects = [];
-    let chartInstance = null;
-    let currentChartEntry = null;
-    let chartMode = "days";
-    let currentDeltaFilter = "off";
+    let analyticsCache = [];
+    let filteredAnalytics = [];
+    let currentTab = "overview";
     let currentSort = "views_desc";
+    let currentPeriod = "update";
+    let currentStatusFilter = "all";
+    let currentChartMode = "days";
+    let currentChartEntry = null;
+
+    const charts = {
+      hero: null,
+      overviewTotal: null,
+      overviewGrowth: null,
+      detail: null
+    };
 
     const els = {
-      statTotal: document.getElementById("statTotal"),
-      statVisible: document.getElementById("statVisible"),
-      statViews: document.getElementById("statViews"),
-      statUpdated: document.getElementById("statUpdated"),
+      lastUpdatedText: document.getElementById("lastUpdatedText"),
+      downloadBtn: document.getElementById("downloadBtn"),
+      openBtn: document.getElementById("openBtn"),
+      updateBtn: document.getElementById("updateBtn"),
+      exportCsvBtn: document.getElementById("exportCsvBtn"),
+      fileInput: document.getElementById("fileInput"),
+      searchInput: document.getElementById("searchInput"),
+      periodSelect: document.getElementById("periodSelect"),
+      sortSelect: document.getElementById("sortSelect"),
+      statusFilterSelect: document.getElementById("statusFilterSelect"),
+      tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
+      tableSortButtons: Array.from(document.querySelectorAll(".sort-btn")),
 
-      insightLastUpdate: document.getElementById("insightLastUpdate"),
-      insightHour: document.getElementById("insightHour"),
-      insightWeek: document.getElementById("insightWeek"),
-      insightMonth: document.getElementById("insightMonth"),
+      heroTotalViews: document.getElementById("heroTotalViews"),
+      heroSummaryText: document.getElementById("heroSummaryText"),
+      heroGrowth: document.getElementById("heroGrowth"),
+      heroGrowthSub: document.getElementById("heroGrowthSub"),
+      heroObjects: document.getElementById("heroObjects"),
+      heroZero: document.getElementById("heroZero"),
+      heroRemoved: document.getElementById("heroRemoved"),
+      heroChartMeta: document.getElementById("heroChartMeta"),
 
-      totalViewsChartBtn: document.getElementById("totalViewsChartBtn"),
+      insightTopGrowth: document.getElementById("insightTopGrowth"),
+      insightTopGrowthSub: document.getElementById("insightTopGrowthSub"),
+      insightBiggestDelta: document.getElementById("insightBiggestDelta"),
+      insightBiggestDeltaSub: document.getElementById("insightBiggestDeltaSub"),
+      insightZeroCount: document.getElementById("insightZeroCount"),
+      insightRemovedCount: document.getElementById("insightRemovedCount"),
+      insightTopShare: document.getElementById("insightTopShare"),
+      insightTopShareSub: document.getElementById("insightTopShareSub"),
+
       fileChip: document.getElementById("fileChip"),
       modeChip: document.getElementById("modeChip"),
       filterChip: document.getElementById("filterChip"),
       status: document.getElementById("status"),
-      grid: document.getElementById("grid"),
-      emptyState: document.getElementById("emptyState"),
-      searchInput: document.getElementById("searchInput"),
-      sortSelect: document.getElementById("sortSelect"),
-      exportCsvBtn: document.getElementById("exportCsvBtn"),
-      resetBtn: document.getElementById("resetBtn"),
 
-      fileInput: document.getElementById("fileInput"),
-      downloadBtn: document.getElementById("downloadBtn"),
-      openBtn: document.getElementById("openBtn"),
-      updateBtn: document.getElementById("updateBtn"),
+      overviewTab: document.getElementById("overviewTab"),
+      tableTab: document.getElementById("tableTab"),
+      cardsTab: document.getElementById("cardsTab"),
+      emptyState: document.getElementById("emptyState"),
+      topGainersList: document.getElementById("topGainersList"),
+      topViewedList: document.getElementById("topViewedList"),
+      overviewTotalViewsMeta: document.getElementById("overviewTotalViewsMeta"),
+      overviewGrowthMeta: document.getElementById("overviewGrowthMeta"),
+      tableBody: document.getElementById("tableBody"),
+      cardsGrid: document.getElementById("cardsGrid"),
 
       loader: document.getElementById("loader"),
       loaderTitle: document.getElementById("loaderTitle"),
@@ -989,59 +1113,61 @@
       loaderStep: document.getElementById("loaderStep"),
       loaderPercent: document.getElementById("loaderPercent"),
 
-      chartModal: document.getElementById("chartModal"),
+      detailModal: document.getElementById("detailModal"),
       modalTitle: document.getElementById("modalTitle"),
       modalSub: document.getElementById("modalSub"),
-      chartMeta: document.getElementById("chartMeta"),
+      modalPreview: document.getElementById("modalPreview"),
+      modalStatus: document.getElementById("modalStatus"),
+      modalViews: document.getElementById("modalViews"),
+      modalDeltas: document.getElementById("modalDeltas"),
+      modalGoLink: document.getElementById("modalGoLink"),
+      modalViewerLink: document.getElementById("modalViewerLink"),
       closeModalBtn: document.getElementById("closeModalBtn"),
       daysBtn: document.getElementById("daysBtn"),
       monthsBtn: document.getElementById("monthsBtn"),
-
-      filterDeltaBadge: document.getElementById("filterDeltaBadge"),
-      filterButtons: Array.from(document.querySelectorAll(".filter-btn"))
+      chartMeta: document.getElementById("chartMeta")
     };
 
     els.downloadBtn.addEventListener("click", downloadFreshBundle);
     els.openBtn.addEventListener("click", () => els.fileInput.click());
     els.updateBtn.addEventListener("click", updateOpenedBundle);
+    els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
     els.fileInput.addEventListener("change", handleFileOpen);
     els.searchInput.addEventListener("input", renderCurrent);
+    els.periodSelect.addEventListener("change", () => {
+      currentPeriod = els.periodSelect.value;
+      renderCurrent();
+    });
     els.sortSelect.addEventListener("change", () => {
       currentSort = els.sortSelect.value;
       renderCurrent();
     });
-    els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
-    els.resetBtn.addEventListener("click", resetUi);
-
-    els.totalViewsChartBtn.addEventListener("click", openTotalViewsChart);
-    els.closeModalBtn.addEventListener("click", closeChartModal);
-    els.chartModal.addEventListener("click", (e) => {
-      if (e.target === els.chartModal) closeChartModal();
+    els.statusFilterSelect.addEventListener("change", () => {
+      currentStatusFilter = els.statusFilterSelect.value;
+      renderCurrent();
     });
-
+    els.tabButtons.forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
+    els.tableSortButtons.forEach(btn => btn.addEventListener("click", () => {
+      currentSort = btn.dataset.sort;
+      els.sortSelect.value = currentSort;
+      renderCurrent();
+    }));
+    els.closeModalBtn.addEventListener("click", closeDetailModal);
+    els.detailModal.addEventListener("click", (e) => {
+      if (e.target === els.detailModal) closeDetailModal();
+    });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeChartModal();
+      if (e.key === "Escape") closeDetailModal();
     });
-
     els.daysBtn.addEventListener("click", () => {
-      chartMode = "days";
+      currentChartMode = "days";
       updateChartModeButtons();
-      if (currentChartEntry) drawChart(currentChartEntry);
+      if (currentChartEntry) drawDetailChart(currentChartEntry);
     });
-
     els.monthsBtn.addEventListener("click", () => {
-      chartMode = "months";
+      currentChartMode = "months";
       updateChartModeButtons();
-      if (currentChartEntry) drawChart(currentChartEntry);
-    });
-
-    els.filterButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        currentDeltaFilter = btn.dataset.filter;
-        updateFilterButtons();
-        renderCurrent();
-        renderFilterDelta();
-      });
+      if (currentChartEntry) drawDetailChart(currentChartEntry);
     });
 
     function setStatus(text) {
@@ -1049,7 +1175,7 @@
     }
 
     function setMode(text) {
-      const value = `Режим: ${text}`;
+      const value = `Mode: ${text}`;
       els.modeChip.textContent = value;
       els.modeChip.title = value;
     }
@@ -1059,70 +1185,68 @@
       els.fileChip.title = text;
     }
 
-    function setFilterChip(text) {
-      els.filterChip.textContent = text;
-      els.filterChip.title = text;
+    function setFilterChip() {
+      const value = `Filter: ${currentPeriod} / ${currentStatusFilter}`;
+      els.filterChip.textContent = value;
+      els.filterChip.title = value;
     }
 
-    function getFilterName(filter) {
-      const map = {
-        off: "выкл",
-        last_update: "с последнего обновления",
-        hour: "за час",
-        week: "за неделю",
-        month: "за месяц"
-      };
-      return map[filter] || "выкл";
+    function formatNum(value) {
+      return Number(value || 0).toLocaleString("en-US");
     }
 
-    function updateFilterButtons() {
-      els.filterButtons.forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.filter === currentDeltaFilter);
-      });
-      setFilterChip(`Фильтр: ${getFilterName(currentDeltaFilter)}`);
-    }
-
-    function formatNum(n) {
-      return Number(n || 0).toLocaleString("ru-RU");
-    }
-
-    function formatSignedNum(n) {
-      const value = Number(n || 0);
-      if (value > 0) return `+${formatNum(value)}`;
-      if (value < 0) return `-${formatNum(Math.abs(value))}`;
+    function formatSignedNum(value) {
+      const n = Number(value || 0);
+      if (n > 0) return `+${formatNum(n)}`;
+      if (n < 0) return `-${formatNum(Math.abs(n))}`;
       return "0";
     }
 
-    function formatDateTimeForFile(date = new Date()) {
-      const p = n => String(n).padStart(2, "0");
-      return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}_${p(date.getHours())}-${p(date.getMinutes())}-${p(date.getSeconds())}`;
+    function formatPercent(value) {
+      const n = Number(value || 0);
+      const sign = n > 0 ? "+" : "";
+      return `${sign}${n.toFixed(1)}%`;
     }
 
     function formatHumanDate(iso) {
       if (!iso) return "—";
       const d = new Date(iso);
       if (Number.isNaN(+d)) return "—";
-      return d.toLocaleString("ru-RU");
+      return d.toLocaleString("en-US");
+    }
+
+    function formatFileDate(date = new Date()) {
+      const p = n => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}_${p(date.getHours())}-${p(date.getMinutes())}-${p(date.getSeconds())}`;
     }
 
     function nowIso() {
       return new Date().toISOString();
     }
 
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     function showLoader(title, text, percent = 0, step = "") {
       els.loaderTitle.textContent = title;
       els.loaderText.textContent = text;
-      els.loaderBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+      els.loaderBar.style.width = `${percent}%`;
+      els.loaderStep.textContent = step;
       els.loaderPercent.textContent = `${Math.round(percent)}%`;
-      els.loaderStep.textContent = step || "";
       els.loader.classList.remove("hidden");
     }
 
     function updateLoader(text, percent, step = "") {
       els.loaderText.textContent = text;
-      els.loaderBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+      els.loaderBar.style.width = `${percent}%`;
+      els.loaderStep.textContent = step;
       els.loaderPercent.textContent = `${Math.round(percent)}%`;
-      els.loaderStep.textContent = step || "";
     }
 
     function hideLoader() {
@@ -1142,10 +1266,10 @@
         setTimeout(() => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-        }, 1000);
+        }, 500);
         return true;
-      } catch (e) {
-        console.error("downloadJson failed", e);
+      } catch (error) {
+        console.error(error);
         return false;
       }
     }
@@ -1163,16 +1287,12 @@
         setTimeout(() => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-        }, 1000);
+        }, 500);
         return true;
-      } catch (e) {
-        console.error("downloadText failed", e);
+      } catch (error) {
+        console.error(error);
         return false;
       }
-    }
-
-    function getViews(obj) {
-      return Number(obj?.views || obj?.lastViews || 0);
     }
 
     function getTinuuid(obj) {
@@ -1183,66 +1303,70 @@
       return obj?.name || obj?.title || "Untitled Object";
     }
 
+    function getViews(obj) {
+      return Number(obj?.views || obj?.lastViews || 0);
+    }
+
     function getPreview(obj) {
       return obj?.mainPreview || obj?.preview || obj?.image || "";
     }
 
     function buildGoUrl(tinuuid) {
-      if (!tinuuid) return null;
-      return `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}`;
+      return tinuuid ? `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}` : "";
     }
 
     function buildViewerUrl(tinuuid) {
-      if (!tinuuid) return null;
-      return `https://viewer.vizbl.com/${encodeURIComponent(tinuuid)}`;
-    }
-
-    function escapeHtml(str) {
-      return String(str ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+      return tinuuid ? `https://viewer.vizbl.com/${encodeURIComponent(tinuuid)}` : "";
     }
 
     function validateBundle(bundle) {
-      if (!bundle || typeof bundle !== "object") throw new Error("JSON должен быть объектом.");
-      if (!Array.isArray(bundle.objects)) throw new Error("В JSON отсутствует массив objects.");
+      if (!bundle || typeof bundle !== "object") throw new Error("JSON must be an object.");
+      if (!Array.isArray(bundle.objects)) throw new Error("Missing objects array.");
       if (!Array.isArray(bundle.snapshots)) bundle.snapshots = [];
       if (!Array.isArray(bundle.totalViewsHistory)) bundle.totalViewsHistory = [];
       return true;
     }
 
-    async function fetchAllObjectsWithProgress(titleText = "Загрузка объектов") {
-      showLoader(titleText, "Подключение к API...", 2, "Шаг 1");
+    async function fetchAllObjectsWithProgress(title = "Loading objects") {
+      showLoader(title, "Connecting to API…", 2, "Step 1");
       let page = 1;
-      let all = [];
       let pagesLoaded = 0;
+      let all = [];
       const hardLimit = 2000;
 
       while (page <= hardLimit) {
-        updateLoader(`Загрузка страницы ${page}...`, Math.min(8 + pagesLoaded * 2, 80), `Страница ${page}`);
-
+        updateLoader(`Loading page ${page}…`, Math.min(8 + pagesLoaded * 2, 82), `Page ${page}`);
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ page })
         });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status} на странице ${page}`);
-
+        if (!res.ok) throw new Error(`HTTP ${res.status} on page ${page}`);
         const data = await res.json();
         const objs = Array.isArray(data?.objs) ? data.objs : [];
         if (!objs.length) break;
-
         all = all.concat(objs);
-        page++;
-        pagesLoaded++;
+        pagesLoaded += 1;
+        page += 1;
       }
 
-      updateLoader(`Получено ${all.length} объектов. Подготовка...`, 88, "Формирование данных");
+      updateLoader(`Fetched ${all.length} objects. Preparing…`, 88, "Preparing data");
       return all;
+    }
+
+    function sortHistory(history) {
+      return [...(Array.isArray(history) ? history : [])].sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
+    }
+
+    function dedupeHistory(history) {
+      const sorted = sortHistory(history);
+      const map = new Map();
+      sorted.forEach(entry => {
+        if (!entry || !entry.capturedAt) return;
+        map.set(entry.capturedAt, { capturedAt: entry.capturedAt, views: Number(entry.views || 0) });
+      });
+      return Array.from(map.values()).sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
     }
 
     function normalizeApiObjects(rawObjects) {
@@ -1253,23 +1377,18 @@
         lastViews: getViews(obj),
         removed: false,
         history: []
-      })).filter(x => x.tinuuid);
+      })).filter(obj => obj.tinuuid);
     }
 
     function createBundleFromFreshApi(rawObjects) {
       const capturedAt = nowIso();
       const normalized = normalizeApiObjects(rawObjects);
-
       normalized.forEach(item => {
         item.history = [{ capturedAt, views: Number(item.lastViews || 0) }];
       });
-
       normalized.sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
 
-      const totalViews = normalized
-        .filter(x => Number(x.lastViews || 0) > 0)
-        .reduce((sum, x) => sum + Number(x.lastViews || 0), 0);
-
+      const totalViews = normalized.reduce((sum, item) => sum + Number(item.lastViews || 0), 0);
       return {
         version: 1,
         source: API_URL,
@@ -1278,8 +1397,8 @@
         totalViewsHistory: [{ capturedAt, views: totalViews }],
         snapshots: [{
           capturedAt,
-          totalObjects: rawObjects.length,
-          visibleObjects: normalized.filter(x => Number(x.lastViews || 0) > 0).length,
+          totalObjects: normalized.length,
+          visibleObjects: normalized.filter(item => Number(item.lastViews || 0) > 0).length,
           totalViews
         }],
         objects: normalized
@@ -1288,561 +1407,689 @@
 
     function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
       validateBundle(bundle);
-
       const capturedAt = nowIso();
-      const freshNorm = normalizeApiObjects(rawObjects);
-      const freshMap = new Map(freshNorm.map(x => [x.tinuuid, x]));
-      const bundleMap = new Map();
+      const fresh = normalizeApiObjects(rawObjects);
+      const freshMap = new Map(fresh.map(item => [item.tinuuid, item]));
+      const mergedMap = new Map();
 
       bundle.objects.forEach(item => {
         const cloned = JSON.parse(JSON.stringify(item));
-        if (!Array.isArray(cloned.history)) cloned.history = [];
         cloned.lastViews = Number(cloned.lastViews || 0);
         cloned.removed = Boolean(cloned.removed);
-        if (cloned.tinuuid) bundleMap.set(cloned.tinuuid, cloned);
+        cloned.history = dedupeHistory(cloned.history || []);
+        if (cloned.tinuuid) mergedMap.set(cloned.tinuuid, cloned);
       });
 
-      for (const [id, fresh] of freshMap.entries()) {
-        if (!bundleMap.has(id)) {
-          bundleMap.set(id, {
-            tinuuid: fresh.tinuuid,
-            name: fresh.name,
-            mainPreview: fresh.mainPreview,
-            lastViews: Number(fresh.lastViews || 0),
+      for (const [tinuuid, freshItem] of freshMap.entries()) {
+        if (!mergedMap.has(tinuuid)) {
+          mergedMap.set(tinuuid, {
+            tinuuid,
+            name: freshItem.name,
+            mainPreview: freshItem.mainPreview,
+            lastViews: Number(freshItem.lastViews || 0),
             removed: false,
-            history: [{ capturedAt, views: Number(fresh.lastViews || 0) }]
+            history: [{ capturedAt, views: Number(freshItem.lastViews || 0) }]
           });
         } else {
-          const existing = bundleMap.get(id);
-          existing.name = fresh.name;
-          existing.mainPreview = fresh.mainPreview;
-          existing.lastViews = Number(fresh.lastViews || 0);
+          const existing = mergedMap.get(tinuuid);
+          existing.name = freshItem.name;
+          existing.mainPreview = freshItem.mainPreview;
+          existing.lastViews = Number(freshItem.lastViews || 0);
           existing.removed = false;
-          existing.history.push({ capturedAt, views: Number(fresh.lastViews || 0) });
+          existing.history = dedupeHistory([...(existing.history || []), { capturedAt, views: Number(freshItem.lastViews || 0) }]);
         }
       }
 
-      for (const [id, existing] of bundleMap.entries()) {
-        if (!freshMap.has(id)) existing.removed = true;
+      for (const [tinuuid, item] of mergedMap.entries()) {
+        if (!freshMap.has(tinuuid)) item.removed = true;
       }
 
-      const mergedObjects = Array.from(bundleMap.values())
-        .sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
-
-      const totalViews = mergedObjects
-        .filter(x => Number(x.lastViews || 0) > 0)
-        .reduce((sum, x) => sum + Number(x.lastViews || 0), 0);
-
+      const objects = Array.from(mergedMap.values()).sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
+      const totalViews = objects.reduce((sum, item) => sum + Number(item.lastViews || 0), 0);
       const updated = JSON.parse(JSON.stringify(bundle));
       updated.updatedAt = capturedAt;
       updated.snapshots = Array.isArray(updated.snapshots) ? updated.snapshots : [];
-      updated.totalViewsHistory = Array.isArray(updated.totalViewsHistory) ? updated.totalViewsHistory : [];
-
+      updated.totalViewsHistory = dedupeHistory([...(updated.totalViewsHistory || []), { capturedAt, views: totalViews }]);
       updated.snapshots.push({
         capturedAt,
-        totalObjects: rawObjects.length,
-        visibleObjects: freshNorm.filter(x => Number(x.lastViews || 0) > 0).length,
+        totalObjects: fresh.length,
+        visibleObjects: fresh.filter(item => Number(item.lastViews || 0) > 0).length,
         totalViews
       });
-
-      updated.totalViewsHistory.push({ capturedAt, views: totalViews });
-      updated.objects = mergedObjects;
+      updated.objects = objects;
       return updated;
     }
 
     async function downloadFreshBundle() {
       try {
-        setMode("создание нового JSON");
-        const raw = await fetchAllObjectsWithProgress("Создание нового JSON");
-        updateLoader("Формирование единого bundle.json...", 94, "Сборка файла");
-
+        setMode("downloading fresh bundle");
+        const raw = await fetchAllObjectsWithProgress("Creating bundle");
+        updateLoader("Building bundle…", 94, "Assembling bundle");
         const bundle = createBundleFromFreshApi(raw);
         currentBundle = bundle;
-
-        updateLoader("Рендер объектов...", 98, "Отрисовка");
-        applyBundleToUI(bundle, `bundle_${formatDateTimeForFile()}.json`, "новый JSON из API");
-
-        const filename = `bundle_${formatDateTimeForFile()}.json`;
-        if (!downloadJson(bundle, filename)) throw new Error("Не удалось скачать JSON.");
-
-        setStatus(`Готово. Скачан ${filename}. Объектов с views: ${getVisibleObjects(bundle).length}.`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Ошибка создания JSON: ${err.message}`);
-        setMode("ошибка");
+        applyBundleToUI(bundle, `bundle_${formatFileDate()}.json`, "fresh bundle ready");
+        const filename = `bundle_${formatFileDate()}.json`;
+        if (!downloadJson(bundle, filename)) throw new Error("Download failed.");
+        setStatus(`Fresh bundle downloaded: ${filename}.`);
+      } catch (error) {
+        console.error(error);
+        setMode("error");
+        setStatus(`Download failed: ${error.message}`);
       } finally {
         hideLoader();
       }
     }
 
-    async function handleFileOpen(e) {
-      const file = e.target.files?.[0];
+    async function handleFileOpen(event) {
+      const file = event.target.files?.[0];
       if (!file) return;
-
       try {
-        setMode("открытие локального JSON");
-        showLoader("Открытие JSON", "Чтение локального файла...", 18, "Чтение файла");
+        setMode("opening local bundle");
+        showLoader("Opening JSON", "Reading local file…", 20, "Reading");
         const text = await file.text();
-        updateLoader("Разбор JSON...", 45, "Парсинг");
-
+        updateLoader("Parsing JSON…", 48, "Parsing");
         const parsed = JSON.parse(text);
         validateBundle(parsed);
-
-        updateLoader("Подготовка интерфейса...", 82, "Отрисовка");
+        updateLoader("Preparing dashboard…", 82, "Rendering");
         currentBundle = parsed;
-
-        applyBundleToUI(parsed, file.name, "локальный JSON открыт");
-        els.updateBtn.disabled = false;
-
-        setStatus(`Файл открыт: ${file.name}.`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Ошибка открытия JSON: ${err.message}`);
-        setMode("ошибка");
+        applyBundleToUI(parsed, file.name, "local bundle opened");
+        setStatus(`Opened ${file.name}.`);
+      } catch (error) {
+        console.error(error);
+        setMode("error");
+        setStatus(`Open failed: ${error.message}`);
       } finally {
         hideLoader();
-        e.target.value = "";
+        event.target.value = "";
       }
     }
 
     async function updateOpenedBundle() {
       if (!currentBundle) {
-        setStatus("Сначала открой JSON.");
+        setStatus("Open a bundle first.");
         return;
       }
-
       try {
-        setMode("обновление статистики");
-        showLoader("Обновление статистики", "Используется уже открытый JSON как база...", 6, "Подготовка");
-        const raw = await fetchAllObjectsWithProgress("Обновление статистики");
-        updateLoader("Слияние старого JSON с новым замером...", 90, "Обновление истории");
-
-        const updatedBundle = mergeOpenedBundleWithFreshApi(currentBundle, raw);
-        currentBundle = updatedBundle;
-
-        updateLoader("Рендер обновлённых данных...", 97, "Отрисовка");
-        applyBundleToUI(updatedBundle, `bundle_updated_${formatDateTimeForFile()}.json`, "статистика обновлена");
-
-        const filename = `bundle_updated_${formatDateTimeForFile()}.json`;
-        if (!downloadJson(updatedBundle, filename)) throw new Error("Не удалось скачать обновлённый JSON.");
-
-        setStatus(`Готово. Статистика обновлена и скачан ${filename}.`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Ошибка обновления статистики: ${err.message}`);
-        setMode("ошибка");
+        setMode("updating bundle");
+        showLoader("Updating bundle", "Fetching latest API snapshot…", 8, "Preparing");
+        const raw = await fetchAllObjectsWithProgress("Updating bundle");
+        updateLoader("Merging history and snapshots…", 90, "Merging");
+        const updated = mergeOpenedBundleWithFreshApi(currentBundle, raw);
+        currentBundle = updated;
+        applyBundleToUI(updated, `bundle_updated_${formatFileDate()}.json`, "bundle updated");
+        const filename = `bundle_updated_${formatFileDate()}.json`;
+        if (!downloadJson(updated, filename)) throw new Error("Download failed.");
+        setStatus(`Bundle updated and downloaded: ${filename}.`);
+      } catch (error) {
+        console.error(error);
+        setMode("error");
+        setStatus(`Update failed: ${error.message}`);
       } finally {
         hideLoader();
       }
     }
 
-    function getVisibleObjects(bundle) {
-      return [...bundle.objects]
-        .filter(x => Number(x.lastViews || 0) > 0)
-        .sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
-    }
-
-    function sortHistory(history) {
-      return [...history].sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
-    }
-
-    function getObjectDeltaFromLast(item) {
-      const history = Array.isArray(item.history) ? sortHistory(item.history) : [];
-      if (history.length < 2) return 0;
-      const prev = Number(history[history.length - 2]?.views || 0);
-      const last = Number(history[history.length - 1]?.views || 0);
-      return last - prev;
-    }
-
-    function getObjectDeltaForPeriod(item, period) {
-      const history = Array.isArray(item.history) ? sortHistory(item.history) : [];
-      if (!history.length) return 0;
-
-      const lastEntry = history[history.length - 1];
-      const lastDate = new Date(lastEntry.capturedAt);
-      if (Number.isNaN(+lastDate)) return 0;
-
+    function getPeriodBaseline(history, period) {
+      const sorted = sortHistory(history);
+      if (!sorted.length) return null;
+      if (period === "all") return sorted[0];
+      const last = sorted[sorted.length - 1];
+      const lastDate = new Date(last.capturedAt);
       const fromDate = new Date(lastDate);
-
+      if (period === "update") {
+        return sorted.length >= 2 ? sorted[sorted.length - 2] : sorted[0];
+      }
+      if (period === "day") fromDate.setDate(fromDate.getDate() - 1);
       if (period === "week") fromDate.setDate(fromDate.getDate() - 7);
-      else if (period === "month") fromDate.setMonth(fromDate.getMonth() - 1);
-      else if (period === "hour") fromDate.setHours(fromDate.getHours() - 1);
-      else return getObjectDeltaFromLast(item);
-
-      let baseline = null;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const d = new Date(history[i].capturedAt);
-        if (d <= fromDate) {
-          baseline = history[i];
+      if (period === "month") fromDate.setMonth(fromDate.getMonth() - 1);
+      let baseline = sorted[0];
+      for (let i = sorted.length - 1; i >= 0; i -= 1) {
+        const pointDate = new Date(sorted[i].capturedAt);
+        if (pointDate <= fromDate) {
+          baseline = sorted[i];
           break;
         }
       }
-
-      if (!baseline) baseline = history[0];
-
-      const lastViews = Number(lastEntry.views || 0);
-      const baseViews = Number(baseline?.views || 0);
-      return lastViews - baseViews;
+      return baseline;
     }
 
-    function getDeltaByFilter(item, filter) {
-      if (filter === "week") return getObjectDeltaForPeriod(item, "week");
-      if (filter === "month") return getObjectDeltaForPeriod(item, "month");
-      if (filter === "hour") return getObjectDeltaForPeriod(item, "hour");
-      if (filter === "last_update") return getObjectDeltaFromLast(item);
-      return getObjectDeltaFromLast(item);
+    function getDeltaForPeriod(history, period) {
+      const sorted = sortHistory(history);
+      if (!sorted.length) return 0;
+      const last = sorted[sorted.length - 1];
+      const baseline = getPeriodBaseline(sorted, period);
+      return Number(last.views || 0) - Number(baseline?.views || 0);
     }
 
-    function getCurrentDelta(item) {
-      return getDeltaByFilter(item, currentDeltaFilter);
+    function getGrowthPercent(totalViews, delta) {
+      const previous = Number(totalViews || 0) - Number(delta || 0);
+      if (previous <= 0) return totalViews > 0 ? 100 : 0;
+      return (Number(delta || 0) / previous) * 100;
     }
 
-    function getDeltaSum(filter) {
-      if (!currentBundle) return 0;
-      return getVisibleObjects(currentBundle).reduce((sum, item) => {
-        return sum + Math.max(0, getDeltaByFilter(item, filter));
-      }, 0);
+    function getStatus(totalViews, deltaUpdate, deltaWeek, deltaMonth, removed) {
+      if (removed) return "removed";
+      if (totalViews <= 0) return "zero";
+      if (deltaWeek <= 0 && deltaMonth <= 0) return "stagnant";
+      if (deltaUpdate > 0 && deltaWeek > 0 && getGrowthPercent(totalViews, deltaWeek) >= 15) return "hot";
+      if (deltaWeek > 0 || deltaMonth > 0) return "rising";
+      return "stagnant";
     }
 
-    function renderInsights() {
-      els.insightLastUpdate.textContent = formatSignedNum(getDeltaSum("last_update"));
-      els.insightHour.textContent = formatSignedNum(getDeltaSum("hour"));
-      els.insightWeek.textContent = formatSignedNum(getDeltaSum("week"));
-      els.insightMonth.textContent = formatSignedNum(getDeltaSum("month"));
+    function buildAnalytics(bundle) {
+      return (bundle?.objects || []).map((item, index) => {
+        const history = dedupeHistory(item.history || []);
+        const totalViews = Number(item.lastViews || 0);
+        const deltaUpdate = getDeltaForPeriod(history, "update");
+        const deltaWeek = getDeltaForPeriod(history, "week");
+        const deltaMonth = getDeltaForPeriod(history, "month");
+        const deltaDay = getDeltaForPeriod(history, "day");
+        const deltaAll = getDeltaForPeriod(history, "all");
+        const growth = getGrowthPercent(totalViews, deltaWeek || deltaUpdate);
+        const status = getStatus(totalViews, deltaUpdate, deltaWeek, deltaMonth, Boolean(item.removed));
+        return {
+          item,
+          index,
+          history,
+          totalViews,
+          deltaUpdate,
+          deltaDay,
+          deltaWeek,
+          deltaMonth,
+          deltaAll,
+          growth,
+          status,
+          goUrl: buildGoUrl(item.tinuuid),
+          viewerUrl: buildViewerUrl(item.tinuuid)
+        };
+      });
     }
 
-    function renderFilterDelta() {
-      if (!currentBundle || currentDeltaFilter === "off") {
-        els.filterDeltaBadge.textContent = "Σ +0";
-        return;
+    function getPeriodDelta(entry) {
+      if (currentPeriod === "day") return entry.deltaDay;
+      if (currentPeriod === "week") return entry.deltaWeek;
+      if (currentPeriod === "month") return entry.deltaMonth;
+      if (currentPeriod === "all") return entry.deltaAll;
+      return entry.deltaUpdate;
+    }
+
+    function applyFilters(list) {
+      const q = String(els.searchInput.value || "").trim().toLowerCase();
+      return list.filter(entry => {
+        const hay = `${entry.item.name || ""} ${entry.item.tinuuid || ""}`.toLowerCase();
+        const matchesQuery = !q || hay.includes(q);
+        const matchesStatus = currentStatusFilter === "all" || entry.status === currentStatusFilter;
+        return matchesQuery && matchesStatus;
+      });
+    }
+
+    function getStatusOrder(status) {
+      return { hot: 0, rising: 1, stagnant: 2, zero: 3, removed: 4 }[status] ?? 99;
+    }
+
+    function sortAnalytics(list) {
+      const arr = [...list];
+      if (currentSort === "name_asc") {
+        arr.sort((a, b) => String(a.item.name || "").localeCompare(String(b.item.name || ""), "en", { sensitivity: "base" }));
+        return arr;
       }
+      if (currentSort === "delta_desc") {
+        arr.sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a) || b.totalViews - a.totalViews);
+        return arr;
+      }
+      if (currentSort === "growth_desc") {
+        arr.sort((a, b) => b.growth - a.growth || getPeriodDelta(b) - getPeriodDelta(a));
+        return arr;
+      }
+      if (currentSort === "status_asc") {
+        arr.sort((a, b) => getStatusOrder(a.status) - getStatusOrder(b.status) || b.totalViews - a.totalViews);
+        return arr;
+      }
+      arr.sort((a, b) => b.totalViews - a.totalViews);
+      return arr;
+    }
 
-      const total = getVisibleObjects(currentBundle).reduce((sum, item) => {
-        return sum + Math.max(0, getCurrentDelta(item));
-      }, 0);
-
-      els.filterDeltaBadge.textContent = `Σ +${formatNum(total)}`;
+    function setTab(tabName) {
+      currentTab = tabName;
+      els.tabButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabName));
+      els.overviewTab.classList.toggle("hidden", tabName !== "overview");
+      els.tableTab.classList.toggle("hidden", tabName !== "table");
+      els.cardsTab.classList.toggle("hidden", tabName !== "cards");
     }
 
     function applyBundleToUI(bundle, fileLabel, modeLabel) {
-      currentDisplayObjects = getVisibleObjects(bundle);
-      renderStats(bundle);
-      renderInsights();
-      renderCurrent();
-      renderFilterDelta();
-      setFileChip(`Файл: ${fileLabel}`);
+      validateBundle(bundle);
+      analyticsCache = buildAnalytics(bundle);
+      els.lastUpdatedText.textContent = `Last updated: ${formatHumanDate(bundle.updatedAt)}`;
+      setFileChip(`File: ${fileLabel}`);
       setMode(modeLabel);
+      setFilterChip();
       els.updateBtn.disabled = false;
-    }
-
-    function renderStats(bundle) {
-      const allCount = Array.isArray(bundle.objects) ? bundle.objects.length : 0;
-      const visible = getVisibleObjects(bundle);
-      const totalViews = visible.reduce((sum, x) => sum + Number(x.lastViews || 0), 0);
-
-      els.statTotal.textContent = formatNum(allCount);
-      els.statVisible.textContent = formatNum(visible.length);
-      els.statViews.textContent = formatNum(totalViews);
-      els.statUpdated.textContent = formatHumanDate(bundle.updatedAt);
-    }
-
-    function applySorting(list) {
-      const arr = [...list];
-
-      if (currentSort === "delta_desc") {
-        arr.sort((a, b) => getCurrentDelta(b) - getCurrentDelta(a));
-        return arr;
-      }
-
-      if (currentSort === "name_asc") {
-        arr.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "ru", { sensitivity: "base" }));
-        return arr;
-      }
-
-      arr.sort((a, b) => Number(b.lastViews || 0) - Number(a.lastViews || 0));
-      return arr;
+      renderCurrent();
     }
 
     function renderCurrent() {
       if (!currentBundle) {
-        els.grid.innerHTML = "";
-        currentRenderedObjects = [];
+        filteredAnalytics = [];
+        setFilterChip();
+        renderHero(null);
+        renderInsights([]);
+        renderOverview([]);
+        renderTable([]);
+        renderCards([]);
         els.emptyState.classList.remove("hidden");
         return;
       }
 
-      const q = String(els.searchInput.value || "").trim().toLowerCase();
+      setFilterChip();
+      filteredAnalytics = sortAnalytics(applyFilters(analyticsCache));
+      renderHero(currentBundle);
+      renderInsights(filteredAnalytics);
+      renderOverview(filteredAnalytics);
+      renderTable(filteredAnalytics);
+      renderCards(filteredAnalytics);
+      els.emptyState.classList.toggle("hidden", filteredAnalytics.length > 0);
+    }
 
-      let list = currentDisplayObjects.filter(item => {
-        if (!q) return true;
-        const hay = `${item.name || ""} ${item.tinuuid || ""}`.toLowerCase();
-        return hay.includes(q);
+    function renderHero(bundle) {
+      if (!bundle) {
+        els.heroTotalViews.textContent = "0";
+        els.heroGrowth.textContent = "0%";
+        els.heroObjects.textContent = "0";
+        els.heroZero.textContent = "0";
+        els.heroRemoved.textContent = "0";
+        els.heroSummaryText.textContent = "Open a bundle or download a fresh one to analyze object history, growth, and status trends.";
+        els.heroChartMeta.textContent = "No data loaded";
+        drawLineChart("hero", document.getElementById("heroChartCanvas"), [], [], "Total views", false);
+        return;
+      }
+
+      const totalViews = analyticsCache.reduce((sum, entry) => sum + entry.totalViews, 0);
+      const zeroCount = analyticsCache.filter(entry => entry.status === "zero").length;
+      const removedCount = analyticsCache.filter(entry => entry.status === "removed").length;
+      const totalGrowthDelta = analyticsCache.reduce((sum, entry) => sum + entry.deltaUpdate, 0);
+      const totalGrowthPercent = getGrowthPercent(totalViews, totalGrowthDelta);
+      const history = dedupeHistory(bundle.totalViewsHistory || []);
+
+      els.heroTotalViews.textContent = formatNum(totalViews);
+      els.heroGrowth.textContent = formatPercent(totalGrowthPercent);
+      els.heroGrowthSub.textContent = `${formatSignedNum(totalGrowthDelta)} since previous update`;
+      els.heroObjects.textContent = formatNum(analyticsCache.length);
+      els.heroZero.textContent = formatNum(zeroCount);
+      els.heroRemoved.textContent = formatNum(removedCount);
+      els.heroSummaryText.textContent = `${formatNum(analyticsCache.filter(entry => entry.status === "hot").length)} hot, ${formatNum(analyticsCache.filter(entry => entry.status === "rising").length)} rising, ${formatNum(analyticsCache.filter(entry => entry.status === "stagnant").length)} stagnant.`;
+      els.heroChartMeta.textContent = history.length ? `${history.length} points · ${formatHumanDate(history[history.length - 1].capturedAt)}` : "No total history";
+
+      drawLineChart(
+        "hero",
+        document.getElementById("heroChartCanvas"),
+        history.map(point => formatPointLabel(point.capturedAt)),
+        history.map(point => Number(point.views || 0)),
+        "Total views",
+        true
+      );
+    }
+
+    function renderInsights(list) {
+      if (!analyticsCache.length) {
+        els.insightTopGrowth.textContent = "—";
+        els.insightTopGrowthSub.textContent = "No data";
+        els.insightBiggestDelta.textContent = "0";
+        els.insightBiggestDeltaSub.textContent = "Latest update delta";
+        els.insightZeroCount.textContent = "0";
+        els.insightRemovedCount.textContent = "0";
+        els.insightTopShare.textContent = "0%";
+        els.insightTopShareSub.textContent = "Share of total views";
+        return;
+      }
+
+      const topGrowth = [...analyticsCache].sort((a, b) => b.growth - a.growth)[0];
+      const biggestDelta = [...analyticsCache].sort((a, b) => b.deltaUpdate - a.deltaUpdate)[0];
+      const zeroCount = analyticsCache.filter(entry => entry.status === "zero").length;
+      const removedCount = analyticsCache.filter(entry => entry.status === "removed").length;
+      const totalViews = analyticsCache.reduce((sum, entry) => sum + entry.totalViews, 0);
+      const top10Views = [...analyticsCache].sort((a, b) => b.totalViews - a.totalViews).slice(0, 10).reduce((sum, entry) => sum + entry.totalViews, 0);
+      const top10Share = totalViews > 0 ? (top10Views / totalViews) * 100 : 0;
+
+      els.insightTopGrowth.textContent = topGrowth ? escapeText(topGrowth.item.name) : "—";
+      els.insightTopGrowthSub.textContent = topGrowth ? `${formatPercent(topGrowth.growth)} · ${topGrowth.status}` : "No data";
+      els.insightBiggestDelta.textContent = biggestDelta ? formatSignedNum(biggestDelta.deltaUpdate) : "0";
+      els.insightBiggestDeltaSub.textContent = biggestDelta ? escapeText(biggestDelta.item.name) : "Latest update delta";
+      els.insightZeroCount.textContent = formatNum(zeroCount);
+      els.insightRemovedCount.textContent = formatNum(removedCount);
+      els.insightTopShare.textContent = `${top10Share.toFixed(1)}%`;
+      els.insightTopShareSub.textContent = `${formatNum(top10Views)} of ${formatNum(totalViews)} total views`;
+    }
+
+    function renderOverview(list) {
+      const totalHistory = dedupeHistory(currentBundle?.totalViewsHistory || []);
+      els.overviewTotalViewsMeta.textContent = totalHistory.length ? `${totalHistory.length} points in bundle history` : "No total history";
+      drawLineChart(
+        "overviewTotal",
+        document.getElementById("overviewTotalViewsCanvas"),
+        totalHistory.map(point => formatPointLabel(point.capturedAt)),
+        totalHistory.map(point => Number(point.views || 0)),
+        "Total views",
+        false
+      );
+
+      const growthEntries = [...analyticsCache]
+        .sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a))
+        .slice(0, 8);
+      els.overviewGrowthMeta.textContent = growthEntries.length ? `Top ${growthEntries.length} by ${currentPeriod} delta` : "No data";
+      drawBarChart(
+        "overviewGrowth",
+        document.getElementById("overviewGrowthCanvas"),
+        growthEntries.map(entry => truncate(entry.item.name || "Untitled", 20)),
+        growthEntries.map(entry => getPeriodDelta(entry)),
+        `Delta (${currentPeriod})`
+      );
+
+      renderList(els.topGainersList, [...list].sort((a, b) => getPeriodDelta(b) - getPeriodDelta(a)).slice(0, 8), entry => formatSignedNum(getPeriodDelta(entry)));
+      renderList(els.topViewedList, [...list].sort((a, b) => b.totalViews - a.totalViews).slice(0, 8), entry => formatNum(entry.totalViews));
+    }
+
+    function renderList(container, entries, valueGetter) {
+      container.innerHTML = "";
+      if (!entries.length) {
+        container.innerHTML = '<div class="muted">No data for current filters.</div>';
+        return;
+      }
+      entries.forEach((entry, index) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "list-item";
+        row.innerHTML = `
+          <span class="rank">${index + 1}</span>
+          <span class="list-main">
+            <strong>${escapeHtml(entry.item.name || "Untitled Object")}</strong>
+            <span>${escapeHtml(entry.item.tinuuid || "—")}</span>
+          </span>
+          <span class="list-value">${escapeHtml(valueGetter(entry))}</span>
+        `;
+        row.addEventListener("click", () => openDetailModal(entry));
+        container.appendChild(row);
       });
+    }
 
-      if (currentDeltaFilter !== "off") {
-        list = list.filter(item => getCurrentDelta(item) > 0);
-      }
+    function renderTable(list) {
+      els.tableBody.innerHTML = "";
+      if (!list.length) return;
+      list.forEach(entry => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <div class="table-name-wrap">
+              <span class="table-name">${escapeHtml(entry.item.name || "Untitled Object")}</span>
+              <span class="table-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
+            </div>
+          </td>
+          <td>${formatNum(entry.totalViews)}</td>
+          <td>${formatSignedNum(getPeriodDelta(entry))}</td>
+          <td>${formatPercent(entry.growth)}</td>
+          <td>${renderStatusPill(entry.status)}</td>
+        `;
+        tr.addEventListener("click", () => openDetailModal(entry));
+        els.tableBody.appendChild(tr);
+      });
+    }
 
-      list = applySorting(list);
-      currentRenderedObjects = list;
-
-      els.grid.innerHTML = "";
-
-      if (!list.length) {
-        els.emptyState.classList.remove("hidden");
-        return;
-      }
-
-      els.emptyState.classList.add("hidden");
-
-      list.forEach((item, index) => {
-        const goUrl = buildGoUrl(item.tinuuid);
-        const viewerUrl = buildViewerUrl(item.tinuuid);
-        const preview = item.mainPreview
-          ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
-          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#8d99ad;">Нет превью</div>`;
-
-        const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item) : getCurrentDelta(item);
-        const deltaBadge = delta > 0
-          ? `<div class="delta-badge">↗ <span>+${formatNum(delta)}</span></div>`
-          : "";
-
-        const card = document.createElement("article");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="media">
-            ${preview}
-            <div class="rank">#${index + 1}</div>
-            ${item.removed ? `<div class="removed">Удалён</div>` : ``}
-            ${deltaBadge}
+    function renderCards(list) {
+      els.cardsGrid.innerHTML = "";
+      if (!list.length) return;
+      list.forEach((entry, index) => {
+        const article = document.createElement("article");
+        article.className = "card";
+        article.innerHTML = `
+          <div class="card-media">
+            ${entry.item.mainPreview
+              ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Object preview")}" />`
+              : `<div class="card-fallback">No preview</div>`}
+            <div class="card-topline">
+              <span class="badge">#${index + 1}</span>
+              ${renderStatusPill(entry.status)}
+            </div>
           </div>
-
-          <div class="body">
-            <h3 class="title">${escapeHtml(item.name || "Untitled Object")}</h3>
-
-            <div class="meta">
-              <div class="meta-box">
-                <div class="k">Views</div>
-                <div class="v">${formatNum(item.lastViews)}</div>
+          <div class="card-body">
+            <div>
+              <span class="card-title">${escapeHtml(entry.item.name || "Untitled Object")}</span>
+              <span class="card-sub">${escapeHtml(entry.item.tinuuid || "—")}</span>
+            </div>
+            <div class="card-metrics">
+              <div class="metric">
+                <div class="label">Views</div>
+                <div class="value">${formatNum(entry.totalViews)}</div>
               </div>
-              <div class="meta-box">
-                <div class="k">TINUUID</div>
-                <div class="v">${escapeHtml(item.tinuuid || "—")}</div>
+              <div class="metric">
+                <div class="label">Delta</div>
+                <div class="value">${formatSignedNum(getPeriodDelta(entry))}</div>
+              </div>
+              <div class="metric">
+                <div class="label">Growth</div>
+                <div class="value">${formatPercent(entry.growth)}</div>
               </div>
             </div>
-
-            <div class="actions">
-              ${
-                goUrl
-                  ? `<a class="mini-btn" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Открыть страницу объекта</a>`
-                  : `<button type="button" class="mini-btn ghost" disabled>Открыть страницу объекта</button>`
-              }
-
-              ${
-                viewerUrl
-                  ? `<a class="mini-btn primary" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">Посмотреть в 3D</a>`
-                  : `<button type="button" class="mini-btn ghost" disabled>Посмотреть в 3D</button>`
-              }
-
-              <button type="button" class="mini-btn ghost chart-btn" data-id="${escapeHtml(item.tinuuid)}">
-                График просмотров
-              </button>
+            <div class="card-actions">
+              <a class="row-btn" href="${escapeHtml(entry.goUrl || "#")}" ${entry.goUrl ? 'target="_blank" rel="noopener noreferrer"' : 'aria-disabled="true"'}>${entry.goUrl ? "Object page" : "No page"}</a>
+              <button type="button" class="row-btn card-detail-btn">Details</button>
             </div>
           </div>
         `;
-        els.grid.appendChild(card);
-      });
-
-      els.grid.querySelectorAll(".chart-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.dataset.id;
-          const entry = currentBundle.objects.find(x => x.tinuuid === id);
-          if (!entry) return;
-          openChartModal(entry);
+        article.addEventListener("click", (event) => {
+          if (event.target.closest("a")) return;
+          openDetailModal(entry);
         });
+        article.querySelector(".card-detail-btn").addEventListener("click", (event) => {
+          event.stopPropagation();
+          openDetailModal(entry);
+        });
+        els.cardsGrid.appendChild(article);
       });
     }
 
-    function exportCurrentCsv() {
-      if (!currentRenderedObjects.length) {
-        setStatus("Нет данных для экспорта CSV.");
-        return;
-      }
-
-      const rows = [
-        ["rank", "name", "tinuuid", "views", "delta", "removed", "viewer_url", "go_url"]
-      ];
-
-      currentRenderedObjects.forEach((item, index) => {
-        const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item) : getCurrentDelta(item);
-        rows.push([
-          index + 1,
-          item.name || "",
-          item.tinuuid || "",
-          item.lastViews || 0,
-          delta || 0,
-          item.removed ? "true" : "false",
-          buildViewerUrl(item.tinuuid) || "",
-          buildGoUrl(item.tinuuid) || ""
-        ]);
-      });
-
-      const csv = rows.map(row =>
-        row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")
-      ).join("\n");
-
-      const filename = `vizbl_export_${formatDateTimeForFile()}.csv`;
-      if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
-        setStatus(`CSV экспортирован: ${filename}.`);
-      } else {
-        setStatus("Не удалось экспортировать CSV.");
-      }
+    function renderStatusPill(status) {
+      const label = status.charAt(0).toUpperCase() + status.slice(1);
+      return `<span class="status-pill status-${escapeHtml(status)}">${escapeHtml(label)}</span>`;
     }
 
-    function resetUi() {
-      currentDeltaFilter = "off";
-      currentSort = "views_desc";
-      els.searchInput.value = "";
-      els.sortSelect.value = "views_desc";
-      updateFilterButtons();
-      renderCurrent();
-      renderFilterDelta();
-      setStatus("Фильтр, поиск и сортировка сброшены.");
-    }
-
-    function openChartModal(entry) {
+    function openDetailModal(entry) {
       currentChartEntry = entry;
-      chartMode = "days";
+      currentChartMode = "days";
       updateChartModeButtons();
-      els.modalTitle.textContent = entry.name || "График просмотров";
-      els.modalSub.textContent = `TINUUID: ${entry.tinuuid || "—"}`;
-      els.chartModal.classList.remove("hidden");
-      drawChart(entry);
+      els.modalTitle.textContent = entry.item.name || "Object detail";
+      els.modalSub.textContent = `TINUUID: ${entry.item.tinuuid || "—"}`;
+      els.modalPreview.innerHTML = entry.item.mainPreview
+        ? `<img src="${escapeHtml(entry.item.mainPreview)}" alt="${escapeHtml(entry.item.name || "Preview")}" />`
+        : `<div class="modal-preview-fallback">No preview</div>`;
+      els.modalStatus.innerHTML = renderStatusPill(entry.status);
+      els.modalViews.textContent = formatNum(entry.totalViews);
+      els.modalDeltas.textContent = `Update ${formatSignedNum(entry.deltaUpdate)} · Week ${formatSignedNum(entry.deltaWeek)} · Month ${formatSignedNum(entry.deltaMonth)}`;
+      setModalLink(els.modalGoLink, entry.goUrl, "Object page");
+      setModalLink(els.modalViewerLink, entry.viewerUrl, "3D viewer");
+      els.detailModal.classList.remove("hidden");
+      drawDetailChart(entry);
     }
 
-    function openTotalViewsChart() {
-      if (!currentBundle || !Array.isArray(currentBundle.totalViewsHistory) || !currentBundle.totalViewsHistory.length) {
-        setStatus("Нет истории суммарных просмотров.");
-        return;
+    function setModalLink(element, href, label) {
+      element.textContent = label;
+      if (href) {
+        element.href = href;
+        element.removeAttribute("aria-disabled");
+        element.style.pointerEvents = "auto";
+        element.style.opacity = "1";
+      } else {
+        element.href = "#";
+        element.setAttribute("aria-disabled", "true");
+        element.style.pointerEvents = "none";
+        element.style.opacity = "0.45";
       }
-
-      currentChartEntry = {
-        name: "Суммарные просмотры всех объектов",
-        tinuuid: "TOTAL_VIEWS",
-        history: currentBundle.totalViewsHistory
-      };
-
-      chartMode = "days";
-      updateChartModeButtons();
-      els.modalTitle.textContent = "Суммарные просмотры всех объектов";
-      els.modalSub.textContent = "История общего количества просмотров по всем объектам";
-      els.chartModal.classList.remove("hidden");
-      drawChart(currentChartEntry);
     }
 
-    function closeChartModal() {
-      els.chartModal.classList.add("hidden");
+    function closeDetailModal() {
+      els.detailModal.classList.add("hidden");
     }
 
     function updateChartModeButtons() {
-      els.daysBtn.classList.toggle("active", chartMode === "days");
-      els.monthsBtn.classList.toggle("active", chartMode === "months");
+      els.daysBtn.classList.toggle("active", currentChartMode === "days");
+      els.monthsBtn.classList.toggle("active", currentChartMode === "months");
     }
 
-    function drawChart(entry) {
-      const history = Array.isArray(entry.history) ? sortHistory(entry.history) : [];
+    function drawDetailChart(entry) {
+      const history = sortHistory(entry.history || entry.item.history || []);
       let labels = [];
       let values = [];
-
-      if (chartMode === "days") {
-        labels = history.map(x => formatPointLabel(x.capturedAt));
-        values = history.map(x => Number(x.views || 0));
-        els.chartMeta.textContent = `Точек: ${values.length} · Режим: дни / замеры`;
+      if (currentChartMode === "days") {
+        labels = history.map(point => formatPointLabel(point.capturedAt));
+        values = history.map(point => Number(point.views || 0));
+        els.chartMeta.textContent = `${history.length} points · daily snapshot view`;
       } else {
         const grouped = groupByMonth(history);
         labels = grouped.labels;
         values = grouped.values;
-        els.chartMeta.textContent = `Точек: ${values.length} · Режим: месяцы`;
+        els.chartMeta.textContent = `${labels.length} month buckets`;
       }
+      drawLineChart("detail", document.getElementById("detailChartCanvas"), labels, values, "Views", true);
+    }
 
-      if (chartInstance) chartInstance.destroy();
-
-      const ctx = document.getElementById("chartCanvas").getContext("2d");
-      chartInstance = new Chart(ctx, {
+    function drawLineChart(key, canvas, labels, values, label, fill) {
+      if (charts[key]) charts[key].destroy();
+      const ctx = canvas.getContext("2d");
+      charts[key] = new Chart(ctx, {
         type: "line",
         data: {
           labels,
           datasets: [{
-            label: "Views",
+            label,
             data: values,
+            borderColor: "rgba(99, 167, 255, 1)",
+            backgroundColor: fill ? "rgba(99, 167, 255, 0.16)" : "rgba(99, 167, 255, 0.10)",
+            fill,
             borderWidth: 2,
-            tension: .25,
-            fill: true,
-            backgroundColor: "rgba(90,169,255,.14)",
-            borderColor: "rgba(90,169,255,1)",
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: "rgba(120,190,255,1)"
+            tension: 0.25,
+            pointRadius: values.length > 1 ? 2.5 : 3,
+            pointHoverRadius: 4
           }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: { labels: { color: "#dce4f2" } },
-            tooltip: {
-              backgroundColor: "rgba(16,20,27,.96)",
-              titleColor: "#fff",
-              bodyColor: "#dce4f2",
-              borderColor: "rgba(255,255,255,.12)",
-              borderWidth: 1,
-              callbacks: {
-                label: (ctx) => ` Views: ${formatNum(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: "#94a1b4", maxRotation: 0, autoSkip: true },
-              grid: { color: "rgba(255,255,255,.05)" }
-            },
-            y: {
-              ticks: {
-                color: "#94a1b4",
-                callback: (v) => formatNum(v)
-              },
-              grid: { color: "rgba(255,255,255,.05)" }
+        options: baseChartOptions()
+      });
+    }
+
+    function drawBarChart(key, canvas, labels, values, label) {
+      if (charts[key]) charts[key].destroy();
+      const ctx = canvas.getContext("2d");
+      charts[key] = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data: values,
+            backgroundColor: values.map(v => v >= 0 ? "rgba(75, 209, 139, 0.65)" : "rgba(255, 125, 125, 0.65)"),
+            borderColor: values.map(v => v >= 0 ? "rgba(75, 209, 139, 1)" : "rgba(255, 125, 125, 1)"),
+            borderWidth: 1,
+            borderRadius: 8
+          }]
+        },
+        options: baseChartOptions(false)
+      });
+    }
+
+    function baseChartOptions(showLegend = false) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: showLegend, labels: { color: "#e8eef8" } },
+          tooltip: {
+            backgroundColor: "rgba(12, 17, 24, 0.96)",
+            titleColor: "#fff",
+            bodyColor: "#e8eef8",
+            borderColor: "rgba(255,255,255,0.12)",
+            borderWidth: 1,
+            callbacks: {
+              label: (ctx) => ` ${ctx.dataset.label}: ${formatNum(ctx.parsed.y)}`
             }
           }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#95a2b8", maxRotation: 0, autoSkip: true },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          },
+          y: {
+            ticks: {
+              color: "#95a2b8",
+              callback: value => formatNum(value)
+            },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          }
         }
-      });
+      };
     }
 
     function formatPointLabel(iso) {
       const d = new Date(iso);
+      if (Number.isNaN(+d)) return "—";
       const p = n => String(n).padStart(2, "0");
-      return `${p(d.getDate())}.${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+      return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
 
     function groupByMonth(history) {
       const map = new Map();
-      history.forEach(x => {
-        const d = new Date(x.capturedAt);
-        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, "0")}`;
-        map.set(key, Number(x.views || 0));
+      history.forEach(point => {
+        const d = new Date(point.capturedAt);
+        if (Number.isNaN(+d)) return;
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        map.set(key, Number(point.views || 0));
       });
-      const entries = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      const entries = Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
       return {
         labels: entries.map(([k]) => k),
         values: entries.map(([, v]) => v)
       };
     }
 
-    updateFilterButtons();
-    renderFilterDelta();
-    renderInsights();
-    setMode("ожидание");
+    function exportCurrentCsv() {
+      if (!filteredAnalytics.length) {
+        setStatus("No rows to export.");
+        return;
+      }
+      const rows = [["name", "tinuuid", "views", "delta", "growth_percent", "status", "removed", "viewer_url", "go_url"]];
+      filteredAnalytics.forEach(entry => {
+        rows.push([
+          entry.item.name || "",
+          entry.item.tinuuid || "",
+          entry.totalViews,
+          getPeriodDelta(entry),
+          entry.growth.toFixed(2),
+          entry.status,
+          entry.item.removed ? "true" : "false",
+          entry.viewerUrl || "",
+          entry.goUrl || ""
+        ]);
+      });
+      const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const filename = `vizbl_export_${formatFileDate()}.csv`;
+      if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
+        setStatus(`CSV exported: ${filename}.`);
+      } else {
+        setStatus("CSV export failed.");
+      }
+    }
+
+    function truncate(text, max) {
+      const str = String(text || "");
+      return str.length > max ? `${str.slice(0, max - 1)}…` : str;
+    }
+
+    function escapeText(text) {
+      return truncate(String(text || "—"), 26);
+    }
+
+    setTab("overview");
+    setFilterChip();
+    setMode("idle");
   </script>
 </body>
 </html>
