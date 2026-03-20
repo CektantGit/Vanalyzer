@@ -113,6 +113,11 @@
             <input class="input" id="searchInput" type="text" placeholder="Name, tinuuid, URL..." />
           </label>
 
+          <label class="field">
+            <span class="field__label">Owner</span>
+            <input class="input" id="ownerInput" type="text" placeholder="Owner name, username, UUID..." />
+          </label>
+
           <div class="field-group two-cols">
             <label class="field">
               <span class="field__label">Sorting</span>
@@ -354,6 +359,65 @@
                 </div>
               </div>
               <div class="benchmark-list" id="benchmarkList"></div>
+            </article>
+          </section>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="ownerModal">
+    <div class="modal-card panel owner-modal-card">
+      <div class="modal__head">
+        <div>
+          <div class="panel__eyebrow">Owner</div>
+          <h2 id="ownerModalTitle">Owner details</h2>
+          <p id="ownerModalSub">Open a bundle to inspect owner activity.</p>
+        </div>
+        <button type="button" class="icon-btn" id="closeOwnerBtn">×</button>
+      </div>
+      <div class="modal__body modal__body--owner">
+        <section class="owner-modal">
+          <div class="owner-modal__toolbar">
+            <button type="button" class="btn btn--primary btn--small" id="ownerFilterBtn">Filter owner</button>
+          </div>
+          <section class="owner-kpi-grid">
+            <article class="panel owner-kpi">
+              <span class="owner-kpi__label">Visible objects</span>
+              <strong class="owner-kpi__value" id="ownerObjectCount">0</strong>
+              <span class="owner-kpi__hint" id="ownerObjectHint">No owner selected</span>
+            </article>
+            <article class="panel owner-kpi">
+              <span class="owner-kpi__label">Current metric total</span>
+              <strong class="owner-kpi__value" id="ownerMetricTotal">0</strong>
+              <span class="owner-kpi__hint" id="ownerMetricHint">Selected metric summary</span>
+            </article>
+            <article class="panel owner-kpi">
+              <span class="owner-kpi__label">Current growth</span>
+              <strong class="owner-kpi__value" id="ownerGrowthTotal">+0</strong>
+              <span class="owner-kpi__hint" id="ownerGrowthHint">Current owner growth share</span>
+            </article>
+          </section>
+
+          <section class="analytics-grid owner-modal__grid">
+            <article class="panel text-panel">
+              <div class="panel__header compact">
+                <div>
+                  <div class="panel__eyebrow">Profile</div>
+                  <h2>Owner identity</h2>
+                </div>
+              </div>
+              <div class="info-card owner-profile" id="ownerProfile"></div>
+            </article>
+
+            <article class="panel shortlist-panel">
+              <div class="panel__header compact">
+                <div>
+                  <div class="panel__eyebrow">Objects</div>
+                  <h2>Top owner objects</h2>
+                </div>
+              </div>
+              <div id="ownerTopObjects" class="shortlist empty-list">No owner selected yet.</div>
             </article>
           </section>
         </section>

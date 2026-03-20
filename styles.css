@@ -289,6 +289,12 @@ canvas {
   cursor: pointer;
 }
 
+.shortlist__item--button,
+.benchmark--button,
+.owner-link-btn {
+  font: inherit;
+}
+
 .text-btn {
   min-height: 38px;
   padding: 0 14px;
@@ -600,6 +606,13 @@ option {
   flex-wrap: wrap;
 }
 
+.benchmark--button {
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
 .results-panel {
   min-height: 600px;
 }
@@ -663,6 +676,21 @@ option {
   display: grid;
   gap: 6px;
   min-width: 0;
+}
+
+.catalog-row__owner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.catalog-row__owner-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .catalog-row__title h3 {
@@ -739,7 +767,7 @@ option {
 
 .catalog-row__actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
 }
 
@@ -1020,6 +1048,69 @@ body.modal-open {
   margin-top: 8px;
 }
 
+.owner-modal-card {
+  width: min(1120px, 100%);
+}
+
+.modal__body--owner {
+  min-height: 0;
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+}
+
+.owner-modal,
+.owner-modal__grid,
+.owner-profile {
+  display: grid;
+  gap: 16px;
+}
+
+.owner-modal__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.owner-kpi-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.owner-kpi {
+  padding: 18px;
+}
+
+.owner-kpi__label,
+.owner-kpi__hint {
+  color: var(--muted);
+}
+
+.owner-kpi__value {
+  display: block;
+  margin-top: 10px;
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.owner-kpi__hint {
+  display: block;
+  margin-top: 8px;
+}
+
+.owner-profile__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.owner-profile__row strong,
+.owner-profile__row span {
+  overflow-wrap: anywhere;
+}
+
 #modalSub,
 #loaderText {
   margin: 10px 0 0;
@@ -1096,6 +1187,7 @@ body.modal-open {
   .stats-grid,
   .insights-grid,
   .board-kpi-grid,
+  .owner-kpi-grid,
   .analytics-grid,
   .field-group.two-cols,
   .card-actions,
@@ -1198,6 +1290,10 @@ body.modal-open {
 
   .shortlist__metric {
     justify-items: start;
+  }
+
+  .owner-profile__row {
+    flex-direction: column;
   }
 
 }

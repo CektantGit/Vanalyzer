@@ -18,6 +18,8 @@ let chartMode = "days";
 let currentDeltaFilter = "off";
 let currentSort = "metric_desc";
 let currentMetric = "views";
+let currentOwnerFilterKey = "";
+let currentOwnerModalKey = "";
 
 const els = {
   statTotal: document.getElementById("statTotal"),
@@ -58,6 +60,7 @@ const els = {
   grid: document.getElementById("grid"),
   emptyState: document.getElementById("emptyState"),
   searchInput: document.getElementById("searchInput"),
+  ownerInput: document.getElementById("ownerInput"),
   sortSelect: document.getElementById("sortSelect"),
   metricSelect: document.getElementById("metricSelect"),
   exportCsvBtn: document.getElementById("exportCsvBtn"),
@@ -92,6 +95,19 @@ const els = {
   boardModal: document.getElementById("boardModal"),
   openBoardBtn: document.getElementById("openBoardBtn"),
   closeBoardBtn: document.getElementById("closeBoardBtn"),
+  ownerModal: document.getElementById("ownerModal"),
+  ownerModalTitle: document.getElementById("ownerModalTitle"),
+  ownerModalSub: document.getElementById("ownerModalSub"),
+  ownerProfile: document.getElementById("ownerProfile"),
+  ownerTopObjects: document.getElementById("ownerTopObjects"),
+  ownerFilterBtn: document.getElementById("ownerFilterBtn"),
+  closeOwnerBtn: document.getElementById("closeOwnerBtn"),
+  ownerObjectCount: document.getElementById("ownerObjectCount"),
+  ownerObjectHint: document.getElementById("ownerObjectHint"),
+  ownerMetricTotal: document.getElementById("ownerMetricTotal"),
+  ownerMetricHint: document.getElementById("ownerMetricHint"),
+  ownerGrowthTotal: document.getElementById("ownerGrowthTotal"),
+  ownerGrowthHint: document.getElementById("ownerGrowthHint"),
 
   trendCanvas: document.getElementById("trendCanvas"),
   rankingCanvas: document.getElementById("rankingCanvas"),
@@ -107,6 +123,10 @@ els.openBtn.addEventListener("click", () => els.fileInput.click());
 els.updateBtn.addEventListener("click", updateOpenedBundle);
 els.fileInput.addEventListener("change", handleFileOpen);
 els.searchInput.addEventListener("input", renderAll);
+els.ownerInput.addEventListener("input", () => {
+  currentOwnerFilterKey = "";
+  renderAll();
+});
 
 [els.minViewsInput, els.minLikesInput, els.minShowcaseInput, els.minMetricInput, els.maxMetricInput].forEach((input) => {
   input.addEventListener("input", renderAll);
@@ -129,6 +149,12 @@ els.totalMetricChartBtn.addEventListener("click", openTotalMetricChart);
 els.closeModalBtn.addEventListener("click", closeChartModal);
 els.openBoardBtn.addEventListener("click", openBoardModal);
 els.closeBoardBtn.addEventListener("click", closeBoardModal);
+els.closeOwnerBtn.addEventListener("click", closeOwnerModal);
+els.ownerFilterBtn.addEventListener("click", () => {
+  if (!currentOwnerModalKey) return;
+  applyOwnerFilter(currentOwnerModalKey);
+  closeOwnerModal();
+});
 
 els.chartModal.addEventListener("click", (e) => {
   if (e.target === els.chartModal) closeChartModal();
@@ -138,9 +164,14 @@ els.boardModal.addEventListener("click", (e) => {
   if (e.target === els.boardModal) closeBoardModal();
 });
 
+els.ownerModal.addEventListener("click", (e) => {
+  if (e.target === els.ownerModal) closeOwnerModal();
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeChartModal();
   if (e.key === "Escape") closeBoardModal();
+  if (e.key === "Escape") closeOwnerModal();
 });
 
 els.daysBtn.addEventListener("click", () => {
@@ -180,7 +211,9 @@ function setMode(text) {
 }
 
 function syncModalOpenState() {
-  const hasOpenModal = !els.chartModal.classList.contains("hidden") || !els.boardModal.classList.contains("hidden");
+  const hasOpenModal = !els.chartModal.classList.contains("hidden")
+    || !els.boardModal.classList.contains("hidden")
+    || !els.ownerModal.classList.contains("hidden");
   document.body.classList.toggle("modal-open", hasOpenModal);
 }
 
@@ -370,8 +403,36 @@ function getPreview(obj) {
   return obj?.mainPreview || obj?.preview || obj?.image || "";
 }
 
+function normalizeOwnerData(obj) {
+  const owner = obj?.owner && typeof obj.owner === "object" ? obj.owner : {};
+  const uuid = owner.uuid || owner.useruuid || owner.userUuid || obj?.ownerUuid || obj?.owneruuid || obj?.ownerUUID || obj?.useruuid || obj?.userUuid || "";
+  const name = owner.name || owner.fullName || obj?.ownerName || obj?.username || "";
+  const username = owner.username || owner.login || obj?.ownerUsername || "";
+  const label = name || username || uuid || "Unknown owner";
+  return {
+    uuid: uuid || "Unknown owner",
+    name: name || "",
+    username: username || "",
+    label
+  };
+}
+
+function getOwnerKey(obj) {
+  const owner = normalizeOwnerData(obj);
+  return owner.uuid || owner.username || owner.name || "Unknown owner";
+}
+
 function getOwnerUuid(obj) {
-  return obj?.ownerUuid || obj?.owneruuid || obj?.ownerUUID || obj?.useruuid || obj?.userUuid || "Unknown owner";
+  return normalizeOwnerData(obj).uuid;
+}
+
+function getOwnerDisplayName(obj) {
+  return normalizeOwnerData(obj).label;
+}
+
+function getOwnerSearchHaystack(obj) {
+  const owner = normalizeOwnerData(obj);
+  return [owner.label, owner.name, owner.username, owner.uuid].filter(Boolean).join(" ").toLowerCase();
 }
 
 function buildGoUrl(tinuuid) {
@@ -437,7 +498,9 @@ function ensureMetricFieldsForItem(item) {
   item.lastViews = num(item.lastViews);
   item.lastLikes = num(item.lastLikes);
   item.lastViewsShowcase = num(item.lastViewsShowcase);
+  item.owner = normalizeOwnerData(item);
   item.ownerUuid = getOwnerUuid(item);
+  item.ownerKey = getOwnerKey(item);
 
   if (!Array.isArray(item.history)) item.history = [];
   if (!Array.isArray(item.likesHistory)) item.likesHistory = [];
@@ -461,6 +524,7 @@ function upgradeBundleSchema(bundle) {
     if (item.lastViews == null) item.lastViews = num(item.views || 0);
     if (item.lastLikes == null) item.lastLikes = num(item.likes || 0);
     if (item.lastViewsShowcase == null) item.lastViewsShowcase = num(item.viewsShowcase || 0);
+    item.owner = normalizeOwnerData(item);
     item.ownerUuid = getOwnerUuid(item);
 
     if (!Array.isArray(item.history)) {
@@ -529,6 +593,7 @@ async function fetchAllObjectsWithProgress(titleText = "Loading objects") {
 function normalizeApiObjects(rawObjects) {
   return rawObjects.map((obj) => ({
     tinuuid: getTinuuid(obj),
+    owner: normalizeOwnerData(obj),
     ownerUuid: getOwnerUuid(obj),
     name: getName(obj),
     mainPreview: getPreview(obj),
@@ -603,6 +668,7 @@ function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
     if (!bundleMap.has(id)) {
       bundleMap.set(id, {
         tinuuid: fresh.tinuuid,
+        owner: fresh.owner,
         ownerUuid: fresh.ownerUuid,
         name: fresh.name,
         mainPreview: fresh.mainPreview,
@@ -616,6 +682,7 @@ function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
       });
     } else {
       const existing = bundleMap.get(id);
+      existing.owner = fresh.owner;
       existing.ownerUuid = fresh.ownerUuid;
       existing.name = fresh.name;
       existing.mainPreview = fresh.mainPreview;
@@ -819,15 +886,30 @@ function getGrowthLeaders(list, metric = currentMetric, filter = getActiveGrowth
     .slice(0, 5);
 }
 
+function getOwnerItems(ownerKey, sourceList = currentBundle?.objects || []) {
+  return sourceList
+    .map(ensureMetricFieldsForItem)
+    .filter((item) => getOwnerKey(item) === ownerKey);
+}
+
 function getOwnerGrowthBreakdown(list, metric = currentMetric, filter = getActiveGrowthFilter()) {
   const totals = new Map();
   list.forEach((item) => {
-    const ownerUuid = getOwnerUuid(item);
+    const ownerKey = getOwnerKey(item);
+    const owner = normalizeOwnerData(item);
     const delta = Math.max(0, getDeltaByFilter(item, filter, metric));
-    const current = totals.get(ownerUuid) || { ownerUuid, delta: 0, objects: 0 };
+    const current = totals.get(ownerKey) || {
+      ownerKey,
+      ownerUuid: owner.uuid,
+      ownerName: owner.name,
+      ownerUsername: owner.username,
+      ownerLabel: owner.label,
+      delta: 0,
+      objects: 0
+    };
     current.delta += delta;
     current.objects += 1;
-    totals.set(ownerUuid, current);
+    totals.set(ownerKey, current);
   });
 
   const sorted = [...totals.values()]
@@ -839,6 +921,81 @@ function getOwnerGrowthBreakdown(list, metric = currentMetric, filter = getActiv
     ...entry,
     share: totalGrowth ? (entry.delta / totalGrowth) * 100 : 0
   }));
+}
+
+function applyOwnerFilter(ownerKey) {
+  if (!ownerKey) return;
+  const ownerItems = getOwnerItems(ownerKey);
+  if (!ownerItems.length) return;
+  currentOwnerFilterKey = ownerKey;
+  els.ownerInput.value = getOwnerDisplayName(ownerItems[0]);
+  renderAll();
+  setStatus(`Owner filter applied: ${getOwnerDisplayName(ownerItems[0])}.`);
+}
+
+function renderOwnerModal(ownerKey) {
+  const ownerItems = getOwnerItems(ownerKey);
+  const owner = ownerItems.length ? normalizeOwnerData(ownerItems[0]) : normalizeOwnerData({});
+  const visibleOwnerItems = filterObjects(getVisibleObjects(currentBundle || { objects: [] }, currentMetric))
+    .filter((item) => getOwnerKey(item) === ownerKey);
+  const totalMetric = visibleOwnerItems.reduce((sum, item) => sum + getItemMetricValue(item, currentMetric), 0);
+  const ownerGrowth = visibleOwnerItems.reduce((sum, item) => sum + Math.max(0, getCurrentDelta(item)), 0);
+  const overallGrowth = currentBundle
+    ? getCurrentList().reduce((sum, item) => sum + Math.max(0, getCurrentDelta(item)), 0)
+    : 0;
+  const growthShare = overallGrowth ? (ownerGrowth / overallGrowth) * 100 : 0;
+  const topObjects = [...visibleOwnerItems]
+    .sort((a, b) => getItemMetricValue(b, currentMetric) - getItemMetricValue(a, currentMetric))
+    .slice(0, 5);
+
+  els.ownerModalTitle.textContent = owner.label;
+  els.ownerModalSub.textContent = `${owner.username ? `@${owner.username} · ` : ""}${owner.uuid || "Unknown UUID"}`;
+  els.ownerObjectCount.textContent = formatNum(visibleOwnerItems.length);
+  els.ownerObjectHint.textContent = `${formatNum(ownerItems.length)} total bundle objects for this owner`;
+  els.ownerMetricTotal.textContent = formatNum(totalMetric);
+  els.ownerMetricHint.textContent = `Visible ${METRIC_LABELS[currentMetric]} total`;
+  els.ownerGrowthTotal.textContent = formatSignedNum(ownerGrowth);
+  els.ownerGrowthHint.textContent = `${formatDecimal(growthShare, 1)}% of current filtered growth`;
+
+  els.ownerProfile.innerHTML = `
+    <div class="owner-profile__row"><span>Name</span><strong>${escapeHtml(owner.name || "—")}</strong></div>
+    <div class="owner-profile__row"><span>Username</span><strong>${escapeHtml(owner.username ? `@${owner.username}` : "—")}</strong></div>
+    <div class="owner-profile__row"><span>UUID</span><strong>${escapeHtml(owner.uuid || "—")}</strong></div>
+  `;
+
+  if (!topObjects.length) {
+    els.ownerTopObjects.className = "shortlist empty-list";
+    els.ownerTopObjects.innerHTML = "No visible objects are available for this owner under the current filters.";
+    return;
+  }
+
+  els.ownerTopObjects.className = "shortlist";
+  els.ownerTopObjects.innerHTML = topObjects.map((item, index) => `
+    <div class="shortlist__item">
+      <span class="shortlist__rank">#${index + 1}</span>
+      <span class="shortlist__body">
+        <strong>${escapeHtml(item.name || "Untitled Object")}</strong>
+        <small>${escapeHtml(item.tinuuid || "—")}</small>
+      </span>
+      <span class="shortlist__metric">
+        <strong>${formatNum(getItemMetricValue(item, currentMetric))}</strong>
+        <small>${formatSignedNum(getCurrentDelta(item))}</small>
+      </span>
+    </div>
+  `).join("");
+}
+
+function openOwnerModal(ownerKey) {
+  if (!currentBundle || !ownerKey) return;
+  currentOwnerModalKey = ownerKey;
+  renderOwnerModal(ownerKey);
+  els.ownerModal.classList.remove("hidden");
+  syncModalOpenState();
+}
+
+function closeOwnerModal() {
+  els.ownerModal.classList.add("hidden");
+  syncModalOpenState();
 }
 
 function getDeltaSum(filter, metric = currentMetric) {
@@ -854,18 +1011,21 @@ function getFilterValues() {
     minMetric: num(els.minMetricInput.value),
     maxMetric: els.maxMetricInput.value === "" ? Infinity : num(els.maxMetricInput.value),
     removed: els.removedSelect.value,
-    query: String(els.searchInput.value || "").trim().toLowerCase()
+    query: String(els.searchInput.value || "").trim().toLowerCase(),
+    ownerQuery: String(els.ownerInput.value || "").trim().toLowerCase()
   };
 }
 
 function clearFilterInputs() {
   els.searchInput.value = "";
+  els.ownerInput.value = "";
   els.minViewsInput.value = "";
   els.minLikesInput.value = "";
   els.minShowcaseInput.value = "";
   els.minMetricInput.value = "";
   els.maxMetricInput.value = "";
   els.removedSelect.value = "all";
+  currentOwnerFilterKey = "";
   currentDeltaFilter = "off";
   currentSort = "metric_desc";
   els.sortSelect.value = "metric_desc";
@@ -876,8 +1036,11 @@ function filterObjects(list) {
   return list.filter((item) => {
     const metricValue = getItemMetricValue(item, currentMetric);
     const hay = `${item.name || ""} ${item.tinuuid || ""} ${buildGoUrl(item.tinuuid) || ""}`.toLowerCase();
+    const ownerHay = getOwnerSearchHaystack(item);
 
     if (filters.query && !hay.includes(filters.query)) return false;
+    if (filters.ownerQuery && !ownerHay.includes(filters.ownerQuery)) return false;
+    if (currentOwnerFilterKey && getOwnerKey(item) !== currentOwnerFilterKey) return false;
     if (num(item.lastViews) < filters.minViews) return false;
     if (num(item.lastLikes) < filters.minLikes) return false;
     if (num(item.lastViewsShowcase) < filters.minShowcase) return false;
@@ -984,17 +1147,17 @@ function renderTopList(list) {
   els.topList.className = "shortlist";
   els.topList.innerHTML = owners.slice(0, 5).map((owner, index) => {
     return `
-      <div class="shortlist__item">
+      <button type="button" class="shortlist__item shortlist__item--button owner-open-btn" data-owner-key="${escapeHtml(owner.ownerKey)}">
         <span class="shortlist__rank">#${index + 1}</span>
         <span class="shortlist__body">
-          <strong>${escapeHtml(owner.ownerUuid)}</strong>
+          <strong>${escapeHtml(owner.ownerLabel)}</strong>
           <small>${formatNum(owner.objects)} objects</small>
         </span>
         <span class="shortlist__metric">
           <strong>${formatSignedNum(owner.delta)}</strong>
           <small>${formatDecimal(owner.share, 1)}% share</small>
         </span>
-      </div>
+      </button>
     `;
   }).join("");
 }
@@ -1049,14 +1212,14 @@ function renderNarrative(list) {
 
   els.insightList.innerHTML = [
     topOwner
-      ? `<div class="info-card"><strong>Top owner in ${METRIC_LABELS[currentMetric]} growth:</strong> ${escapeHtml(topOwner.ownerUuid)} added ${formatSignedNum(topOwner.delta)} and owns ${formatDecimal(topOwner.share, 1)}% of owner growth.</div>`
+      ? `<div class="info-card"><strong>Top owner in ${METRIC_LABELS[currentMetric]} growth:</strong> ${escapeHtml(topOwner.ownerLabel)} added ${formatSignedNum(topOwner.delta)} and owns ${formatDecimal(topOwner.share, 1)}% of owner growth.</div>`
       : "<div class=\"info-card\">No owner growth is available under the current filters.</div>",
     `<div class="info-card"><strong>Three-metric change:</strong> views ${formatSignedNum(viewDelta)}, likes ${formatSignedNum(likesDelta)}, showcase ${formatSignedNum(showcaseDelta)}.</div>`,
     `<div class="info-card"><strong>Leading change metric:</strong> ${metricLeaders[0].label} shows the strongest absolute shift in the active period.</div>`
   ].join("");
 
   els.benchmarkList.innerHTML = owners.length
-    ? owners.slice(0, 5).map((owner) => `<div class="benchmark"><span>${escapeHtml(owner.ownerUuid)}</span><strong>${formatSignedNum(owner.delta)} · ${formatDecimal(owner.share, 1)}% · ${formatNum(owner.objects)} objects</strong></div>`).join("")
+    ? owners.slice(0, 5).map((owner) => `<button type="button" class="benchmark benchmark--button owner-open-btn" data-owner-key="${escapeHtml(owner.ownerKey)}"><span>${escapeHtml(owner.ownerLabel)}</span><strong>${formatSignedNum(owner.delta)} · ${formatDecimal(owner.share, 1)}% · ${formatNum(owner.objects)} objects</strong></button>`).join("")
     : "<div class=\"info-card\">No owner growth table is available for the selected period.</div>";
 }
 
@@ -1141,7 +1304,7 @@ function renderRankingChart(list) {
   rankingChartInstance = new Chart(els.rankingCanvas.getContext("2d"), {
     type: "bar",
     data: {
-      labels: owners.slice(0, 6).map((owner) => truncate(owner.ownerUuid, 18)),
+      labels: owners.slice(0, 6).map((owner) => truncate(owner.ownerLabel, 18)),
       datasets: [{
         label: `Δ ${METRIC_LABELS[currentMetric]}`,
         data: owners.slice(0, 6).map((owner) => owner.delta),
@@ -1167,7 +1330,7 @@ function renderMixChart(list) {
   mixChartInstance = new Chart(els.mixCanvas.getContext("2d"), {
     type: "doughnut",
     data: {
-      labels: topOwners.map((owner) => truncate(owner.ownerUuid, 18)),
+      labels: topOwners.map((owner) => truncate(owner.ownerLabel, 18)),
       datasets: [{
         data: topOwners.map((owner) => owner.delta),
         backgroundColor: ["#7cc4ff", "#58d7ae", "#ffc857", "#5aa9ff", "#8f7dff", "#67d9c2"],
@@ -1226,6 +1389,7 @@ function renderCurrent() {
   list.forEach((item, index) => {
     const goUrl = buildGoUrl(item.tinuuid);
     const viewerUrl = buildViewerUrl(item.tinuuid);
+    const owner = normalizeOwnerData(item);
     const preview = item.mainPreview
       ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
       : `<div class="catalog-row__fallback">No preview</div>`;
@@ -1240,6 +1404,10 @@ function renderCurrent() {
       <div class="catalog-row__title">
         <h3>${escapeHtml(item.name || "Untitled Object")}</h3>
         <p>${escapeHtml(item.tinuuid || "—")}</p>
+        <div class="catalog-row__owner">
+          <span class="catalog-row__owner-label">Owner</span>
+          <button type="button" class="text-btn owner-link-btn owner-open-btn" data-owner-key="${escapeHtml(getOwnerKey(item))}">${escapeHtml(owner.label)}</button>
+        </div>
         <small>${item.removed ? "Removed from latest API snapshot" : "Live in latest API snapshot"}</small>
       </div>
 
@@ -1268,6 +1436,7 @@ function renderCurrent() {
         ${viewerUrl
           ? `<a class="btn btn--primary btn--small" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">3D viewer</a>`
           : `<button type="button" class="btn btn--ghost btn--small" disabled>3D viewer</button>`}
+          <button type="button" class="btn btn--ghost btn--small owner-open-btn" data-owner-key="${escapeHtml(getOwnerKey(item))}">Owner</button>
           <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
         </div>
     `;
@@ -1275,6 +1444,9 @@ function renderCurrent() {
   });
 
   bindChartButtons(els.grid);
+  bindOwnerButtons(els.grid);
+  bindOwnerButtons(els.topList);
+  bindOwnerButtons(els.benchmarkList);
 }
 
 function bindChartButtons(scope) {
@@ -1284,6 +1456,16 @@ function bindChartButtons(scope) {
       const entry = currentBundle?.objects.find((x) => x.tinuuid === id);
       if (!entry) return;
       openChartModal(entry);
+    });
+  });
+}
+
+function bindOwnerButtons(scope) {
+  scope.querySelectorAll(".owner-open-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ownerKey = btn.dataset.ownerKey;
+      if (!ownerKey) return;
+      openOwnerModal(ownerKey);
     });
   });
 }
@@ -1495,6 +1677,9 @@ function renderAll() {
   renderInsights();
   renderCurrent();
   renderFilterDelta();
+  if (!els.ownerModal.classList.contains("hidden") && currentOwnerModalKey) {
+    renderOwnerModal(currentOwnerModalKey);
+  }
   setMetricChip();
 }
 
