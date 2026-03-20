@@ -342,8 +342,7 @@ canvas {
 
 .sidebar,
 .content,
-.content__top,
-.content__mid,
+.analytics-grid,
 .filter-panel,
 .cards-grid,
 .kpi-grid,
@@ -378,12 +377,6 @@ canvas {
 
 .filter-panel--top > .field-group.two-cols {
   grid-column: span 2;
-}
-
-.content__top,
-.content__mid {
-  align-items: start;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .filter-panel,
@@ -520,12 +513,13 @@ canvas {
   justify-items: end;
 }
 
-.content__top {
-  grid-template-columns: minmax(420px, 1.4fr) minmax(320px, 0.9fr);
+.analytics-grid {
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
-.content__mid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.chart-panel--wide {
+  grid-column: span 2;
 }
 
 .shortlist-panel {
@@ -815,18 +809,8 @@ canvas {
     grid-template-columns: 1fr;
   }
 
-  .content__top {
-    grid-template-columns: 1fr;
-  }
-
-  .content__mid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1180px) {
-  .content__mid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .chart-panel--wide {
+    grid-column: span 1;
   }
 }
 
@@ -851,7 +835,7 @@ canvas {
 
   .stats-grid,
   .insights-grid,
-  .content__mid,
+  .analytics-grid,
   .filter-panel--top,
   .field-group.two-cols,
   .card-actions,
