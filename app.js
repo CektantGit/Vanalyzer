@@ -45,6 +45,9 @@ const els = {
   boardViewsDelta: document.getElementById("boardViewsDelta"),
   boardLikesDelta: document.getElementById("boardLikesDelta"),
   boardShowcaseDelta: document.getElementById("boardShowcaseDelta"),
+  boardViewsHint: document.getElementById("boardViewsHint"),
+  boardLikesHint: document.getElementById("boardLikesHint"),
+  boardShowcaseHint: document.getElementById("boardShowcaseHint"),
 
   totalMetricChartBtn: document.getElementById("totalMetricChartBtn"),
   fileChip: document.getElementById("fileChip"),
@@ -956,6 +959,9 @@ function renderNarrative(list) {
     els.boardViewsDelta.textContent = "+0";
     els.boardLikesDelta.textContent = "+0";
     els.boardShowcaseDelta.textContent = "+0";
+    els.boardViewsHint.textContent = "No growth data yet";
+    els.boardLikesHint.textContent = "No growth data yet";
+    els.boardShowcaseHint.textContent = "No growth data yet";
     els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate change totals and top-mover insights.</div>";
     els.benchmarkList.innerHTML = "<div class=\"info-card\">No three-metric snapshot is available yet.</div>";
     return;
@@ -965,21 +971,32 @@ function renderNarrative(list) {
   const viewDelta = getMetricDeltaTotal(list, "views", activeFilter);
   const likesDelta = getMetricDeltaTotal(list, "likes", activeFilter);
   const showcaseDelta = getMetricDeltaTotal(list, "viewsShowcase", activeFilter);
+  const positiveViews = list.filter((item) => getDeltaByFilter(item, activeFilter, "views") > 0).length;
+  const positiveLikes = list.filter((item) => getDeltaByFilter(item, activeFilter, "likes") > 0).length;
+  const positiveShowcase = list.filter((item) => getDeltaByFilter(item, activeFilter, "viewsShowcase") > 0).length;
   const leaders = getGrowthLeaders(list, currentMetric, activeFilter);
   const topLeader = leaders[0];
   const positiveGrowthCount = list.filter((item) => getDeltaByFilter(item, activeFilter, currentMetric) > 0).length;
   const removedCount = currentBundle.objects.filter((item) => item.removed).length;
+  const metricLeaders = [
+    { label: "views", delta: viewDelta },
+    { label: "likes", delta: likesDelta },
+    { label: "showcase", delta: showcaseDelta }
+  ].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
   els.boardViewsDelta.textContent = formatSignedNum(viewDelta);
   els.boardLikesDelta.textContent = formatSignedNum(likesDelta);
   els.boardShowcaseDelta.textContent = formatSignedNum(showcaseDelta);
+  els.boardViewsHint.textContent = `${formatNum(positiveViews)} objects gained views`;
+  els.boardLikesHint.textContent = `${formatNum(positiveLikes)} objects gained likes`;
+  els.boardShowcaseHint.textContent = `${formatNum(positiveShowcase)} objects gained showcase`;
 
   els.insightList.innerHTML = [
     topLeader
       ? `<div class="info-card"><strong>Top mover in ${METRIC_LABELS[currentMetric]}:</strong> ${escapeHtml(topLeader.item.name || topLeader.item.tinuuid)} changed by ${formatSignedNum(topLeader.delta)}.</div>`
       : "<div class=\"info-card\">No top mover is available under the current filters.</div>",
     `<div class="info-card"><strong>Visible movers:</strong> ${formatNum(positiveGrowthCount)} objects show positive ${METRIC_LABELS[currentMetric]} growth.</div>`,
-    `<div class="info-card"><strong>Cross-metric change:</strong> views ${formatSignedNum(viewDelta)}, likes ${formatSignedNum(likesDelta)}, showcase ${formatSignedNum(showcaseDelta)}.</div>`
+    `<div class="info-card"><strong>Cross-metric leader:</strong> ${metricLeaders[0].label} shows the largest absolute change in the active growth window.</div>`
   ].join("");
 
   els.benchmarkList.innerHTML = [
@@ -987,7 +1004,8 @@ function renderNarrative(list) {
     `<div class="benchmark"><span>Removed in bundle</span><strong>${formatNum(removedCount)}</strong></div>`,
     `<div class="benchmark"><span>Total views</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViews), 0))}</strong></div>`,
     `<div class="benchmark"><span>Total likes</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastLikes), 0))}</strong></div>`,
-    `<div class="benchmark"><span>Total showcase</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViewsShowcase), 0))}</strong></div>`
+    `<div class="benchmark"><span>Total showcase</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViewsShowcase), 0))}</strong></div>`,
+    `<div class="benchmark"><span>Strongest change metric</span><strong>${metricLeaders[0].label}</strong></div>`
   ].join("");
 }
 
@@ -1088,9 +1106,9 @@ function renderRankingChart(list) {
 function renderMixChart(list) {
   const base = list.length ? list : currentDisplayObjects;
   const totals = [
-    base.reduce((sum, item) => sum + num(item.lastViews), 0),
-    base.reduce((sum, item) => sum + num(item.lastLikes), 0),
-    base.reduce((sum, item) => sum + num(item.lastViewsShowcase), 0)
+    Math.abs(getMetricDeltaTotal(base, "views")),
+    Math.abs(getMetricDeltaTotal(base, "likes")),
+    Math.abs(getMetricDeltaTotal(base, "viewsShowcase"))
   ];
 
   if (mixChartInstance) mixChartInstance.destroy();

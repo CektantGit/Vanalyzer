@@ -496,7 +496,7 @@ option {
   width: 100%;
   text-align: left;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: 40px minmax(0, 1fr) minmax(96px, auto);
   gap: 12px;
   align-items: center;
   padding: 12px;
@@ -542,7 +542,7 @@ option {
 
 .analytics-grid {
   align-items: start;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .chart-panel--wide {
@@ -579,6 +579,7 @@ option {
   justify-content: space-between;
   gap: 16px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .results-panel {
@@ -934,7 +935,8 @@ body.modal-open {
 }
 
 .board-modal .modal-card {
-  width: min(1520px, 100%);
+  width: min(1280px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
 }
 
 .modal__head {
@@ -948,6 +950,7 @@ body.modal-open {
 .modal__body--board {
   min-height: min(80vh, 920px);
   overflow: auto;
+  overflow-x: hidden;
 }
 
 .board-modal__toolbar {
@@ -967,12 +970,13 @@ body.modal-open {
 }
 
 .board-kpi-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-bottom: 16px;
 }
 
 .board-kpi {
   padding: 18px;
+  min-width: 0;
 }
 
 .board-kpi__label,
