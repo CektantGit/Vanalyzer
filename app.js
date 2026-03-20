@@ -370,6 +370,10 @@ function getPreview(obj) {
   return obj?.mainPreview || obj?.preview || obj?.image || "";
 }
 
+function getOwnerUuid(obj) {
+  return obj?.ownerUuid || obj?.owneruuid || obj?.ownerUUID || obj?.useruuid || obj?.userUuid || "Unknown owner";
+}
+
 function buildGoUrl(tinuuid) {
   if (!tinuuid) return null;
   return `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}`;
@@ -433,6 +437,7 @@ function ensureMetricFieldsForItem(item) {
   item.lastViews = num(item.lastViews);
   item.lastLikes = num(item.lastLikes);
   item.lastViewsShowcase = num(item.lastViewsShowcase);
+  item.ownerUuid = getOwnerUuid(item);
 
   if (!Array.isArray(item.history)) item.history = [];
   if (!Array.isArray(item.likesHistory)) item.likesHistory = [];
@@ -456,6 +461,7 @@ function upgradeBundleSchema(bundle) {
     if (item.lastViews == null) item.lastViews = num(item.views || 0);
     if (item.lastLikes == null) item.lastLikes = num(item.likes || 0);
     if (item.lastViewsShowcase == null) item.lastViewsShowcase = num(item.viewsShowcase || 0);
+    item.ownerUuid = getOwnerUuid(item);
 
     if (!Array.isArray(item.history)) {
       item.history = item.lastViews || item.createdAt || bundle.updatedAt
@@ -523,6 +529,7 @@ async function fetchAllObjectsWithProgress(titleText = "Loading objects") {
 function normalizeApiObjects(rawObjects) {
   return rawObjects.map((obj) => ({
     tinuuid: getTinuuid(obj),
+    ownerUuid: getOwnerUuid(obj),
     name: getName(obj),
     mainPreview: getPreview(obj),
     lastViews: getViews(obj),
@@ -596,6 +603,7 @@ function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
     if (!bundleMap.has(id)) {
       bundleMap.set(id, {
         tinuuid: fresh.tinuuid,
+        ownerUuid: fresh.ownerUuid,
         name: fresh.name,
         mainPreview: fresh.mainPreview,
         lastViews: num(fresh.lastViews),
@@ -608,6 +616,7 @@ function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
       });
     } else {
       const existing = bundleMap.get(id);
+      existing.ownerUuid = fresh.ownerUuid;
       existing.name = fresh.name;
       existing.mainPreview = fresh.mainPreview;
       existing.lastViews = num(fresh.lastViews);
@@ -810,6 +819,28 @@ function getGrowthLeaders(list, metric = currentMetric, filter = getActiveGrowth
     .slice(0, 5);
 }
 
+function getOwnerGrowthBreakdown(list, metric = currentMetric, filter = getActiveGrowthFilter()) {
+  const totals = new Map();
+  list.forEach((item) => {
+    const ownerUuid = getOwnerUuid(item);
+    const delta = Math.max(0, getDeltaByFilter(item, filter, metric));
+    const current = totals.get(ownerUuid) || { ownerUuid, delta: 0, objects: 0 };
+    current.delta += delta;
+    current.objects += 1;
+    totals.set(ownerUuid, current);
+  });
+
+  const sorted = [...totals.values()]
+    .filter((entry) => entry.delta > 0)
+    .sort((a, b) => b.delta - a.delta || b.objects - a.objects);
+
+  const totalGrowth = sorted.reduce((sum, entry) => sum + entry.delta, 0);
+  return sorted.map((entry) => ({
+    ...entry,
+    share: totalGrowth ? (entry.delta / totalGrowth) * 100 : 0
+  }));
+}
+
 function getDeltaSum(filter, metric = currentMetric) {
   if (!currentBundle) return 0;
   return getVisibleObjects(currentBundle, metric).reduce((sum, item) => sum + Math.max(0, getDeltaByFilter(item, filter, metric)), 0);
@@ -943,32 +974,29 @@ function renderFilterDelta() {
 }
 
 function renderTopList(list) {
-  if (!list.length) {
+  const owners = getOwnerGrowthBreakdown(list);
+  if (!owners.length) {
     els.topList.className = "shortlist empty-list";
-    els.topList.innerHTML = "No objects match the current filters.";
+    els.topList.innerHTML = "No owner growth is available for the selected period.";
     return;
   }
 
-  const leaders = getGrowthLeaders(list);
   els.topList.className = "shortlist";
-  els.topList.innerHTML = leaders.map(({ item, delta }, index) => {
-    const metricValue = getItemMetricValue(item, currentMetric);
+  els.topList.innerHTML = owners.slice(0, 5).map((owner, index) => {
     return `
-      <button type="button" class="shortlist__item chart-btn" data-id="${escapeHtml(item.tinuuid)}">
+      <div class="shortlist__item">
         <span class="shortlist__rank">#${index + 1}</span>
         <span class="shortlist__body">
-          <strong>${escapeHtml(item.name || "Untitled Object")}</strong>
-          <small>${escapeHtml(item.tinuuid || "—")}</small>
+          <strong>${escapeHtml(owner.ownerUuid)}</strong>
+          <small>${formatNum(owner.objects)} objects</small>
         </span>
         <span class="shortlist__metric">
-          <strong>${formatSignedNum(delta)}</strong>
-          <small>${METRIC_LABELS[currentMetric]} total ${formatNum(metricValue)}</small>
+          <strong>${formatSignedNum(owner.delta)}</strong>
+          <small>${formatDecimal(owner.share, 1)}% share</small>
         </span>
-      </button>
+      </div>
     `;
   }).join("");
-
-  bindChartButtons(els.topList);
 }
 
 function openBoardModal() {
@@ -992,8 +1020,8 @@ function renderNarrative(list) {
     els.boardViewsHint.textContent = "No growth data yet";
     els.boardLikesHint.textContent = "No growth data yet";
     els.boardShowcaseHint.textContent = "No growth data yet";
-    els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate change totals and top-mover insights.</div>";
-    els.benchmarkList.innerHTML = "<div class=\"info-card\">No three-metric snapshot is available yet.</div>";
+    els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate change totals and owner growth highlights.</div>";
+    els.benchmarkList.innerHTML = "<div class=\"info-card\">No owner growth table is available yet.</div>";
     return;
   }
 
@@ -1004,10 +1032,8 @@ function renderNarrative(list) {
   const positiveViews = list.filter((item) => getDeltaByFilter(item, activeFilter, "views") > 0).length;
   const positiveLikes = list.filter((item) => getDeltaByFilter(item, activeFilter, "likes") > 0).length;
   const positiveShowcase = list.filter((item) => getDeltaByFilter(item, activeFilter, "viewsShowcase") > 0).length;
-  const leaders = getGrowthLeaders(list, currentMetric, activeFilter);
-  const topLeader = leaders[0];
-  const positiveGrowthCount = list.filter((item) => getDeltaByFilter(item, activeFilter, currentMetric) > 0).length;
-  const removedCount = currentBundle.objects.filter((item) => item.removed).length;
+  const owners = getOwnerGrowthBreakdown(list, currentMetric, activeFilter);
+  const topOwner = owners[0];
   const metricLeaders = [
     { label: "views", delta: viewDelta },
     { label: "likes", delta: likesDelta },
@@ -1022,21 +1048,16 @@ function renderNarrative(list) {
   els.boardShowcaseHint.textContent = `${formatNum(positiveShowcase)} objects gained showcase`;
 
   els.insightList.innerHTML = [
-    topLeader
-      ? `<div class="info-card"><strong>Top mover in ${METRIC_LABELS[currentMetric]}:</strong> ${escapeHtml(topLeader.item.name || topLeader.item.tinuuid)} changed by ${formatSignedNum(topLeader.delta)}.</div>`
-      : "<div class=\"info-card\">No top mover is available under the current filters.</div>",
-    `<div class="info-card"><strong>Visible movers:</strong> ${formatNum(positiveGrowthCount)} objects show positive ${METRIC_LABELS[currentMetric]} growth.</div>`,
-    `<div class="info-card"><strong>Cross-metric leader:</strong> ${metricLeaders[0].label} shows the largest absolute change in the active growth window.</div>`
+    topOwner
+      ? `<div class="info-card"><strong>Top owner in ${METRIC_LABELS[currentMetric]} growth:</strong> ${escapeHtml(topOwner.ownerUuid)} added ${formatSignedNum(topOwner.delta)} and owns ${formatDecimal(topOwner.share, 1)}% of owner growth.</div>`
+      : "<div class=\"info-card\">No owner growth is available under the current filters.</div>",
+    `<div class="info-card"><strong>Three-metric change:</strong> views ${formatSignedNum(viewDelta)}, likes ${formatSignedNum(likesDelta)}, showcase ${formatSignedNum(showcaseDelta)}.</div>`,
+    `<div class="info-card"><strong>Leading change metric:</strong> ${metricLeaders[0].label} shows the strongest absolute shift in the active period.</div>`
   ].join("");
 
-  els.benchmarkList.innerHTML = [
-    `<div class="benchmark"><span>Objects in view</span><strong>${formatNum(list.length)}</strong></div>`,
-    `<div class="benchmark"><span>Removed in bundle</span><strong>${formatNum(removedCount)}</strong></div>`,
-    `<div class="benchmark"><span>Total views</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViews), 0))}</strong></div>`,
-    `<div class="benchmark"><span>Total likes</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastLikes), 0))}</strong></div>`,
-    `<div class="benchmark"><span>Total showcase</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViewsShowcase), 0))}</strong></div>`,
-    `<div class="benchmark"><span>Strongest change metric</span><strong>${metricLeaders[0].label}</strong></div>`
-  ].join("");
+  els.benchmarkList.innerHTML = owners.length
+    ? owners.slice(0, 5).map((owner) => `<div class="benchmark"><span>${escapeHtml(owner.ownerUuid)}</span><strong>${formatSignedNum(owner.delta)} · ${formatDecimal(owner.share, 1)}% · ${formatNum(owner.objects)} objects</strong></div>`).join("")
+    : "<div class=\"info-card\">No owner growth table is available for the selected period.</div>";
 }
 
 function getChartBaseOptions() {
@@ -1077,11 +1098,16 @@ function renderOverviewCharts(list) {
 
 function renderTrendChart() {
   const history = currentBundle ? getBundleTotalHistory(currentBundle, currentMetric) : [];
-  const labels = history.map((entry) => formatPointLabel(entry.capturedAt));
-  const values = history.map((entry) => num(entry.views));
+  const points = history.slice(1).map((entry, index) => ({
+    capturedAt: entry.capturedAt,
+    delta: num(entry.views) - num(history[index].views)
+  }));
+  const labels = points.map((entry) => formatPointLabel(entry.capturedAt));
+  const values = points.map((entry) => entry.delta);
+  const totalChange = values.reduce((sum, value) => sum + value, 0);
 
   els.trendSummary.textContent = history.length
-    ? `${values.length} points · latest value ${formatNum(values.at(-1))}`
+    ? `${values.length} change points · total ${formatSignedNum(totalChange)}`
     : "No data";
 
   if (trendChartInstance) trendChartInstance.destroy();
@@ -1090,7 +1116,7 @@ function renderTrendChart() {
     data: {
       labels,
       datasets: [{
-        label: `Σ ${METRIC_LABELS[currentMetric]}`,
+        label: `Δ ${METRIC_LABELS[currentMetric]}`,
         data: values,
         borderColor: "#7cc4ff",
         backgroundColor: "rgba(79,146,255,.18)",
@@ -1106,19 +1132,19 @@ function renderTrendChart() {
 }
 
 function renderRankingChart(list) {
-  const leaders = getGrowthLeaders(list);
-  els.rankingSummary.textContent = leaders.length
-    ? `Top ${leaders.length} movers for ${METRIC_LABELS[currentMetric]}`
+  const owners = getOwnerGrowthBreakdown(list);
+  els.rankingSummary.textContent = owners.length
+    ? `Top ${owners.length} owners for ${METRIC_LABELS[currentMetric]} growth`
     : "No data";
 
   if (rankingChartInstance) rankingChartInstance.destroy();
   rankingChartInstance = new Chart(els.rankingCanvas.getContext("2d"), {
     type: "bar",
     data: {
-      labels: leaders.map(({ item }) => truncate(item.name || item.tinuuid || "Object", 22)),
+      labels: owners.slice(0, 6).map((owner) => truncate(owner.ownerUuid, 18)),
       datasets: [{
         label: `Δ ${METRIC_LABELS[currentMetric]}`,
-        data: leaders.map(({ delta }) => delta),
+        data: owners.slice(0, 6).map((owner) => owner.delta),
         borderRadius: 10,
         backgroundColor: ["#7cc4ff", "#5aa9ff", "#4f92ff", "#3a7df3", "#58d7ae"]
       }]
@@ -1134,21 +1160,17 @@ function renderRankingChart(list) {
 }
 
 function renderMixChart(list) {
-  const base = list.length ? list : currentDisplayObjects;
-  const totals = [
-    Math.abs(getMetricDeltaTotal(base, "views")),
-    Math.abs(getMetricDeltaTotal(base, "likes")),
-    Math.abs(getMetricDeltaTotal(base, "viewsShowcase"))
-  ];
+  const owners = getOwnerGrowthBreakdown(list.length ? list : currentDisplayObjects);
+  const topOwners = owners.slice(0, 6);
 
   if (mixChartInstance) mixChartInstance.destroy();
   mixChartInstance = new Chart(els.mixCanvas.getContext("2d"), {
     type: "doughnut",
     data: {
-      labels: ["views", "likes", "viewsShowcase"],
+      labels: topOwners.map((owner) => truncate(owner.ownerUuid, 18)),
       datasets: [{
-        data: totals,
-        backgroundColor: ["#7cc4ff", "#58d7ae", "#ffc857"],
+        data: topOwners.map((owner) => owner.delta),
+        backgroundColor: ["#7cc4ff", "#58d7ae", "#ffc857", "#5aa9ff", "#8f7dff", "#67d9c2"],
         borderWidth: 0,
         hoverOffset: 8
       }]
@@ -1163,7 +1185,7 @@ function renderMixChart(list) {
         },
         tooltip: {
           callbacks: {
-            label: (ctx) => `${ctx.label}: ${formatNum(ctx.parsed)}`
+            label: (ctx) => `${ctx.label}: ${formatNum(ctx.parsed)} (${formatDecimal(topOwners[ctx.dataIndex]?.share || 0, 1)}%)`
           }
         }
       }
