@@ -168,9 +168,14 @@ function setStatus(text) {
 }
 
 function setMode(text) {
-  const value = `Mode: ${text}`;
+  const value = `Session: ${text}`;
   els.modeChip.textContent = value;
   els.modeChip.title = value;
+}
+
+function syncModalOpenState() {
+  const hasOpenModal = !els.chartModal.classList.contains("hidden") || !els.boardModal.classList.contains("hidden");
+  document.body.classList.toggle("modal-open", hasOpenModal);
 }
 
 function setFileChip(text) {
@@ -913,15 +918,16 @@ function renderTopList(list) {
 }
 
 function openBoardModal() {
-  if (!currentBundle) {
-    setStatus("Load a bundle.json file first.");
-    return;
-  }
   els.boardModal.classList.remove("hidden");
+  syncModalOpenState();
+  if (!currentBundle) {
+    setStatus("Analytics board opened in preview mode. Load a bundle.json file to populate charts and rankings.");
+  }
 }
 
 function closeBoardModal() {
   els.boardModal.classList.add("hidden");
+  syncModalOpenState();
 }
 
 function renderNarrative(list) {
@@ -1266,6 +1272,7 @@ function openChartModal(entry) {
   els.modalTitle.textContent = `${entry.name || "Chart"} · ${METRIC_LABELS[currentMetric]}`;
   els.modalSub.textContent = `TINUUID: ${entry.tinuuid || "—"}`;
   els.chartModal.classList.remove("hidden");
+  syncModalOpenState();
   drawChart(entry);
 }
 
@@ -1292,11 +1299,13 @@ function openTotalMetricChart() {
   els.modalTitle.textContent = `Total ${METRIC_LABELS[currentMetric]} across all objects`;
   els.modalSub.textContent = `Historical total of ${METRIC_LABELS[currentMetric]} across all objects`;
   els.chartModal.classList.remove("hidden");
+  syncModalOpenState();
   drawChart(currentChartEntry);
 }
 
 function closeChartModal() {
   els.chartModal.classList.add("hidden");
+  syncModalOpenState();
 }
 
 function updateChartModeButtons() {

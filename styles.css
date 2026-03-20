@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --bg: #07111f;
   --bg-soft: #0b1728;
   --panel: rgba(11, 21, 37, 0.88);
@@ -43,6 +44,7 @@ body {
 
 body {
   padding: 24px;
+  overflow-x: hidden;
 }
 
 button,
@@ -364,19 +366,8 @@ canvas {
 .filter-panel {
   position: sticky;
   top: 24px;
-  max-height: calc(100vh - 24px);
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-
-.filter-panel::-webkit-scrollbar {
-  width: 10px;
-}
-
-.filter-panel::-webkit-scrollbar-thumb {
-  background: rgba(103, 178, 255, 0.24);
-  border-radius: 999px;
+  max-height: none;
+  overflow: visible;
 }
 
 .filter-panel,
@@ -404,6 +395,8 @@ canvas {
 
 .input,
 .select {
+  appearance: none;
+  -webkit-appearance: none;
   min-height: 46px;
   border-radius: 14px;
   border: 1px solid var(--stroke);
@@ -419,14 +412,19 @@ canvas {
   box-shadow: 0 0 0 4px rgba(103,178,255,0.12);
 }
 
+option {
+  background: #0b1728;
+  color: var(--text);
+}
+
 .segmented {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 8px;
   padding: 6px;
   border-radius: 16px;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--stroke);
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
 .filter-panel .segmented--metrics {
@@ -444,8 +442,9 @@ canvas {
 }
 
 .segmented__btn {
-  flex: 1 1 120px;
+  width: 100%;
   min-height: 40px;
+  min-width: 0;
   border-radius: 12px;
   background: transparent;
   color: var(--muted);
@@ -911,6 +910,10 @@ canvas {
   z-index: 50;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 .overlay-card {
   width: min(520px, 100%);
 }
@@ -948,6 +951,10 @@ canvas {
 .analytics-launcher {
   display: grid;
   gap: 12px;
+}
+
+.analytics-launcher .panel__header {
+  align-items: flex-start;
 }
 
 #modalSub,
