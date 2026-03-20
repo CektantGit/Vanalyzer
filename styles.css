@@ -429,6 +429,20 @@ canvas {
   border: 1px solid var(--stroke);
 }
 
+.filter-panel .segmented--metrics {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.filter-panel .segmented--filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.filter-panel .segmented--filters .segmented__btn:last-child {
+  grid-column: 1 / -1;
+}
+
 .segmented__btn {
   flex: 1 1 120px;
   min-height: 40px;
@@ -630,7 +644,8 @@ canvas {
 .catalog-row__title p,
 .catalog-row__title small,
 .catalog-row__metric-label,
-.catalog-row__label {
+.catalog-row__label,
+.catalog-row__stat small {
   margin: 0;
   color: var(--muted);
 }
@@ -913,12 +928,26 @@ canvas {
   width: min(1040px, 100%);
 }
 
+.board-modal .modal-card {
+  width: min(1520px, 100%);
+}
+
 .modal__head {
   align-items: flex-start;
 }
 
 .modal__body {
   min-height: 460px;
+}
+
+.modal__body--board {
+  min-height: min(80vh, 920px);
+  overflow: auto;
+}
+
+.analytics-launcher {
+  display: grid;
+  gap: 12px;
 }
 
 #modalSub,

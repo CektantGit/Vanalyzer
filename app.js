@@ -41,6 +41,7 @@ const els = {
   trendSummary: document.getElementById("trendSummary"),
   rankingSummary: document.getElementById("rankingSummary"),
   resultsSummary: document.getElementById("resultsSummary"),
+  boardSub: document.getElementById("boardSub"),
 
   totalMetricChartBtn: document.getElementById("totalMetricChartBtn"),
   fileChip: document.getElementById("fileChip"),
@@ -82,6 +83,9 @@ const els = {
   closeModalBtn: document.getElementById("closeModalBtn"),
   daysBtn: document.getElementById("daysBtn"),
   monthsBtn: document.getElementById("monthsBtn"),
+  boardModal: document.getElementById("boardModal"),
+  openBoardBtn: document.getElementById("openBoardBtn"),
+  closeBoardBtn: document.getElementById("closeBoardBtn"),
 
   trendCanvas: document.getElementById("trendCanvas"),
   rankingCanvas: document.getElementById("rankingCanvas"),
@@ -117,13 +121,20 @@ els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
 els.resetBtn.addEventListener("click", resetUi);
 els.totalMetricChartBtn.addEventListener("click", openTotalMetricChart);
 els.closeModalBtn.addEventListener("click", closeChartModal);
+els.openBoardBtn.addEventListener("click", openBoardModal);
+els.closeBoardBtn.addEventListener("click", closeBoardModal);
 
 els.chartModal.addEventListener("click", (e) => {
   if (e.target === els.chartModal) closeChartModal();
 });
 
+els.boardModal.addEventListener("click", (e) => {
+  if (e.target === els.boardModal) closeBoardModal();
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeChartModal();
+  if (e.key === "Escape") closeBoardModal();
 });
 
 els.daysBtn.addEventListener("click", () => {
@@ -901,6 +912,18 @@ function renderTopList(list) {
   bindChartButtons(els.topList);
 }
 
+function openBoardModal() {
+  if (!currentBundle) {
+    setStatus("Load a bundle.json file first.");
+    return;
+  }
+  els.boardModal.classList.remove("hidden");
+}
+
+function closeBoardModal() {
+  els.boardModal.classList.add("hidden");
+}
+
 function renderNarrative(list) {
   if (!currentBundle) {
     els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate the key insight panel.</div>";
@@ -1069,6 +1092,7 @@ function renderCurrent() {
     currentRenderedObjects = [];
     els.emptyState.classList.remove("hidden");
     els.resultsSummary.textContent = "0 cards";
+    els.boardSub.textContent = "Open a bundle to populate the full analytics board.";
     renderTopList([]);
     renderNarrative([]);
     renderOverviewCharts([]);
@@ -1083,6 +1107,7 @@ function renderCurrent() {
   renderTopList(list);
   renderNarrative(list);
   renderOverviewCharts(list);
+  els.boardSub.textContent = `Metric: ${METRIC_LABELS[currentMetric]} · Filter: ${getFilterName(currentDeltaFilter)} · Objects in view: ${formatNum(list.length)}`;
 
   if (!list.length) {
     els.emptyState.classList.remove("hidden");
@@ -1091,7 +1116,7 @@ function renderCurrent() {
 
   els.emptyState.classList.add("hidden");
 
-  const maxMetric = Math.max(...list.map((item) => getItemMetricValue(item, currentMetric)), 1);
+  const activeCardPeriod = currentDeltaFilter === "off" ? "last_update" : currentDeltaFilter;
 
   list.forEach((item, index) => {
     const goUrl = buildGoUrl(item.tinuuid);
@@ -1100,9 +1125,7 @@ function renderCurrent() {
       ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
       : `<div class="catalog-row__fallback">No preview</div>`;
 
-    const metricValue = getItemMetricValue(item, currentMetric);
     const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item, currentMetric) : getCurrentDelta(item);
-    const progress = Math.min(100, (metricValue / maxMetric) * 100);
     const deltaText = delta > 0 ? `+${formatNum(delta)}` : "no growth";
 
     const card = document.createElement("article");
@@ -1118,44 +1141,37 @@ function renderCurrent() {
         <small>${item.removed ? "Removed from latest API snapshot" : "Live in latest API snapshot"}</small>
       </div>
 
-      <div class="catalog-row__summary">
-        <div class="catalog-row__metric-head">
-          <span class="catalog-row__metric-label">${escapeHtml(METRIC_LABELS[currentMetric])}</span>
-          <strong class="catalog-row__metric-value">${formatNum(metricValue)}</strong>
+        <div class="catalog-row__stat">
+          <span class="catalog-row__label">views</span>
+          <strong>${formatNum(item.lastViews)}</strong>
+          <small>${formatSignedNum(getDeltaByFilter(item, activeCardPeriod, "views"))}</small>
         </div>
-        <div class="catalog-row__progress">
-          <div class="catalog-row__progress-bar" style="width:${progress}%"></div>
+
+        <div class="catalog-row__stat">
+          <span class="catalog-row__label">likes</span>
+          <strong>${formatNum(item.lastLikes)}</strong>
+          <small>${formatSignedNum(getDeltaByFilter(item, activeCardPeriod, "likes"))}</small>
         </div>
-      </div>
 
-      <div class="catalog-row__stat">
-        <span class="catalog-row__label">views</span>
-        <strong>${formatNum(item.lastViews)}</strong>
-      </div>
-
-      <div class="catalog-row__stat">
-        <span class="catalog-row__label">likes</span>
-        <strong>${formatNum(item.lastLikes)}</strong>
-      </div>
-
-      <div class="catalog-row__stat">
-        <span class="catalog-row__label">showcase</span>
-        <strong>${formatNum(item.lastViewsShowcase)}</strong>
-      </div>
-
-      <div class="catalog-row__actions">
-        <div class="catalog-row__delta ${delta > 0 ? 'positive' : ''}">
-          <span class="catalog-row__label">Δ ${getFilterName(currentDeltaFilter)}</span>
-          <strong>${deltaText}</strong>
+        <div class="catalog-row__stat">
+          <span class="catalog-row__label">showcase</span>
+          <strong>${formatNum(item.lastViewsShowcase)}</strong>
+          <small>${formatSignedNum(getDeltaByFilter(item, activeCardPeriod, "viewsShowcase"))}</small>
         </div>
-        ${goUrl
-          ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
-          : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
+
+        <div class="catalog-row__actions">
+          <div class="catalog-row__delta ${delta > 0 ? 'positive' : ''}">
+            <span class="catalog-row__label">Δ ${getFilterName(activeCardPeriod)}</span>
+            <strong>${deltaText}</strong>
+          </div>
+          ${goUrl
+            ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
+            : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
         ${viewerUrl
           ? `<a class="btn btn--primary btn--small" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">3D viewer</a>`
           : `<button type="button" class="btn btn--ghost btn--small" disabled>3D viewer</button>`}
-        <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
-      </div>
+          <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
+        </div>
     `;
     els.grid.appendChild(card);
   });
