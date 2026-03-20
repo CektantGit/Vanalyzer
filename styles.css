@@ -381,6 +381,7 @@ canvas {
 }
 
 .filter-panel,
+.board-panel,
 .shortlist-panel,
 .chart-panel,
 .results-panel,
@@ -538,6 +539,20 @@ option {
   display: grid;
   gap: 3px;
   justify-items: end;
+}
+
+.board-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.board-panel__sub {
+  margin: -4px 0 0;
+}
+
+.board-panel__toolbar {
+  display: grid;
+  gap: 12px;
 }
 
 .analytics-grid {
@@ -961,6 +976,10 @@ body.modal-open {
 .board-metric-switch {
   width: min(420px, 100%);
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.board-filter-switch {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
 .board-kpi-grid,

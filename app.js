@@ -89,9 +89,6 @@ const els = {
   closeModalBtn: document.getElementById("closeModalBtn"),
   daysBtn: document.getElementById("daysBtn"),
   monthsBtn: document.getElementById("monthsBtn"),
-  boardModal: document.getElementById("boardModal"),
-  openBoardBtn: document.getElementById("openBoardBtn"),
-  closeBoardBtn: document.getElementById("closeBoardBtn"),
 
   trendCanvas: document.getElementById("trendCanvas"),
   rankingCanvas: document.getElementById("rankingCanvas"),
@@ -127,20 +124,13 @@ els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
 els.resetBtn.addEventListener("click", resetUi);
 els.totalMetricChartBtn.addEventListener("click", openTotalMetricChart);
 els.closeModalBtn.addEventListener("click", closeChartModal);
-els.openBoardBtn.addEventListener("click", openBoardModal);
-els.closeBoardBtn.addEventListener("click", closeBoardModal);
 
 els.chartModal.addEventListener("click", (e) => {
   if (e.target === els.chartModal) closeChartModal();
 });
 
-els.boardModal.addEventListener("click", (e) => {
-  if (e.target === els.boardModal) closeBoardModal();
-});
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeChartModal();
-  if (e.key === "Escape") closeBoardModal();
 });
 
 els.daysBtn.addEventListener("click", () => {
@@ -180,7 +170,7 @@ function setMode(text) {
 }
 
 function syncModalOpenState() {
-  const hasOpenModal = !els.chartModal.classList.contains("hidden") || !els.boardModal.classList.contains("hidden");
+  const hasOpenModal = !els.chartModal.classList.contains("hidden");
   document.body.classList.toggle("modal-open", hasOpenModal);
 }
 
@@ -939,19 +929,6 @@ function renderTopList(list) {
   }).join("");
 
   bindChartButtons(els.topList);
-}
-
-function openBoardModal() {
-  els.boardModal.classList.remove("hidden");
-  syncModalOpenState();
-  if (!currentBundle) {
-    setStatus("Analytics board opened in preview mode. Load a bundle.json file to populate metric changes and top movers.");
-  }
-}
-
-function closeBoardModal() {
-  els.boardModal.classList.add("hidden");
-  syncModalOpenState();
 }
 
 function renderNarrative(list) {

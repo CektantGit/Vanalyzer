@@ -16,17 +16,11 @@
       <div class="hero__main">
         <div class="eyebrow">Vizbl</div>
         <h1>Vizbl Analytics</h1>
-        <p class="hero__text">
-          A unified analytics workspace with stable responsive layouts, clear metric hierarchy, stronger filters, and production-ready reporting for <strong>views</strong>, <strong>likes</strong>, and <strong>viewsShowcase</strong>.
-        </p>
-        <div class="hero__badges">
+        <div class="hero__badges hidden" aria-hidden="true">
           <div class="chip chip--solid" id="fileChip" title="No file loaded">No file loaded</div>
           <div class="chip" id="modeChip" title="Session: idle">Session: idle</div>
           <div class="chip" id="metricChip" title="Metric: views">Metric: views</div>
           <div class="chip" id="filterChip" title="Filter: all">Filter: all</div>
-        </div>
-        <div class="hero__board-cta">
-          <button type="button" class="btn btn--primary btn--hero-board" id="openBoardBtn">Open analytics board</button>
         </div>
       </div>
 
@@ -43,7 +37,7 @@
           <button type="button" class="btn btn--primary" id="updateBtn" disabled>Refresh statistics</button>
           <button type="button" class="btn btn--ghost" id="exportCsvBtn">Export CSV</button>
         </div>
-        <p class="hero__hint">Opening a local bundle enables refresh mode. CSV export always uses the currently filtered and sorted dataset.</p>
+        <p class="hero__hint hidden">Opening a local bundle enables refresh mode. CSV export always uses the currently filtered and sorted dataset.</p>
       </div>
     </header>
 
@@ -120,14 +114,6 @@
 
           <div class="field-group two-cols">
             <label class="field">
-              <span class="field__label">Metric</span>
-              <select class="select" id="metricSelect">
-                <option value="views">views</option>
-                <option value="likes">likes</option>
-                <option value="viewsShowcase">viewsShowcase</option>
-              </select>
-            </label>
-            <label class="field">
               <span class="field__label">Sorting</span>
               <select class="select" id="sortSelect">
                 <option value="metric_desc">Metric ↓</option>
@@ -137,6 +123,11 @@
               </select>
             </label>
           </div>
+          <select class="hidden" id="metricSelect" aria-hidden="true" tabindex="-1">
+            <option value="views">views</option>
+            <option value="likes">likes</option>
+            <option value="viewsShowcase">viewsShowcase</option>
+          </select>
 
           <div class="field">
             <span class="field__label">Quick metric switch</span>
@@ -150,7 +141,7 @@
           <div class="field">
             <div class="field__row">
               <span class="field__label">Growth filter</span>
-              <span class="delta-pill" id="filterDeltaBadge">Σ +0</span>
+              <span class="delta-pill hidden" id="filterDeltaBadge">Σ +0</span>
             </div>
             <div class="segmented segmented--filters">
               <button type="button" class="segmented__btn filter-btn active" data-filter="off">All</button>
@@ -201,6 +192,110 @@
       </aside>
 
       <section class="content">
+        <section class="panel board-panel">
+          <div class="panel__header compact">
+            <div>
+              <div class="panel__eyebrow">Board</div>
+              <h2>Views, likes, and showcase usage</h2>
+            </div>
+          </div>
+          <p class="panel__hint board-panel__sub" id="boardSub">Open a bundle to see change totals and the strongest movers across views, likes, and showcase.</p>
+          <div class="board-panel__toolbar">
+            <div class="segmented board-metric-switch">
+              <button type="button" class="segmented__btn metric-btn active" data-metric="views">views</button>
+              <button type="button" class="segmented__btn metric-btn" data-metric="likes">likes</button>
+              <button type="button" class="segmented__btn metric-btn" data-metric="viewsShowcase">showcase</button>
+            </div>
+            <div class="segmented board-filter-switch">
+              <button type="button" class="segmented__btn filter-btn active" data-filter="off">All</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="last_update">Last update</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="hour">1h</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="week">7d</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="month">30d</button>
+            </div>
+          </div>
+          <section class="board-kpi-grid">
+            <article class="panel board-kpi">
+              <span class="board-kpi__label">Δ views</span>
+              <strong class="board-kpi__value" id="boardViewsDelta">+0</strong>
+              <span class="board-kpi__hint" id="boardViewsHint">No growth data yet</span>
+            </article>
+            <article class="panel board-kpi">
+              <span class="board-kpi__label">Δ likes</span>
+              <strong class="board-kpi__value" id="boardLikesDelta">+0</strong>
+              <span class="board-kpi__hint" id="boardLikesHint">No growth data yet</span>
+            </article>
+            <article class="panel board-kpi">
+              <span class="board-kpi__label">Δ showcase</span>
+              <strong class="board-kpi__value" id="boardShowcaseDelta">+0</strong>
+              <span class="board-kpi__hint" id="boardShowcaseHint">No growth data yet</span>
+            </article>
+          </section>
+          <section class="analytics-grid analytics-grid--board">
+            <article class="panel chart-panel chart-panel--wide">
+              <div class="panel__header">
+                <div>
+                  <div class="panel__eyebrow">Overview</div>
+                  <h2>Total metric trend</h2>
+                </div>
+                <span class="panel__hint" id="trendSummary">No data</span>
+              </div>
+              <div class="chart-panel__body large"><canvas id="trendCanvas"></canvas></div>
+            </article>
+
+            <article class="panel chart-panel">
+              <div class="panel__header">
+                <div>
+                  <div class="panel__eyebrow">Ranking</div>
+                  <h2>Top 5 growth by selected metric</h2>
+                </div>
+                <span class="panel__hint" id="rankingSummary">No data</span>
+              </div>
+              <div class="chart-panel__body"><canvas id="rankingCanvas"></canvas></div>
+            </article>
+
+            <article class="panel shortlist-panel">
+              <div class="panel__header compact">
+                <div>
+                  <div class="panel__eyebrow">Spotlight</div>
+                  <h2>Top 5 movers</h2>
+                </div>
+              </div>
+              <div id="topList" class="shortlist empty-list">Load a bundle.json file to see the strongest movers.</div>
+            </article>
+
+            <article class="panel micro-panel">
+              <div class="panel__header compact">
+                <div>
+                  <div class="panel__eyebrow">Breakdown</div>
+                  <h2>Change split</h2>
+                </div>
+              </div>
+              <div class="chart-panel__body small"><canvas id="mixCanvas"></canvas></div>
+            </article>
+
+            <article class="panel text-panel">
+              <div class="panel__header compact">
+                <div>
+                  <div class="panel__eyebrow">Insights</div>
+                  <h2>What changed</h2>
+                </div>
+              </div>
+              <div class="insight-list" id="insightList"></div>
+            </article>
+
+            <article class="panel benchmark-panel">
+              <div class="panel__header compact">
+                <div>
+                  <div class="panel__eyebrow">Totals</div>
+                  <h2>Three-metric snapshot</h2>
+                </div>
+              </div>
+              <div class="benchmark-list" id="benchmarkList"></div>
+            </article>
+          </section>
+        </section>
+
         <section class="panel results-panel">
           <div class="panel__header results-header">
             <div>
@@ -209,7 +304,7 @@
             </div>
             <span class="panel__hint" id="resultsSummary">0 cards</span>
           </div>
-          <div class="status-line" id="status">Ready.</div>
+          <div class="status-line hidden" id="status">Ready.</div>
           <div class="cards-grid" id="grid"></div>
           <div class="empty-state hidden" id="emptyState">
             <h3>No objects match the current filters</h3>
@@ -254,109 +349,6 @@
       </div>
       <div class="modal__body">
         <canvas id="chartCanvas"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal hidden board-modal" id="boardModal">
-    <div class="modal-card panel">
-      <div class="modal__head">
-        <div>
-          <div class="panel__eyebrow">Analytics board</div>
-          <h2>Metric changes and leaders</h2>
-          <p id="boardSub">Open a bundle to see change totals and the strongest movers across views, likes, and showcase.</p>
-        </div>
-        <button type="button" class="icon-btn" id="closeBoardBtn">×</button>
-      </div>
-      <div class="modal__toolbar board-modal__toolbar">
-        <div class="segmented board-metric-switch">
-          <button type="button" class="segmented__btn metric-btn active" data-metric="views">views</button>
-          <button type="button" class="segmented__btn metric-btn" data-metric="likes">likes</button>
-          <button type="button" class="segmented__btn metric-btn" data-metric="viewsShowcase">showcase</button>
-        </div>
-        <span class="panel__hint">Selected metric drives the chart and growth leaderboard.</span>
-      </div>
-      <div class="modal__body modal__body--board">
-        <section class="board-kpi-grid">
-          <article class="panel board-kpi">
-            <span class="board-kpi__label">Δ views</span>
-            <strong class="board-kpi__value" id="boardViewsDelta">+0</strong>
-            <span class="board-kpi__hint" id="boardViewsHint">No growth data yet</span>
-          </article>
-          <article class="panel board-kpi">
-            <span class="board-kpi__label">Δ likes</span>
-            <strong class="board-kpi__value" id="boardLikesDelta">+0</strong>
-            <span class="board-kpi__hint" id="boardLikesHint">No growth data yet</span>
-          </article>
-          <article class="panel board-kpi">
-            <span class="board-kpi__label">Δ showcase</span>
-            <strong class="board-kpi__value" id="boardShowcaseDelta">+0</strong>
-            <span class="board-kpi__hint" id="boardShowcaseHint">No growth data yet</span>
-          </article>
-        </section>
-        <section class="analytics-grid analytics-grid--modal">
-          <article class="panel chart-panel chart-panel--wide">
-            <div class="panel__header">
-              <div>
-                <div class="panel__eyebrow">Overview</div>
-                <h2>Total metric trend</h2>
-              </div>
-              <span class="panel__hint" id="trendSummary">No data</span>
-            </div>
-            <div class="chart-panel__body large"><canvas id="trendCanvas"></canvas></div>
-          </article>
-
-          <article class="panel chart-panel">
-            <div class="panel__header">
-              <div>
-                <div class="panel__eyebrow">Ranking</div>
-                <h2>Top 5 growth by selected metric</h2>
-              </div>
-              <span class="panel__hint" id="rankingSummary">No data</span>
-            </div>
-            <div class="chart-panel__body"><canvas id="rankingCanvas"></canvas></div>
-          </article>
-
-          <article class="panel shortlist-panel">
-            <div class="panel__header compact">
-              <div>
-                <div class="panel__eyebrow">Spotlight</div>
-                <h2>Top 5 movers</h2>
-              </div>
-            </div>
-            <div id="topList" class="shortlist empty-list">Load a bundle.json file to see the strongest movers.</div>
-          </article>
-
-          <article class="panel micro-panel">
-            <div class="panel__header compact">
-              <div>
-                <div class="panel__eyebrow">Breakdown</div>
-                <h2>Change split</h2>
-              </div>
-            </div>
-            <div class="chart-panel__body small"><canvas id="mixCanvas"></canvas></div>
-          </article>
-
-          <article class="panel text-panel">
-            <div class="panel__header compact">
-              <div>
-                <div class="panel__eyebrow">Insights</div>
-                <h2>What changed</h2>
-              </div>
-            </div>
-            <div class="insight-list" id="insightList"></div>
-          </article>
-
-          <article class="panel benchmark-panel">
-            <div class="panel__header compact">
-              <div>
-                <div class="panel__eyebrow">Totals</div>
-                <h2>Three-metric snapshot</h2>
-              </div>
-            </div>
-            <div class="benchmark-list" id="benchmarkList"></div>
-          </article>
-        </section>
       </div>
     </div>
   </div>
