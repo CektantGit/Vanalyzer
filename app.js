@@ -31,7 +31,7 @@ const els = {
   metricTotalSub: document.getElementById("metricTotalSub"),
 
   insightLastUpdate: document.getElementById("insightLastUpdate"),
-  insightHour: document.getElementById("insightHour"),
+  insightDay: document.getElementById("insightDay"),
   insightWeek: document.getElementById("insightWeek"),
   insightMonth: document.getElementById("insightMonth"),
   insightList: document.getElementById("insightList"),
@@ -204,7 +204,7 @@ function getFilterName(filter) {
   const map = {
     off: "all objects",
     last_update: "growth since last update",
-    hour: "growth in the last hour",
+    day: "growth in the last 24 hours",
     week: "growth in the last 7 days",
     month: "growth in the last 30 days"
   };
@@ -769,7 +769,7 @@ function getObjectDeltaForPeriod(item, period, metric = currentMetric) {
   const fromDate = new Date(lastDate);
   if (period === "week") fromDate.setDate(fromDate.getDate() - 7);
   else if (period === "month") fromDate.setMonth(fromDate.getMonth() - 1);
-  else if (period === "hour") fromDate.setHours(fromDate.getHours() - 1);
+  else if (period === "day") fromDate.setHours(fromDate.getHours() - 24);
   else return getObjectDeltaFromLast(item, metric);
 
   let baseline = null;
@@ -788,7 +788,7 @@ function getObjectDeltaForPeriod(item, period, metric = currentMetric) {
 function getDeltaByFilter(item, filter, metric = currentMetric) {
   if (filter === "week") return getObjectDeltaForPeriod(item, "week", metric);
   if (filter === "month") return getObjectDeltaForPeriod(item, "month", metric);
-  if (filter === "hour") return getObjectDeltaForPeriod(item, "hour", metric);
+  if (filter === "day") return getObjectDeltaForPeriod(item, "day", metric);
   return getObjectDeltaFromLast(item, metric);
 }
 
@@ -897,7 +897,7 @@ function renderStats(bundle) {
 
 function renderInsights() {
   els.insightLastUpdate.textContent = formatSignedNum(getDeltaSum("last_update", currentMetric));
-  els.insightHour.textContent = formatSignedNum(getDeltaSum("hour", currentMetric));
+  els.insightDay.textContent = formatSignedNum(getDeltaSum("day", currentMetric));
   els.insightWeek.textContent = formatSignedNum(getDeltaSum("week", currentMetric));
   els.insightMonth.textContent = formatSignedNum(getDeltaSum("month", currentMetric));
 }
