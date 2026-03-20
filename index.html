@@ -25,6 +25,9 @@
           <div class="chip" id="metricChip" title="Metric: views">Metric: views</div>
           <div class="chip" id="filterChip" title="Filter: all">Filter: all</div>
         </div>
+        <div class="hero__board-cta">
+          <button type="button" class="btn btn--primary btn--hero-board" id="openBoardBtn">Open analytics board</button>
+        </div>
       </div>
 
       <div class="hero__actions panel">
@@ -198,17 +201,6 @@
       </aside>
 
       <section class="content">
-        <section class="panel analytics-launcher">
-          <div class="panel__header">
-            <div>
-              <div class="panel__eyebrow">Analytics board</div>
-              <h2>Open the advanced board</h2>
-            </div>
-            <button type="button" class="btn btn--primary" id="openBoardBtn">Open board</button>
-          </div>
-          <p class="hero__hint">Overview, ranking, spotlight, mix, insights, and benchmarks are grouped into a dedicated overlay board. It opens even before data is loaded, so you can preview the layout and then populate it with a bundle.</p>
-        </section>
-
         <section class="panel results-panel">
           <div class="panel__header results-header">
             <div>
@@ -271,12 +263,37 @@
       <div class="modal__head">
         <div>
           <div class="panel__eyebrow">Analytics board</div>
-          <h2>Dashboard insights</h2>
-          <p id="boardSub">Open a bundle to populate the full analytics board.</p>
+          <h2>Metric changes and leaders</h2>
+          <p id="boardSub">Open a bundle to see change totals and the strongest movers across views, likes, and showcase.</p>
         </div>
         <button type="button" class="icon-btn" id="closeBoardBtn">×</button>
       </div>
+      <div class="modal__toolbar board-modal__toolbar">
+        <div class="segmented board-metric-switch">
+          <button type="button" class="segmented__btn metric-btn active" data-metric="views">views</button>
+          <button type="button" class="segmented__btn metric-btn" data-metric="likes">likes</button>
+          <button type="button" class="segmented__btn metric-btn" data-metric="viewsShowcase">showcase</button>
+        </div>
+        <span class="panel__hint">Selected metric drives the chart and growth leaderboard.</span>
+      </div>
       <div class="modal__body modal__body--board">
+        <section class="board-kpi-grid">
+          <article class="panel board-kpi">
+            <span class="board-kpi__label">Δ views</span>
+            <strong class="board-kpi__value" id="boardViewsDelta">+0</strong>
+            <span class="board-kpi__hint">Total change across visible objects</span>
+          </article>
+          <article class="panel board-kpi">
+            <span class="board-kpi__label">Δ likes</span>
+            <strong class="board-kpi__value" id="boardLikesDelta">+0</strong>
+            <span class="board-kpi__hint">Total change across visible objects</span>
+          </article>
+          <article class="panel board-kpi">
+            <span class="board-kpi__label">Δ showcase</span>
+            <strong class="board-kpi__value" id="boardShowcaseDelta">+0</strong>
+            <span class="board-kpi__hint">Total change across visible objects</span>
+          </article>
+        </section>
         <section class="analytics-grid analytics-grid--modal">
           <article class="panel chart-panel chart-panel--wide">
             <div class="panel__header">
@@ -293,7 +310,7 @@
             <div class="panel__header">
               <div>
                 <div class="panel__eyebrow">Ranking</div>
-                <h2>Top 8 by selected metric</h2>
+                <h2>Top 5 growth by selected metric</h2>
               </div>
               <span class="panel__hint" id="rankingSummary">No data</span>
             </div>
@@ -304,10 +321,10 @@
             <div class="panel__header compact">
               <div>
                 <div class="panel__eyebrow">Spotlight</div>
-                <h2>Top objects</h2>
+                <h2>Top 5 movers</h2>
               </div>
             </div>
-            <div id="topList" class="shortlist empty-list">Load a bundle.json file to see leaderboard insights.</div>
+            <div id="topList" class="shortlist empty-list">Load a bundle.json file to see the strongest movers.</div>
           </article>
 
           <article class="panel micro-panel">
@@ -324,7 +341,7 @@
             <div class="panel__header compact">
               <div>
                 <div class="panel__eyebrow">Insights</div>
-                <h2>Key insights</h2>
+                <h2>What changed</h2>
               </div>
             </div>
             <div class="insight-list" id="insightList"></div>
@@ -333,8 +350,8 @@
           <article class="panel benchmark-panel">
             <div class="panel__header compact">
               <div>
-                <div class="panel__eyebrow">Benchmarks</div>
-                <h2>Dataset health checks</h2>
+                <div class="panel__eyebrow">Totals</div>
+                <h2>Three-metric snapshot</h2>
               </div>
             </div>
             <div class="benchmark-list" id="benchmarkList"></div>

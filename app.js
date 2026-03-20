@@ -42,6 +42,9 @@ const els = {
   rankingSummary: document.getElementById("rankingSummary"),
   resultsSummary: document.getElementById("resultsSummary"),
   boardSub: document.getElementById("boardSub"),
+  boardViewsDelta: document.getElementById("boardViewsDelta"),
+  boardLikesDelta: document.getElementById("boardLikesDelta"),
+  boardShowcaseDelta: document.getElementById("boardShowcaseDelta"),
 
   totalMetricChartBtn: document.getElementById("totalMetricChartBtn"),
   fileChip: document.getElementById("fileChip"),
@@ -203,6 +206,10 @@ function getFilterName(filter) {
     month: "growth in the last 30 days"
   };
   return map[filter] || map.off;
+}
+
+function getActiveGrowthFilter() {
+  return currentDeltaFilter === "off" ? "last_update" : currentDeltaFilter;
 }
 
 function updateFilterButtons() {
@@ -783,7 +790,21 @@ function getDeltaByFilter(item, filter, metric = currentMetric) {
 }
 
 function getCurrentDelta(item) {
-  return getDeltaByFilter(item, currentDeltaFilter, currentMetric);
+  return getDeltaByFilter(item, getActiveGrowthFilter(), currentMetric);
+}
+
+function getMetricDeltaTotal(list, metric, filter = getActiveGrowthFilter()) {
+  return list.reduce((sum, item) => sum + getDeltaByFilter(item, filter, metric), 0);
+}
+
+function getGrowthLeaders(list, metric = currentMetric, filter = getActiveGrowthFilter()) {
+  return [...list]
+    .map((item) => ({
+      item,
+      delta: getDeltaByFilter(item, filter, metric)
+    }))
+    .sort((a, b) => b.delta - a.delta || getItemMetricValue(b.item, metric) - getItemMetricValue(a.item, metric))
+    .slice(0, 5);
 }
 
 function getDeltaSum(filter, metric = currentMetric) {
@@ -895,10 +916,10 @@ function renderTopList(list) {
     return;
   }
 
+  const leaders = getGrowthLeaders(list);
   els.topList.className = "shortlist";
-  els.topList.innerHTML = list.slice(0, 5).map((item, index) => {
+  els.topList.innerHTML = leaders.map(({ item, delta }, index) => {
     const metricValue = getItemMetricValue(item, currentMetric);
-    const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item, currentMetric) : getCurrentDelta(item);
     return `
       <button type="button" class="shortlist__item chart-btn" data-id="${escapeHtml(item.tinuuid)}">
         <span class="shortlist__rank">#${index + 1}</span>
@@ -907,8 +928,8 @@ function renderTopList(list) {
           <small>${escapeHtml(item.tinuuid || "—")}</small>
         </span>
         <span class="shortlist__metric">
-          <strong>${formatNum(metricValue)}</strong>
-          <small>${delta > 0 ? `+${formatNum(delta)}` : "no growth"}</small>
+          <strong>${formatSignedNum(delta)}</strong>
+          <small>${METRIC_LABELS[currentMetric]} total ${formatNum(metricValue)}</small>
         </span>
       </button>
     `;
@@ -921,7 +942,7 @@ function openBoardModal() {
   els.boardModal.classList.remove("hidden");
   syncModalOpenState();
   if (!currentBundle) {
-    setStatus("Analytics board opened in preview mode. Load a bundle.json file to populate charts and rankings.");
+    setStatus("Analytics board opened in preview mode. Load a bundle.json file to populate metric changes and top movers.");
   }
 }
 
@@ -932,31 +953,41 @@ function closeBoardModal() {
 
 function renderNarrative(list) {
   if (!currentBundle) {
-    els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate the key insight panel.</div>";
-    els.benchmarkList.innerHTML = "<div class=\"info-card\">No benchmark data available yet.</div>";
+    els.boardViewsDelta.textContent = "+0";
+    els.boardLikesDelta.textContent = "+0";
+    els.boardShowcaseDelta.textContent = "+0";
+    els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate change totals and top-mover insights.</div>";
+    els.benchmarkList.innerHTML = "<div class=\"info-card\">No three-metric snapshot is available yet.</div>";
     return;
   }
 
-  const top = list[0];
-  const sumMetric = list.reduce((sum, item) => sum + getItemMetricValue(item, currentMetric), 0);
-  const topShare = top && sumMetric ? (getItemMetricValue(top, currentMetric) / sumMetric) * 100 : 0;
-  const growthLeaders = list.filter((item) => getCurrentDelta(item) > 0).length;
-  const engagementMean = list.length ? list.reduce((sum, item) => sum + computeEngagementScore(item), 0) / list.length : 0;
+  const activeFilter = getActiveGrowthFilter();
+  const viewDelta = getMetricDeltaTotal(list, "views", activeFilter);
+  const likesDelta = getMetricDeltaTotal(list, "likes", activeFilter);
+  const showcaseDelta = getMetricDeltaTotal(list, "viewsShowcase", activeFilter);
+  const leaders = getGrowthLeaders(list, currentMetric, activeFilter);
+  const topLeader = leaders[0];
+  const positiveGrowthCount = list.filter((item) => getDeltaByFilter(item, activeFilter, currentMetric) > 0).length;
   const removedCount = currentBundle.objects.filter((item) => item.removed).length;
 
+  els.boardViewsDelta.textContent = formatSignedNum(viewDelta);
+  els.boardLikesDelta.textContent = formatSignedNum(likesDelta);
+  els.boardShowcaseDelta.textContent = formatSignedNum(showcaseDelta);
+
   els.insightList.innerHTML = [
-    top
-      ? `<div class="info-card"><strong>Catalog leader:</strong> ${escapeHtml(top.name)} owns ${formatDecimal(topShare)}% of the selected metric.</div>`
-      : "<div class=\"info-card\">No catalog leader under the current filters.</div>",
-    `<div class="info-card"><strong>Growth:</strong> ${formatNum(growthLeaders)} objects show positive momentum in the active growth window.</div>`,
-    `<div class="info-card"><strong>Engagement:</strong> average engagement score = ${formatDecimal(engagementMean, 2)}.</div>`
+    topLeader
+      ? `<div class="info-card"><strong>Top mover in ${METRIC_LABELS[currentMetric]}:</strong> ${escapeHtml(topLeader.item.name || topLeader.item.tinuuid)} changed by ${formatSignedNum(topLeader.delta)}.</div>`
+      : "<div class=\"info-card\">No top mover is available under the current filters.</div>",
+    `<div class="info-card"><strong>Visible movers:</strong> ${formatNum(positiveGrowthCount)} objects show positive ${METRIC_LABELS[currentMetric]} growth.</div>`,
+    `<div class="info-card"><strong>Cross-metric change:</strong> views ${formatSignedNum(viewDelta)}, likes ${formatSignedNum(likesDelta)}, showcase ${formatSignedNum(showcaseDelta)}.</div>`
   ].join("");
 
   els.benchmarkList.innerHTML = [
     `<div class="benchmark"><span>Objects in view</span><strong>${formatNum(list.length)}</strong></div>`,
     `<div class="benchmark"><span>Removed in bundle</span><strong>${formatNum(removedCount)}</strong></div>`,
-    `<div class="benchmark"><span>Average likes / views</span><strong>${formatDecimal(list.length ? list.reduce((sum, item) => sum + (num(item.lastLikes) / Math.max(1, num(item.lastViews))), 0) / list.length : 0, 3)}</strong></div>`,
-    `<div class="benchmark"><span>Average showcase / views</span><strong>${formatDecimal(list.length ? list.reduce((sum, item) => sum + (num(item.lastViewsShowcase) / Math.max(1, num(item.lastViews))), 0) / list.length : 0, 3)}</strong></div>`
+    `<div class="benchmark"><span>Total views</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViews), 0))}</strong></div>`,
+    `<div class="benchmark"><span>Total likes</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastLikes), 0))}</strong></div>`,
+    `<div class="benchmark"><span>Total showcase</span><strong>${formatNum(list.reduce((sum, item) => sum + num(item.lastViewsShowcase), 0))}</strong></div>`
   ].join("");
 }
 
@@ -1027,21 +1058,21 @@ function renderTrendChart() {
 }
 
 function renderRankingChart(list) {
-  const top = list.slice(0, 8);
-  els.rankingSummary.textContent = top.length
-    ? `Showing ${top.length} leaders for ${METRIC_LABELS[currentMetric]}`
+  const leaders = getGrowthLeaders(list);
+  els.rankingSummary.textContent = leaders.length
+    ? `Top ${leaders.length} movers for ${METRIC_LABELS[currentMetric]}`
     : "No data";
 
   if (rankingChartInstance) rankingChartInstance.destroy();
   rankingChartInstance = new Chart(els.rankingCanvas.getContext("2d"), {
     type: "bar",
     data: {
-      labels: top.map((item) => truncate(item.name || item.tinuuid || "Object", 22)),
+      labels: leaders.map(({ item }) => truncate(item.name || item.tinuuid || "Object", 22)),
       datasets: [{
-        label: METRIC_LABELS[currentMetric],
-        data: top.map((item) => getItemMetricValue(item, currentMetric)),
+        label: `Δ ${METRIC_LABELS[currentMetric]}`,
+        data: leaders.map(({ delta }) => delta),
         borderRadius: 10,
-        backgroundColor: ["#7cc4ff", "#5aa9ff", "#4f92ff", "#3a7df3", "#58d7ae", "#5e94ff", "#6bb9ff", "#74e0c0"]
+        backgroundColor: ["#7cc4ff", "#5aa9ff", "#4f92ff", "#3a7df3", "#58d7ae"]
       }]
     },
     options: {
@@ -1098,7 +1129,7 @@ function renderCurrent() {
     currentRenderedObjects = [];
     els.emptyState.classList.remove("hidden");
     els.resultsSummary.textContent = "0 cards";
-    els.boardSub.textContent = "Open a bundle to populate the full analytics board.";
+    els.boardSub.textContent = "Open a bundle to see change totals and top movers across views, likes, and showcase.";
     renderTopList([]);
     renderNarrative([]);
     renderOverviewCharts([]);
@@ -1113,7 +1144,7 @@ function renderCurrent() {
   renderTopList(list);
   renderNarrative(list);
   renderOverviewCharts(list);
-  els.boardSub.textContent = `Metric: ${METRIC_LABELS[currentMetric]} · Filter: ${getFilterName(currentDeltaFilter)} · Objects in view: ${formatNum(list.length)}`;
+  els.boardSub.textContent = `${formatNum(list.length)} visible objects · board is focused on ${METRIC_LABELS[currentMetric]} movers.`;
 
   if (!list.length) {
     els.emptyState.classList.remove("hidden");
@@ -1122,17 +1153,12 @@ function renderCurrent() {
 
   els.emptyState.classList.add("hidden");
 
-  const activeCardPeriod = currentDeltaFilter === "off" ? "last_update" : currentDeltaFilter;
-
   list.forEach((item, index) => {
     const goUrl = buildGoUrl(item.tinuuid);
     const viewerUrl = buildViewerUrl(item.tinuuid);
     const preview = item.mainPreview
       ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
       : `<div class="catalog-row__fallback">No preview</div>`;
-
-    const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item, currentMetric) : getCurrentDelta(item);
-    const deltaText = delta > 0 ? `+${formatNum(delta)}` : "no growth";
 
     const card = document.createElement("article");
     card.className = "catalog-row";
@@ -1150,26 +1176,22 @@ function renderCurrent() {
         <div class="catalog-row__stat">
           <span class="catalog-row__label">views</span>
           <strong>${formatNum(item.lastViews)}</strong>
-          <small>${formatSignedNum(getDeltaByFilter(item, activeCardPeriod, "views"))}</small>
+          <small>${formatSignedNum(getDeltaByFilter(item, getActiveGrowthFilter(), "views"))}</small>
         </div>
 
         <div class="catalog-row__stat">
           <span class="catalog-row__label">likes</span>
           <strong>${formatNum(item.lastLikes)}</strong>
-          <small>${formatSignedNum(getDeltaByFilter(item, activeCardPeriod, "likes"))}</small>
+          <small>${formatSignedNum(getDeltaByFilter(item, getActiveGrowthFilter(), "likes"))}</small>
         </div>
 
         <div class="catalog-row__stat">
           <span class="catalog-row__label">showcase</span>
           <strong>${formatNum(item.lastViewsShowcase)}</strong>
-          <small>${formatSignedNum(getDeltaByFilter(item, activeCardPeriod, "viewsShowcase"))}</small>
+          <small>${formatSignedNum(getDeltaByFilter(item, getActiveGrowthFilter(), "viewsShowcase"))}</small>
         </div>
 
         <div class="catalog-row__actions">
-          <div class="catalog-row__delta ${delta > 0 ? 'positive' : ''}">
-            <span class="catalog-row__label">Δ ${getFilterName(activeCardPeriod)}</span>
-            <strong>${deltaText}</strong>
-          </div>
           ${goUrl
             ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
             : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
