@@ -37,6 +37,7 @@
           <button type="button" class="btn btn--primary" id="updateBtn" disabled>Refresh statistics</button>
           <button type="button" class="btn btn--ghost" id="exportCsvBtn">Export CSV</button>
         </div>
+        <button type="button" class="btn btn--primary btn--board-launch" id="openBoardBtn">Open analytics board</button>
         <p class="hero__hint hidden">Opening a local bundle enables refresh mode. CSV export always uses the currently filtered and sorted dataset.</p>
       </div>
     </header>
@@ -192,14 +193,75 @@
       </aside>
 
       <section class="content">
-        <section class="panel board-panel">
-          <div class="panel__header compact">
+        <section class="panel results-panel">
+          <div class="panel__header results-header">
             <div>
-              <div class="panel__eyebrow">Board</div>
-              <h2>Views, likes, and showcase usage</h2>
+              <div class="panel__eyebrow">Catalog</div>
+              <h2>Object catalog</h2>
             </div>
+            <span class="panel__hint" id="resultsSummary">0 cards</span>
           </div>
+          <div class="status-line hidden" id="status">Ready.</div>
+          <div class="cards-grid" id="grid"></div>
+          <div class="empty-state hidden" id="emptyState">
+            <h3>No objects match the current filters</h3>
+            <p>Try adjusting metric ranges, the growth filter, or the search query.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <input id="fileInput" type="file" accept="application/json" hidden />
+
+  <div class="overlay hidden" id="loader">
+    <div class="overlay-card panel">
+      <div class="panel__eyebrow">Processing</div>
+      <h2 id="loaderTitle">Loading</h2>
+      <p id="loaderText">Preparing...</p>
+      <div class="progress"><div class="progress__bar" id="loaderBar"></div></div>
+      <div class="progress__meta">
+        <span id="loaderStep">Step 1</span>
+        <span id="loaderPercent">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="chartModal">
+    <div class="modal-card panel">
+      <div class="modal__head">
+        <div>
+          <div class="panel__eyebrow">Deep dive</div>
+          <h2 id="modalTitle">Chart</h2>
+          <p id="modalSub">—</p>
+        </div>
+        <button type="button" class="icon-btn" id="closeModalBtn">×</button>
+      </div>
+      <div class="modal__toolbar">
+        <div class="segmented">
+          <button type="button" class="segmented__btn active" id="daysBtn">Days</button>
+          <button type="button" class="segmented__btn" id="monthsBtn">Months</button>
+        </div>
+        <span class="panel__hint" id="chartMeta">No data</span>
+      </div>
+      <div class="modal__body">
+        <canvas id="chartCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden board-modal" id="boardModal">
+    <div class="modal-card panel">
+      <div class="modal__head">
+        <div>
+          <div class="panel__eyebrow">Board</div>
+          <h2>Views, likes, and showcase usage</h2>
           <p class="panel__hint board-panel__sub" id="boardSub">Open a bundle to see change totals and the strongest movers across views, likes, and showcase.</p>
+        </div>
+        <button type="button" class="icon-btn" id="closeBoardBtn">×</button>
+      </div>
+      <div class="modal__body modal__body--board">
+        <section class="board-panel">
           <div class="board-panel__toolbar">
             <div class="segmented board-metric-switch">
               <button type="button" class="segmented__btn metric-btn active" data-metric="views">views</button>
@@ -295,60 +357,6 @@
             </article>
           </section>
         </section>
-
-        <section class="panel results-panel">
-          <div class="panel__header results-header">
-            <div>
-              <div class="panel__eyebrow">Catalog</div>
-              <h2>Object catalog</h2>
-            </div>
-            <span class="panel__hint" id="resultsSummary">0 cards</span>
-          </div>
-          <div class="status-line hidden" id="status">Ready.</div>
-          <div class="cards-grid" id="grid"></div>
-          <div class="empty-state hidden" id="emptyState">
-            <h3>No objects match the current filters</h3>
-            <p>Try adjusting metric ranges, the growth filter, or the search query.</p>
-          </div>
-        </section>
-      </section>
-    </main>
-  </div>
-
-  <input id="fileInput" type="file" accept="application/json" hidden />
-
-  <div class="overlay hidden" id="loader">
-    <div class="overlay-card panel">
-      <div class="panel__eyebrow">Processing</div>
-      <h2 id="loaderTitle">Loading</h2>
-      <p id="loaderText">Preparing...</p>
-      <div class="progress"><div class="progress__bar" id="loaderBar"></div></div>
-      <div class="progress__meta">
-        <span id="loaderStep">Step 1</span>
-        <span id="loaderPercent">0%</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal hidden" id="chartModal">
-    <div class="modal-card panel">
-      <div class="modal__head">
-        <div>
-          <div class="panel__eyebrow">Deep dive</div>
-          <h2 id="modalTitle">Chart</h2>
-          <p id="modalSub">—</p>
-        </div>
-        <button type="button" class="icon-btn" id="closeModalBtn">×</button>
-      </div>
-      <div class="modal__toolbar">
-        <div class="segmented">
-          <button type="button" class="segmented__btn active" id="daysBtn">Days</button>
-          <button type="button" class="segmented__btn" id="monthsBtn">Months</button>
-        </div>
-        <span class="panel__hint" id="chartMeta">No data</span>
-      </div>
-      <div class="modal__body">
-        <canvas id="chartCanvas"></canvas>
       </div>
     </div>
   </div>

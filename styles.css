@@ -147,6 +147,10 @@ canvas {
   min-width: min(360px, 100%);
 }
 
+.btn--board-launch {
+  width: 100%;
+}
+
 .chip {
   min-height: 42px;
   display: inline-flex;
@@ -381,7 +385,6 @@ canvas {
 }
 
 .filter-panel,
-.board-panel,
 .shortlist-panel,
 .chart-panel,
 .results-panel,
@@ -950,8 +953,8 @@ body.modal-open {
 }
 
 .board-modal .modal-card {
-  width: min(1280px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
+  width: min(1480px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
 }
 
 .modal__head {
@@ -963,7 +966,8 @@ body.modal-open {
 }
 
 .modal__body--board {
-  min-height: min(80vh, 920px);
+  min-height: 0;
+  max-height: calc(100vh - 170px);
   overflow: auto;
   overflow-x: hidden;
 }
