@@ -827,6 +827,19 @@ function getFilterValues() {
   };
 }
 
+function clearFilterInputs() {
+  els.searchInput.value = "";
+  els.minViewsInput.value = "";
+  els.minLikesInput.value = "";
+  els.minShowcaseInput.value = "";
+  els.minMetricInput.value = "";
+  els.maxMetricInput.value = "";
+  els.removedSelect.value = "all";
+  currentDeltaFilter = "off";
+  currentSort = "metric_desc";
+  els.sortSelect.value = "metric_desc";
+}
+
 function filterObjects(list) {
   const filters = getFilterValues();
   return list.filter((item) => {
@@ -875,6 +888,23 @@ function getCurrentList() {
   if (!currentBundle) return [];
   currentDisplayObjects = getVisibleObjects(currentBundle, currentMetric);
   return applySorting(filterObjects(currentDisplayObjects));
+}
+
+function ensureRenderableCatalogState(bundle) {
+  const fallbackMetric = METRICS.find((metric) => getVisibleObjects(bundle, metric).length > 0);
+  if (fallbackMetric && !getVisibleObjects(bundle, currentMetric).length) {
+    currentMetric = fallbackMetric;
+  }
+
+  let list = applySorting(filterObjects(getVisibleObjects(bundle, currentMetric)));
+  if (!list.length && getVisibleObjects(bundle, currentMetric).length) {
+    clearFilterInputs();
+    list = applySorting(filterObjects(getVisibleObjects(bundle, currentMetric)));
+  }
+
+  updateFilterButtons();
+  updateMetricButtons();
+  return list;
 }
 
 function renderStats(bundle) {
@@ -1422,7 +1452,8 @@ function truncate(text, length) {
 
 function applyBundleToUI(bundle, fileLabel, modeLabel) {
   validateBundle(bundle);
-  currentDisplayObjects = getVisibleObjects(bundle, currentMetric);
+  currentBundle = bundle;
+  currentDisplayObjects = ensureRenderableCatalogState(bundle);
   setFileChip(`File: ${fileLabel}`);
   setMode(modeLabel);
   els.updateBtn.disabled = false;
