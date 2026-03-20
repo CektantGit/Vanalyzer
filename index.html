@@ -4,2125 +4,325 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vizbl Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root{
-      --bg:#0b0f15;
-      --bg2:#121824;
-      --panel:#171f2c;
-      --panel2:#1d2635;
-      --panel3:#1b2a42;
-      --line:rgba(255,255,255,.08);
-      --line2:rgba(255,255,255,.12);
-      --text:#f3f6fb;
-      --muted:#95a2b8;
-      --accent:#5aa9ff;
-      --accent2:#368cff;
-      --green:#4cd08a;
-      --danger:#ff7b7b;
-      --shadow:0 18px 48px rgba(0,0,0,.35);
-      --shadowSoft:0 10px 26px rgba(0,0,0,.24);
-      --maxw:1720px;
-      --control-h:46px;
-      --chip-w:260px;
-      --chip-w-mode:220px;
-    }
-
-    * { box-sizing:border-box; }
-
-    html, body {
-      margin:0;
-      padding:0;
-      min-height:100%;
-      background:
-        radial-gradient(circle at top left, rgba(90,169,255,.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(90,169,255,.08), transparent 22%),
-        linear-gradient(180deg,var(--bg),var(--bg2));
-      color:var(--text);
-      font-family:Inter, Arial, sans-serif;
-    }
-
-    body { padding:24px; }
-    .page { max-width:var(--maxw); margin:0 auto; }
-
-    .hero {
-      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));
-      border:1px solid var(--line);
-      border-radius:28px;
-      padding:24px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(10px);
-    }
-
-    h1 {
-      margin:0 0 8px;
-      font-size:34px;
-      line-height:1.02;
-      letter-spacing:-.03em;
-    }
-
-    .sub {
-      margin:0;
-      color:var(--muted);
-      font-size:15px;
-      line-height:1.55;
-      max-width:1100px;
-    }
-
-    .stats {
-      margin-top:18px;
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:12px;
-    }
-
-    .stat {
-      background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.015));
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:14px 16px;
-      min-height:94px;
-      box-shadow:var(--shadowSoft);
-    }
-
-    .stat .k {
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:7px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .stat .v {
-      font-size:24px;
-      font-weight:900;
-      letter-spacing:-.03em;
-      line-height:1.1;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .stat .subv {
-      margin-top:6px;
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .stat.total-metric .vwrap{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:nowrap;
-    }
-
-    .insights {
-      margin-top:14px;
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:12px;
-    }
-
-    .insight {
-      background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.012));
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 14px;
-      min-height:78px;
-    }
-
-    .insight .k {
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:6px;
-    }
-
-    .insight .v {
-      font-size:20px;
-      font-weight:900;
-      line-height:1.1;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .controls {
-      margin-top:18px;
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:14px;
-    }
-
-    .box {
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      min-height:142px;
-    }
-
-    .box h3 {
-      margin:0 0 10px;
-      font-size:15px;
-      line-height:1.2;
-    }
-
-    .box p {
-      margin:0 0 14px;
-      min-height:40px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.45;
-    }
-
-    .btn, .mini-btn, .seg-btn, .icon-btn, .filter-btn, .metric-btn, .select, .ghost-btn {
-      border:0;
-      cursor:pointer;
-      transition:transform .16s ease, opacity .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
-      font-family:inherit;
-    }
-
-    .btn:hover, .mini-btn:hover, .seg-btn:hover, .icon-btn:hover, .filter-btn:hover, .metric-btn:hover, .ghost-btn:hover {
-      transform:translateY(-1px);
-    }
-
-    .btn {
-      width:100%;
-      height:var(--control-h);
-      padding:0 16px;
-      border-radius:14px;
-      font-size:14px;
-      font-weight:800;
-      color:#fff;
-      white-space:nowrap;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      box-shadow:0 10px 24px rgba(54,140,255,.24);
-    }
-
-    .btn.secondary {
-      background:linear-gradient(180deg,#2a3243,#222a39);
-      border:1px solid var(--line2);
-      box-shadow:none;
-    }
-
-    .btn:disabled, .mini-btn:disabled, .ghost-btn:disabled {
-      opacity:.45;
-      cursor:not-allowed;
-      transform:none !important;
-    }
-
-    .toolbar {
-      margin-top:18px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .toolbar-left { width:100%; }
-
-    .search-row {
-      display:grid;
-      grid-template-columns:minmax(0,1fr) 220px 220px 180px 140px;
-      gap:10px;
-      width:100%;
-    }
-
-    .search-wrap { width:100%; }
-
-    .search, .select {
-      width:100%;
-      height:52px;
-      border-radius:15px;
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      padding:0 16px;
-      outline:none;
-      font-size:14px;
-    }
-
-    .select {
-      appearance:none;
-      -webkit-appearance:none;
-      -moz-appearance:none;
-    }
-
-    .ghost-btn {
-      width:100%;
-      height:52px;
-      border-radius:15px;
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      font-size:14px;
-      font-weight:700;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .filters-panel {
-      width:100%;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      padding:14px;
-      border-radius:18px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-    }
-
-    .filters-top {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .filter-label {
-      color:var(--muted);
-      font-size:13px;
-      font-weight:700;
-      min-height:40px;
-      display:flex;
-      align-items:center;
-      white-space:nowrap;
-    }
-
-    .filter-delta {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-width:220px;
-      min-height:40px;
-      padding:0 14px;
-      border-radius:12px;
-      background:linear-gradient(180deg, rgba(8,22,14,.96), rgba(14,42,24,.96));
-      border:1px solid rgba(124,255,178,.45);
-      color:#fff;
-      font-size:13px;
-      font-weight:900;
-      white-space:nowrap;
-      text-shadow:0 1px 2px rgba(0,0,0,.6);
-    }
-
-    .metric-group,
-    .filter-group {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      width:100%;
-    }
-
-    .metric-btn,
-    .filter-btn {
-      height:40px;
-      padding:0 14px;
-      border-radius:12px;
-      background:transparent;
-      color:var(--muted);
-      font-size:13px;
-      font-weight:800;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      white-space:nowrap;
-      border:1px solid rgba(255,255,255,.05);
-      flex:1 1 180px;
-    }
-
-    .metric-btn.active,
-    .filter-btn.active {
-      color:#fff;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      box-shadow:0 8px 18px rgba(54,140,255,.22);
-      border-color:transparent;
-    }
-
-    .chips {
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      width:100%;
-    }
-
-    .chip {
-      height:40px;
-      border-radius:999px;
-      padding:0 14px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:rgba(255,255,255,.04);
-      border:1px solid var(--line);
-      color:var(--muted);
-      font-size:13px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .chip.file { width:var(--chip-w); }
-    .chip.mode { width:var(--chip-w-mode); }
-    .chip.filter { width:var(--chip-w); }
-    .chip.metric { width:220px; }
-
-    .status {
-      margin-top:14px;
-      color:var(--muted);
-      font-size:14px;
-      min-height:22px;
-    }
-
-    .note {
-      margin-top:12px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    .grid {
-      margin-top:24px;
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-      gap:18px;
-    }
-
-    .card {
-      display:flex;
-      flex-direction:column;
-      background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.015));
-      border:1px solid var(--line);
-      border-radius:22px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      min-height:100%;
-    }
-
-    .media {
-      position:relative;
-      aspect-ratio:1.35 / 1;
-      background:#0f141d;
-      border-bottom:1px solid var(--line);
-      overflow:hidden;
-    }
-
-    .media img {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-
-    .rank {
-      position:absolute;
-      top:12px;
-      left:12px;
-      background:rgba(11,15,21,.82);
-      border:1px solid rgba(255,255,255,.12);
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      backdrop-filter:blur(8px);
-    }
-
-    .removed {
-      position:absolute;
-      top:12px;
-      left:72px;
-      background:rgba(255,93,93,.15);
-      border:1px solid rgba(255,93,93,.35);
-      color:#ff9b9b;
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:700;
-    }
-
-    .delta-badge {
-      position:absolute;
-      top:12px;
-      right:12px;
-      display:flex;
-      align-items:center;
-      gap:6px;
-      background:linear-gradient(180deg, rgba(8,22,14,.98), rgba(14,42,24,.98));
-      border:1px solid rgba(124,255,178,.55);
-      color:#fff;
-      padding:8px 11px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.01em;
-      backdrop-filter:blur(8px);
-      box-shadow:
-        0 10px 24px rgba(0,0,0,.34),
-        0 0 0 1px rgba(0,0,0,.18) inset;
-      text-shadow:
-        0 1px 2px rgba(0,0,0,.7),
-        0 0 10px rgba(76,208,138,.25);
-      white-space:nowrap;
-    }
-
-    .body {
-      padding:16px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      flex:1;
-    }
-
-    .title {
-      margin:0;
-      font-size:18px;
-      line-height:1.3;
-      letter-spacing:-.02em;
-      font-weight:800;
-      word-break:break-word;
-      min-height:48px;
-      display:-webkit-box;
-      -webkit-line-clamp:2;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-    }
-
-    .meta {
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-    }
-
-    .meta-box {
-      background:var(--panel2);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      min-width:0;
-      min-height:72px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-
-    .meta-box .k {
-      color:var(--muted);
-      font-size:11px;
-      margin-bottom:6px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .meta-box .v {
-      font-size:15px;
-      font-weight:800;
-      word-break:break-word;
-      line-height:1.25;
-    }
-
-    .actions {
-      margin-top:auto;
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-
-    .mini-btn {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      height:44px;
-      padding:0 14px;
-      border-radius:14px;
-      text-decoration:none;
-      font-size:14px;
-      font-weight:700;
-      color:#fff;
-      background:#232d40;
-      border:1px solid rgba(255,255,255,.08);
-      white-space:nowrap;
-    }
-
-    .mini-btn.primary {
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-    }
-
-    .mini-btn.ghost {
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-    }
-
-    .mini-btn.small {
-      height:36px;
-      padding:0 12px;
-      font-size:12px;
-      border-radius:10px;
-      min-width:86px;
-    }
-
-    .empty {
-      margin-top:24px;
-      padding:34px;
-      border-radius:20px;
-      border:1px solid var(--line);
-      background:var(--panel);
-      text-align:center;
-      color:var(--muted);
-    }
-
-    .hidden { display:none !important; }
-
-    .overlay {
-      position:fixed;
-      inset:0;
-      z-index:3000;
-      background:rgba(5,8,13,.72);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      backdrop-filter:blur(8px);
-    }
-
-    .overlay.hidden { display:none; }
-
-    .overlay-card {
-      width:min(560px,100%);
-      background:#121926;
-      border:1px solid var(--line2);
-      border-radius:24px;
-      box-shadow:0 24px 60px rgba(0,0,0,.45);
-      padding:22px;
-    }
-
-    .overlay-title {
-      margin:0 0 10px;
-      font-size:22px;
-      font-weight:800;
-      letter-spacing:-.02em;
-    }
-
-    .overlay-text {
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.5;
-      min-height:42px;
-      margin-bottom:14px;
-    }
-
-    .progress {
-      width:100%;
-      height:14px;
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      overflow:hidden;
-      border:1px solid var(--line);
-    }
-
-    .progress-bar {
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg,var(--accent),var(--green));
-      transition:width .18s ease;
-    }
-
-    .progress-row {
-      margin-top:10px;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .modal {
-      position:fixed;
-      inset:0;
-      z-index:2500;
-      background:rgba(5,8,13,.7);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      backdrop-filter:blur(8px);
-    }
-
-    .modal.hidden { display:none; }
-
-    .modal-card {
-      width:min(980px,100%);
-      background:#121926;
-      border:1px solid var(--line2);
-      border-radius:24px;
-      box-shadow:0 24px 60px rgba(0,0,0,.45);
-      overflow:hidden;
-    }
-
-    .modal-head {
-      display:flex;
-      justify-content:space-between;
-      gap:16px;
-      align-items:flex-start;
-      padding:20px;
-      border-bottom:1px solid var(--line);
-    }
-
-    .modal-title {
-      margin:0;
-      font-size:22px;
-      font-weight:800;
-      letter-spacing:-.02em;
-    }
-
-    .modal-sub {
-      margin-top:8px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-      word-break:break-word;
-    }
-
-    .icon-btn {
-      width:42px;
-      height:42px;
-      border-radius:12px;
-      background:rgba(255,255,255,.05);
-      color:#fff;
-      border:1px solid var(--line);
-      font-size:18px;
-    }
-
-    .modal-toolbar {
-      padding:16px 20px 0;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .seg {
-      display:inline-flex;
-      gap:8px;
-      padding:6px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-    }
-
-    .seg-btn {
-      padding:10px 16px;
-      border-radius:10px;
-      background:transparent;
-      color:var(--muted);
-      font-size:13px;
-      font-weight:700;
-    }
-
-    .seg-btn.active {
-      color:#fff;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-    }
-
-    .chart-meta {
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .chart-wrap {
-      padding:16px 20px 20px;
-    }
-
-    .chart-box {
-      height:460px;
-      padding:16px;
-      border-radius:18px;
-      background:#0f151f;
-      border:1px solid var(--line);
-    }
-
-    @media (max-width: 1320px){
-      .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .insights { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .controls { grid-template-columns:1fr; }
-      .search-row { grid-template-columns:1fr 1fr; }
-    }
-
-    @media (max-width: 860px){
-      body { padding:16px; }
-      .hero { padding:18px; }
-      h1 { font-size:28px; }
-      .grid { grid-template-columns:1fr; }
-      .chart-box { height:360px; }
-      .chip.file,.chip.mode,.chip.filter,.chip.metric { width:auto; min-width:180px; }
-      .stats { grid-template-columns:1fr; }
-      .insights { grid-template-columns:1fr; }
-      .search-row { grid-template-columns:1fr; }
-    }
-  </style>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div class="page">
-    <section class="hero">
-      <div>
-        <h1>Vizbl Objects Analytics</h1>
-        <p class="sub">
-          Один JSON хранит объекты, историю views, likes и viewsShowcase по каждому объекту, а также суммарную историю по каждому параметру.
-          Можно переключать метрику, смотреть рост, фильтровать карточки, строить графики и экспортировать CSV.
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero__main">
+        <div class="eyebrow">Vizbl Objects Analytics</div>
+        <h1>Единый аналитический дашборд без визуальных разъездов между режимами</h1>
+        <p class="hero__text">
+          Пересобранный интерфейс в стиле сильных продуктовых дашбордов: единая палитра, понятная иерархия,
+          больше аналитических блоков, наглядные тренды и удобные фильтры по <strong>views</strong>, <strong>likes</strong>
+          и <strong>viewsShowcase</strong>.
         </p>
-      </div>
-
-      <div class="stats">
-        <div class="stat">
-          <div class="k">Всего объектов</div>
-          <div class="v" id="statTotal">0</div>
-          <div class="subv">Все записи из JSON</div>
-        </div>
-
-        <div class="stat">
-          <div class="k">С текущей метрикой &gt; 0</div>
-          <div class="v" id="statVisible">0</div>
-          <div class="subv" id="statVisibleSub">Только отображаемые объекты</div>
-        </div>
-
-        <div class="stat total-metric">
-          <div class="k" id="metricTotalTitle">Сумма views</div>
-          <div class="vwrap">
-            <div class="v" id="statMetricTotal">0</div>
-            <button type="button" id="totalMetricChartBtn" class="mini-btn ghost small">График</button>
-          </div>
-          <div class="subv" id="metricTotalSub">Общий объём выбранной метрики</div>
-        </div>
-
-        <div class="stat">
-          <div class="k">Последний замер</div>
-          <div class="v" id="statUpdated">—</div>
-          <div class="subv">Дата последнего обновления</div>
+        <div class="hero__badges">
+          <div class="chip chip--solid" id="fileChip" title="Файл не открыт">Файл не открыт</div>
+          <div class="chip" id="modeChip" title="Режим: ожидание">Режим: ожидание</div>
+          <div class="chip" id="metricChip" title="Метрика: views">Метрика: views</div>
+          <div class="chip" id="filterChip" title="Фильтр: выкл">Фильтр: выкл</div>
         </div>
       </div>
 
-      <div class="insights">
-        <div class="insight">
-          <div class="k">Σ с последнего обновления</div>
-          <div class="v" id="insightLastUpdate">0</div>
-        </div>
-        <div class="insight">
-          <div class="k">Σ за час</div>
-          <div class="v" id="insightHour">0</div>
-        </div>
-        <div class="insight">
-          <div class="k">Σ за неделю</div>
-          <div class="v" id="insightWeek">0</div>
-        </div>
-        <div class="insight">
-          <div class="k">Σ за месяц</div>
-          <div class="v" id="insightMonth">0</div>
-        </div>
-      </div>
-
-      <div class="controls">
-        <div class="box">
-          <h3>Скачать новый JSON</h3>
-          <p>Полная выгрузка с API. Создаёт новый bundle.json и сразу скачивает его на компьютер.</p>
-          <button type="button" class="btn" id="downloadBtn">Скачать bundle.json</button>
-        </div>
-
-        <div class="box">
-          <h3>Открыть JSON</h3>
-          <p>Загрузка локального bundle.json без CORS. После открытия кнопка обновления становится доступной.</p>
-          <button type="button" class="btn secondary" id="openBtn">Выбрать bundle.json</button>
-        </div>
-
-        <div class="box">
-          <h3>Обновить статистику</h3>
-          <p>Берёт уже открытый JSON как базу, делает новый проход по API и скачивает обновлённый bundle.json.</p>
-          <button type="button" class="btn" id="updateBtn" disabled>Обновить статистику</button>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="search-row">
-            <div class="search-wrap">
-              <input class="search" id="searchInput" type="text" placeholder="Поиск по названию, tinuuid..." />
-            </div>
-
-            <select class="select" id="metricSelect">
-              <option value="views">Метрика: views</option>
-              <option value="likes">Метрика: likes</option>
-              <option value="viewsShowcase">Метрика: viewsShowcase</option>
-            </select>
-
-            <select class="select" id="sortSelect">
-              <option value="metric_desc">Сортировка: метрика ↓</option>
-              <option value="delta_desc">Сортировка: рост ↓</option>
-              <option value="name_asc">Сортировка: имя A→Z</option>
-            </select>
-
-            <button type="button" class="ghost-btn" id="exportCsvBtn">Экспорт CSV</button>
-            <button type="button" class="ghost-btn" id="resetBtn">Сброс</button>
-          </div>
-
-          <div class="filters-panel">
-            <div class="filter-label">Выбор метрики</div>
-            <div class="metric-group">
-              <button type="button" class="metric-btn active" data-metric="views">views</button>
-              <button type="button" class="metric-btn" data-metric="likes">likes</button>
-              <button type="button" class="metric-btn" data-metric="viewsShowcase">viewsShowcase</button>
-            </div>
-
-            <div class="filters-top">
-              <div class="filter-label">Фильтр изменений</div>
-              <div class="filter-delta" id="filterDeltaBadge">Σ +0</div>
-            </div>
-
-            <div class="filter-group">
-              <button type="button" class="filter-btn active" data-filter="off">Выкл</button>
-              <button type="button" class="filter-btn" data-filter="last_update">С последнего обновления</button>
-              <button type="button" class="filter-btn" data-filter="hour">За час</button>
-              <button type="button" class="filter-btn" data-filter="week">За неделю</button>
-              <button type="button" class="filter-btn" data-filter="month">За месяц</button>
-            </div>
+      <div class="hero__actions panel">
+        <div class="panel__header compact">
+          <div>
+            <div class="panel__eyebrow">Data flow</div>
+            <h2>Работа с bundle.json</h2>
           </div>
         </div>
-
-        <div class="chips">
-          <div class="chip file" id="fileChip" title="Файл не открыт">Файл не открыт</div>
-          <div class="chip mode" id="modeChip" title="Режим: ожидание">Режим: ожидание</div>
-          <div class="chip metric" id="metricChip" title="Метрика: views">Метрика: views</div>
-          <div class="chip filter" id="filterChip" title="Фильтр: выкл">Фильтр: выкл</div>
+        <div class="action-grid">
+          <button type="button" class="btn btn--primary" id="downloadBtn">Скачать новый bundle.json</button>
+          <button type="button" class="btn btn--secondary" id="openBtn">Открыть локальный bundle.json</button>
+          <button type="button" class="btn btn--primary" id="updateBtn" disabled>Обновить статистику</button>
+          <button type="button" class="btn btn--ghost" id="exportCsvBtn">Экспорт CSV</button>
         </div>
+        <p class="hero__hint">Открытие локального JSON включает режим обновления. Экспорт выгружает текущую витрину после всех фильтров и сортировки.</p>
       </div>
+    </header>
 
-      <div class="status" id="status">Готово.</div>
-      <div class="note">
-        В режиме «Выкл» показываются все объекты, у которых выбранная метрика больше нуля.
-        В остальных режимах показываются только объекты с положительным ростом по выбранной метрике за выбранный период.
-      </div>
+    <section class="stats-grid">
+      <article class="stat-card panel">
+        <span class="stat-card__label">Всего объектов</span>
+        <strong class="stat-card__value" id="statTotal">0</strong>
+        <span class="stat-card__hint">Все записи из bundle.json</span>
+      </article>
+      <article class="stat-card panel">
+        <span class="stat-card__label">Активных по метрике</span>
+        <strong class="stat-card__value" id="statVisible">0</strong>
+        <span class="stat-card__hint" id="statVisibleSub">Только объекты с views &gt; 0</span>
+      </article>
+      <article class="stat-card panel">
+        <div class="stat-card__header-row">
+          <span class="stat-card__label" id="metricTotalTitle">Сумма views</span>
+          <button type="button" id="totalMetricChartBtn" class="text-btn">График</button>
+        </div>
+        <strong class="stat-card__value" id="statMetricTotal">0</strong>
+        <span class="stat-card__hint" id="metricTotalSub">Общий объём выбранной метрики</span>
+      </article>
+      <article class="stat-card panel">
+        <span class="stat-card__label">Среднее на объект</span>
+        <strong class="stat-card__value" id="statAverage">0</strong>
+        <span class="stat-card__hint">Среднее значение по видимым объектам</span>
+      </article>
+      <article class="stat-card panel">
+        <span class="stat-card__label">Медиана</span>
+        <strong class="stat-card__value" id="statMedian">0</strong>
+        <span class="stat-card__hint">Средняя устойчивость выборки</span>
+      </article>
+      <article class="stat-card panel">
+        <span class="stat-card__label">Последний замер</span>
+        <strong class="stat-card__value small" id="statUpdated">—</strong>
+        <span class="stat-card__hint">Время последнего обновления</span>
+      </article>
     </section>
 
-    <div id="grid" class="grid"></div>
-    <div id="emptyState" class="empty hidden">Нет объектов для отображения.</div>
+    <section class="insights-grid">
+      <article class="insight-card panel accent">
+        <span class="insight-card__label">Σ с последнего обновления</span>
+        <strong class="insight-card__value" id="insightLastUpdate">0</strong>
+      </article>
+      <article class="insight-card panel">
+        <span class="insight-card__label">Σ за час</span>
+        <strong class="insight-card__value" id="insightHour">0</strong>
+      </article>
+      <article class="insight-card panel">
+        <span class="insight-card__label">Σ за неделю</span>
+        <strong class="insight-card__value" id="insightWeek">0</strong>
+      </article>
+      <article class="insight-card panel">
+        <span class="insight-card__label">Σ за месяц</span>
+        <strong class="insight-card__value" id="insightMonth">0</strong>
+      </article>
+    </section>
+
+    <main class="dashboard-layout">
+      <aside class="sidebar">
+        <section class="panel filter-panel">
+          <div class="panel__header">
+            <div>
+              <div class="panel__eyebrow">Controls</div>
+              <h2>Фильтры и навигация</h2>
+            </div>
+            <button type="button" class="text-btn" id="resetBtn">Сбросить</button>
+          </div>
+
+          <label class="field">
+            <span class="field__label">Поиск</span>
+            <input class="input" id="searchInput" type="text" placeholder="Название, tinuuid, URL..." />
+          </label>
+
+          <div class="field-group two-cols">
+            <label class="field">
+              <span class="field__label">Метрика</span>
+              <select class="select" id="metricSelect">
+                <option value="views">views</option>
+                <option value="likes">likes</option>
+                <option value="viewsShowcase">viewsShowcase</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">Сортировка</span>
+              <select class="select" id="sortSelect">
+                <option value="metric_desc">По метрике ↓</option>
+                <option value="delta_desc">По росту ↓</option>
+                <option value="engagement_desc">По вовлечению ↓</option>
+                <option value="name_asc">По имени A→Z</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="field">
+            <span class="field__label">Быстрый переключатель метрики</span>
+            <div class="segmented segmented--metrics">
+              <button type="button" class="segmented__btn metric-btn active" data-metric="views">views</button>
+              <button type="button" class="segmented__btn metric-btn" data-metric="likes">likes</button>
+              <button type="button" class="segmented__btn metric-btn" data-metric="viewsShowcase">showcase</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field__row">
+              <span class="field__label">Фильтр по динамике</span>
+              <span class="delta-pill" id="filterDeltaBadge">Σ +0</span>
+            </div>
+            <div class="segmented segmented--filters">
+              <button type="button" class="segmented__btn filter-btn active" data-filter="off">Все</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="last_update">Last update</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="hour">1h</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="week">7d</button>
+              <button type="button" class="segmented__btn filter-btn" data-filter="month">30d</button>
+            </div>
+          </div>
+
+          <div class="field-group two-cols">
+            <label class="field">
+              <span class="field__label">Мин. views</span>
+              <input class="input" id="minViewsInput" type="number" min="0" step="1" placeholder="0" />
+            </label>
+            <label class="field">
+              <span class="field__label">Мин. likes</span>
+              <input class="input" id="minLikesInput" type="number" min="0" step="1" placeholder="0" />
+            </label>
+          </div>
+
+          <div class="field-group two-cols">
+            <label class="field">
+              <span class="field__label">Мин. showcase</span>
+              <input class="input" id="minShowcaseInput" type="number" min="0" step="1" placeholder="0" />
+            </label>
+            <label class="field">
+              <span class="field__label">Мин. выбранной метрики</span>
+              <input class="input" id="minMetricInput" type="number" min="0" step="1" placeholder="0" />
+            </label>
+          </div>
+
+          <div class="field-group two-cols">
+            <label class="field">
+              <span class="field__label">Макс. выбранной метрики</span>
+              <input class="input" id="maxMetricInput" type="number" min="0" step="1" placeholder="Без лимита" />
+            </label>
+            <label class="field">
+              <span class="field__label">Статус</span>
+              <select class="select" id="removedSelect">
+                <option value="all">Все объекты</option>
+                <option value="active">Только активные</option>
+                <option value="removed">Только удалённые</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel shortlist-panel">
+          <div class="panel__header compact">
+            <div>
+              <div class="panel__eyebrow">Spotlight</div>
+              <h2>Топ объектов</h2>
+            </div>
+          </div>
+          <div id="topList" class="shortlist empty-list">Загрузите bundle.json, чтобы увидеть лидеров.</div>
+        </section>
+      </aside>
+
+      <section class="content">
+        <section class="content__top">
+          <article class="panel chart-panel">
+            <div class="panel__header">
+              <div>
+                <div class="panel__eyebrow">Overview</div>
+                <h2>Динамика суммарной метрики</h2>
+              </div>
+              <span class="panel__hint" id="trendSummary">Нет данных</span>
+            </div>
+            <div class="chart-panel__body large"><canvas id="trendCanvas"></canvas></div>
+          </article>
+
+          <article class="panel chart-panel">
+            <div class="panel__header">
+              <div>
+                <div class="panel__eyebrow">Ranking</div>
+                <h2>Топ-8 по выбранной метрике</h2>
+              </div>
+              <span class="panel__hint" id="rankingSummary">Нет данных</span>
+            </div>
+            <div class="chart-panel__body"><canvas id="rankingCanvas"></canvas></div>
+          </article>
+        </section>
+
+        <section class="content__mid">
+          <article class="panel micro-panel">
+            <div class="panel__header compact">
+              <div>
+                <div class="panel__eyebrow">Breakdown</div>
+                <h2>Структура просмотров</h2>
+              </div>
+            </div>
+            <div class="chart-panel__body small"><canvas id="mixCanvas"></canvas></div>
+          </article>
+
+          <article class="panel text-panel">
+            <div class="panel__header compact">
+              <div>
+                <div class="panel__eyebrow">Insights</div>
+                <h2>Ключевые выводы</h2>
+              </div>
+            </div>
+            <div class="insight-list" id="insightList"></div>
+          </article>
+
+          <article class="panel benchmark-panel">
+            <div class="panel__header compact">
+              <div>
+                <div class="panel__eyebrow">Benchmarks</div>
+                <h2>Контроль качества витрины</h2>
+              </div>
+            </div>
+            <div class="benchmark-list" id="benchmarkList"></div>
+          </article>
+        </section>
+
+        <section class="panel results-panel">
+          <div class="panel__header results-header">
+            <div>
+              <div class="panel__eyebrow">Catalog</div>
+              <h2>Каталог объектов</h2>
+            </div>
+            <span class="panel__hint" id="resultsSummary">0 карточек</span>
+          </div>
+          <div class="status-line" id="status">Готово.</div>
+          <div class="cards-grid" id="grid"></div>
+          <div class="empty-state hidden" id="emptyState">
+            <h3>Нет объектов под текущие фильтры</h3>
+            <p>Проверьте диапазоны метрик, режим динамики или поисковый запрос.</p>
+          </div>
+        </section>
+      </section>
+    </main>
   </div>
 
-  <input id="fileInput" type="file" accept=".json,application/json" class="hidden" />
+  <input id="fileInput" type="file" accept="application/json" hidden />
 
-  <div id="loader" class="overlay hidden">
-    <div class="overlay-card">
-      <h2 class="overlay-title" id="loaderTitle">Загрузка</h2>
-      <div class="overlay-text" id="loaderText">Подготовка...</div>
-      <div class="progress">
-        <div class="progress-bar" id="loaderBar"></div>
-      </div>
-      <div class="progress-row">
-        <div id="loaderStep">Шаг 0</div>
-        <div id="loaderPercent">0%</div>
+  <div class="overlay hidden" id="loader">
+    <div class="overlay-card panel">
+      <div class="panel__eyebrow">Processing</div>
+      <h2 id="loaderTitle">Загрузка</h2>
+      <p id="loaderText">Подготовка...</p>
+      <div class="progress"><div class="progress__bar" id="loaderBar"></div></div>
+      <div class="progress__meta">
+        <span id="loaderStep">Шаг 1</span>
+        <span id="loaderPercent">0%</span>
       </div>
     </div>
   </div>
 
-  <div id="chartModal" class="modal hidden">
-    <div class="modal-card">
-      <div class="modal-head">
+  <div class="modal hidden" id="chartModal">
+    <div class="modal-card panel">
+      <div class="modal__head">
         <div>
-          <h2 class="modal-title" id="modalTitle">График</h2>
-          <div class="modal-sub" id="modalSub">—</div>
+          <div class="panel__eyebrow">Deep dive</div>
+          <h2 id="modalTitle">График</h2>
+          <p id="modalSub">—</p>
         </div>
-        <button type="button" class="icon-btn" id="closeModalBtn">✕</button>
+        <button type="button" class="icon-btn" id="closeModalBtn">×</button>
       </div>
-
-      <div class="modal-toolbar">
-        <div class="seg">
-          <button type="button" class="seg-btn active" id="daysBtn">Дни</button>
-          <button type="button" class="seg-btn" id="monthsBtn">Месяцы</button>
+      <div class="modal__toolbar">
+        <div class="segmented">
+          <button type="button" class="segmented__btn active" id="daysBtn">Дни</button>
+          <button type="button" class="segmented__btn" id="monthsBtn">Месяцы</button>
         </div>
-        <div class="chart-meta" id="chartMeta">—</div>
+        <span class="panel__hint" id="chartMeta">Нет данных</span>
       </div>
-
-      <div class="chart-wrap">
-        <div class="chart-box">
-          <canvas id="chartCanvas"></canvas>
-        </div>
+      <div class="modal__body">
+        <canvas id="chartCanvas"></canvas>
       </div>
     </div>
   </div>
 
-  <script>
-    const API_URL = "https://api.vizbl.us/obj/GetPublic";
-    const METRICS = ["views", "likes", "viewsShowcase"];
-    const METRIC_LABELS = {
-      views: "views",
-      likes: "likes",
-      viewsShowcase: "viewsShowcase"
-    };
-
-    let currentBundle = null;
-    let currentDisplayObjects = [];
-    let currentRenderedObjects = [];
-    let chartInstance = null;
-    let currentChartEntry = null;
-    let chartMode = "days";
-    let currentDeltaFilter = "off";
-    let currentSort = "metric_desc";
-    let currentMetric = "views";
-
-    const els = {
-      statTotal: document.getElementById("statTotal"),
-      statVisible: document.getElementById("statVisible"),
-      statVisibleSub: document.getElementById("statVisibleSub"),
-      statMetricTotal: document.getElementById("statMetricTotal"),
-      statUpdated: document.getElementById("statUpdated"),
-      metricTotalTitle: document.getElementById("metricTotalTitle"),
-      metricTotalSub: document.getElementById("metricTotalSub"),
-
-      insightLastUpdate: document.getElementById("insightLastUpdate"),
-      insightHour: document.getElementById("insightHour"),
-      insightWeek: document.getElementById("insightWeek"),
-      insightMonth: document.getElementById("insightMonth"),
-
-      totalMetricChartBtn: document.getElementById("totalMetricChartBtn"),
-      fileChip: document.getElementById("fileChip"),
-      modeChip: document.getElementById("modeChip"),
-      metricChip: document.getElementById("metricChip"),
-      filterChip: document.getElementById("filterChip"),
-      status: document.getElementById("status"),
-      grid: document.getElementById("grid"),
-      emptyState: document.getElementById("emptyState"),
-      searchInput: document.getElementById("searchInput"),
-      sortSelect: document.getElementById("sortSelect"),
-      metricSelect: document.getElementById("metricSelect"),
-      exportCsvBtn: document.getElementById("exportCsvBtn"),
-      resetBtn: document.getElementById("resetBtn"),
-
-      fileInput: document.getElementById("fileInput"),
-      downloadBtn: document.getElementById("downloadBtn"),
-      openBtn: document.getElementById("openBtn"),
-      updateBtn: document.getElementById("updateBtn"),
-
-      loader: document.getElementById("loader"),
-      loaderTitle: document.getElementById("loaderTitle"),
-      loaderText: document.getElementById("loaderText"),
-      loaderBar: document.getElementById("loaderBar"),
-      loaderStep: document.getElementById("loaderStep"),
-      loaderPercent: document.getElementById("loaderPercent"),
-
-      chartModal: document.getElementById("chartModal"),
-      modalTitle: document.getElementById("modalTitle"),
-      modalSub: document.getElementById("modalSub"),
-      chartMeta: document.getElementById("chartMeta"),
-      closeModalBtn: document.getElementById("closeModalBtn"),
-      daysBtn: document.getElementById("daysBtn"),
-      monthsBtn: document.getElementById("monthsBtn"),
-
-      filterDeltaBadge: document.getElementById("filterDeltaBadge"),
-      filterButtons: Array.from(document.querySelectorAll(".filter-btn")),
-      metricButtons: Array.from(document.querySelectorAll(".metric-btn"))
-    };
-
-    els.downloadBtn.addEventListener("click", downloadFreshBundle);
-    els.openBtn.addEventListener("click", () => els.fileInput.click());
-    els.updateBtn.addEventListener("click", updateOpenedBundle);
-    els.fileInput.addEventListener("change", handleFileOpen);
-    els.searchInput.addEventListener("input", renderCurrent);
-
-    els.sortSelect.addEventListener("change", () => {
-      currentSort = els.sortSelect.value;
-      renderCurrent();
-    });
-
-    els.metricSelect.addEventListener("change", () => {
-      setMetric(els.metricSelect.value);
-    });
-
-    els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
-    els.resetBtn.addEventListener("click", resetUi);
-
-    els.totalMetricChartBtn.addEventListener("click", openTotalMetricChart);
-    els.closeModalBtn.addEventListener("click", closeChartModal);
-
-    els.chartModal.addEventListener("click", (e) => {
-      if (e.target === els.chartModal) closeChartModal();
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeChartModal();
-    });
-
-    els.daysBtn.addEventListener("click", () => {
-      chartMode = "days";
-      updateChartModeButtons();
-      if (currentChartEntry) drawChart(currentChartEntry);
-    });
-
-    els.monthsBtn.addEventListener("click", () => {
-      chartMode = "months";
-      updateChartModeButtons();
-      if (currentChartEntry) drawChart(currentChartEntry);
-    });
-
-    els.filterButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        currentDeltaFilter = btn.dataset.filter;
-        updateFilterButtons();
-        renderAll();
-      });
-    });
-
-    els.metricButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        setMetric(btn.dataset.metric);
-      });
-    });
-
-    function setStatus(text) {
-      els.status.textContent = text;
-    }
-
-    function setMode(text) {
-      const value = `Режим: ${text}`;
-      els.modeChip.textContent = value;
-      els.modeChip.title = value;
-    }
-
-    function setFileChip(text) {
-      els.fileChip.textContent = text;
-      els.fileChip.title = text;
-    }
-
-    function setFilterChip(text) {
-      els.filterChip.textContent = text;
-      els.filterChip.title = text;
-    }
-
-    function setMetricChip() {
-      const value = `Метрика: ${METRIC_LABELS[currentMetric]}`;
-      els.metricChip.textContent = value;
-      els.metricChip.title = value;
-    }
-
-    function getFilterName(filter) {
-      const map = {
-        off: "выкл",
-        last_update: "с последнего обновления",
-        hour: "за час",
-        week: "за неделю",
-        month: "за месяц"
-      };
-      return map[filter] || "выкл";
-    }
-
-    function updateFilterButtons() {
-      els.filterButtons.forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.filter === currentDeltaFilter);
-      });
-      setFilterChip(`Фильтр: ${getFilterName(currentDeltaFilter)}`);
-    }
-
-    function updateMetricButtons() {
-      els.metricButtons.forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.metric === currentMetric);
-      });
-      els.metricSelect.value = currentMetric;
-      setMetricChip();
-    }
-
-    function setMetric(metric) {
-      if (!METRICS.includes(metric)) return;
-      currentMetric = metric;
-      updateMetricButtons();
-      renderAll();
-    }
-
-    function formatNum(n) {
-      return Number(n || 0).toLocaleString("ru-RU");
-    }
-
-    function formatSignedNum(n) {
-      const value = Number(n || 0);
-      if (value > 0) return `+${formatNum(value)}`;
-      if (value < 0) return `-${formatNum(Math.abs(value))}`;
-      return "0";
-    }
-
-    function formatDateTimeForFile(date = new Date()) {
-      const p = n => String(n).padStart(2, "0");
-      return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}_${p(date.getHours())}-${p(date.getMinutes())}-${p(date.getSeconds())}`;
-    }
-
-    function formatHumanDate(iso) {
-      if (!iso) return "—";
-      const d = new Date(iso);
-      if (Number.isNaN(+d)) return "—";
-      return d.toLocaleString("ru-RU");
-    }
-
-    function nowIso() {
-      return new Date().toISOString();
-    }
-
-    function showLoader(title, text, percent = 0, step = "") {
-      els.loaderTitle.textContent = title;
-      els.loaderText.textContent = text;
-      els.loaderBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-      els.loaderPercent.textContent = `${Math.round(percent)}%`;
-      els.loaderStep.textContent = step || "";
-      els.loader.classList.remove("hidden");
-    }
-
-    function updateLoader(text, percent, step = "") {
-      els.loaderText.textContent = text;
-      els.loaderBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-      els.loaderPercent.textContent = `${Math.round(percent)}%`;
-      els.loaderStep.textContent = step || "";
-    }
-
-    function hideLoader() {
-      els.loader.classList.add("hidden");
-    }
-
-    function downloadJson(data, filename) {
-      try {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 1000);
-        return true;
-      } catch (e) {
-        console.error("downloadJson failed", e);
-        return false;
-      }
-    }
-
-    function downloadText(text, filename, mime = "text/plain;charset=utf-8") {
-      try {
-        const blob = new Blob([text], { type: mime });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 1000);
-        return true;
-      } catch (e) {
-        console.error("downloadText failed", e);
-        return false;
-      }
-    }
-
-    function num(v) {
-      return Number(v || 0);
-    }
-
-    function getViews(obj) {
-      return num(obj?.views || obj?.lastViews || 0);
-    }
-
-    function getLikes(obj) {
-      return num(obj?.likes || obj?.lastLikes || 0);
-    }
-
-    function getViewsShowcase(obj) {
-      return num(obj?.viewsShowcase || obj?.lastViewsShowcase || 0);
-    }
-
-    function getTinuuid(obj) {
-      return obj?.tinuuid || obj?.tinUuid || obj?.tinUUID || obj?.uuid || obj?.id || "";
-    }
-
-    function getName(obj) {
-      return obj?.name || obj?.title || "Untitled Object";
-    }
-
-    function getPreview(obj) {
-      return obj?.mainPreview || obj?.preview || obj?.image || "";
-    }
-
-    function buildGoUrl(tinuuid) {
-      if (!tinuuid) return null;
-      return `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}`;
-    }
-
-    function buildViewerUrl(tinuuid) {
-      if (!tinuuid) return null;
-      return `https://viewer.vizbl.com/${encodeURIComponent(tinuuid)}`;
-    }
-
-    function escapeHtml(str) {
-      return String(str ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function metricHistoryKey(metric) {
-      if (metric === "views") return "history";
-      if (metric === "likes") return "likesHistory";
-      if (metric === "viewsShowcase") return "viewsShowcaseHistory";
-      return "history";
-    }
-
-    function metricLastKey(metric) {
-      if (metric === "views") return "lastViews";
-      if (metric === "likes") return "lastLikes";
-      if (metric === "viewsShowcase") return "lastViewsShowcase";
-      return "lastViews";
-    }
-
-    function metricTotalHistoryKey(metric) {
-      if (metric === "views") return "totalViewsHistory";
-      if (metric === "likes") return "totalLikesHistory";
-      if (metric === "viewsShowcase") return "totalViewsShowcaseHistory";
-      return "totalViewsHistory";
-    }
-
-    function getItemMetricValue(item, metric = currentMetric) {
-      return num(item?.[metricLastKey(metric)]);
-    }
-
-    function getItemHistory(item, metric = currentMetric) {
-      const key = metricHistoryKey(metric);
-      const arr = Array.isArray(item?.[key]) ? item[key] : [];
-      return sortHistory(arr);
-    }
-
-    function getBundleTotalHistory(bundle, metric = currentMetric) {
-      const key = metricTotalHistoryKey(metric);
-      return sortHistory(Array.isArray(bundle?.[key]) ? bundle[key] : []);
-    }
-
-    function ensureMetricFieldsForItem(item) {
-      item.lastViews = num(item.lastViews);
-      item.lastLikes = num(item.lastLikes);
-      item.lastViewsShowcase = num(item.lastViewsShowcase);
-
-      if (!Array.isArray(item.history)) item.history = [];
-      if (!Array.isArray(item.likesHistory)) item.likesHistory = [];
-      if (!Array.isArray(item.viewsShowcaseHistory)) item.viewsShowcaseHistory = [];
-
-      return item;
-    }
-
-    function upgradeBundleSchema(bundle) {
-      if (!bundle || typeof bundle !== "object") return bundle;
-
-      if (!Array.isArray(bundle.objects)) bundle.objects = [];
-      if (!Array.isArray(bundle.snapshots)) bundle.snapshots = [];
-      if (!Array.isArray(bundle.totalViewsHistory)) bundle.totalViewsHistory = [];
-      if (!Array.isArray(bundle.totalLikesHistory)) bundle.totalLikesHistory = [];
-      if (!Array.isArray(bundle.totalViewsShowcaseHistory)) bundle.totalViewsShowcaseHistory = [];
-
-      bundle.objects = bundle.objects.map(raw => {
-        const item = JSON.parse(JSON.stringify(raw));
-
-        if (item.lastViews == null) item.lastViews = num(item.views || 0);
-        if (item.lastLikes == null) item.lastLikes = num(item.likes || 0);
-        if (item.lastViewsShowcase == null) item.lastViewsShowcase = num(item.viewsShowcase || 0);
-
-        if (!Array.isArray(item.history)) {
-          item.history = item.lastViews || item.createdAt || bundle.updatedAt
-            ? [{ capturedAt: bundle.updatedAt || bundle.createdAt || nowIso(), views: num(item.lastViews) }]
-            : [];
-        }
-
-        if (!Array.isArray(item.likesHistory)) {
-          item.likesHistory = item.lastLikes || item.createdAt || bundle.updatedAt
-            ? [{ capturedAt: bundle.updatedAt || bundle.createdAt || nowIso(), views: num(item.lastLikes) }]
-            : [];
-        }
-
-        if (!Array.isArray(item.viewsShowcaseHistory)) {
-          item.viewsShowcaseHistory = item.lastViewsShowcase || item.createdAt || bundle.updatedAt
-            ? [{ capturedAt: bundle.updatedAt || bundle.createdAt || nowIso(), views: num(item.lastViewsShowcase) }]
-            : [];
-        }
-
-        item.removed = Boolean(item.removed);
-        return ensureMetricFieldsForItem(item);
-      });
-
-      return bundle;
-    }
-
-    function validateBundle(bundle) {
-      if (!bundle || typeof bundle !== "object") throw new Error("JSON должен быть объектом.");
-      if (!Array.isArray(bundle.objects)) throw new Error("В JSON отсутствует массив objects.");
-      upgradeBundleSchema(bundle);
-      return true;
-    }
-
-    async function fetchAllObjectsWithProgress(titleText = "Загрузка объектов") {
-      showLoader(titleText, "Подключение к API...", 2, "Шаг 1");
-      let page = 1;
-      let all = [];
-      let pagesLoaded = 0;
-      const hardLimit = 2000;
-
-      while (page <= hardLimit) {
-        updateLoader(`Загрузка страницы ${page}...`, Math.min(8 + pagesLoaded * 2, 80), `Страница ${page}`);
-
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ page })
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status} на странице ${page}`);
-
-        const data = await res.json();
-        const objs = Array.isArray(data?.objs) ? data.objs : [];
-        if (!objs.length) break;
-
-        all = all.concat(objs);
-        page++;
-        pagesLoaded++;
-      }
-
-      updateLoader(`Получено ${all.length} объектов. Подготовка...`, 88, "Формирование данных");
-      return all;
-    }
-
-    function normalizeApiObjects(rawObjects) {
-      return rawObjects.map(obj => ({
-        tinuuid: getTinuuid(obj),
-        name: getName(obj),
-        mainPreview: getPreview(obj),
-
-        lastViews: getViews(obj),
-        lastLikes: getLikes(obj),
-        lastViewsShowcase: getViewsShowcase(obj),
-
-        removed: false,
-        history: [],
-        likesHistory: [],
-        viewsShowcaseHistory: []
-      })).filter(x => x.tinuuid);
-    }
-
-    function sumMetric(items, metric) {
-      return items.reduce((sum, x) => sum + getItemMetricValue(x, metric), 0);
-    }
-
-    function createBundleFromFreshApi(rawObjects) {
-      const capturedAt = nowIso();
-      const normalized = normalizeApiObjects(rawObjects);
-
-      normalized.forEach(item => {
-        item.history = [{ capturedAt, views: num(item.lastViews) }];
-        item.likesHistory = [{ capturedAt, views: num(item.lastLikes) }];
-        item.viewsShowcaseHistory = [{ capturedAt, views: num(item.lastViewsShowcase) }];
-      });
-
-      normalized.sort((a, b) => num(b.lastViews) - num(a.lastViews));
-
-      const totalViews = normalized.filter(x => num(x.lastViews) > 0).reduce((sum, x) => sum + num(x.lastViews), 0);
-      const totalLikes = normalized.filter(x => num(x.lastLikes) > 0).reduce((sum, x) => sum + num(x.lastLikes), 0);
-      const totalViewsShowcase = normalized.filter(x => num(x.lastViewsShowcase) > 0).reduce((sum, x) => sum + num(x.lastViewsShowcase), 0);
-
-      return {
-        version: 2,
-        source: API_URL,
-        createdAt: capturedAt,
-        updatedAt: capturedAt,
-
-        totalViewsHistory: [{ capturedAt, views: totalViews }],
-        totalLikesHistory: [{ capturedAt, views: totalLikes }],
-        totalViewsShowcaseHistory: [{ capturedAt, views: totalViewsShowcase }],
-
-        snapshots: [{
-          capturedAt,
-          totalObjects: rawObjects.length,
-          visibleObjectsViews: normalized.filter(x => num(x.lastViews) > 0).length,
-          visibleObjectsLikes: normalized.filter(x => num(x.lastLikes) > 0).length,
-          visibleObjectsViewsShowcase: normalized.filter(x => num(x.lastViewsShowcase) > 0).length,
-          totalViews,
-          totalLikes,
-          totalViewsShowcase
-        }],
-
-        objects: normalized
-      };
-    }
-
-    function pushMetricPoint(historyArr, capturedAt, value) {
-      if (!Array.isArray(historyArr)) historyArr = [];
-      historyArr.push({ capturedAt, views: num(value) });
-      return historyArr;
-    }
-
-    function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
-      validateBundle(bundle);
-
-      const capturedAt = nowIso();
-      const freshNorm = normalizeApiObjects(rawObjects);
-      const freshMap = new Map(freshNorm.map(x => [x.tinuuid, x]));
-      const bundleMap = new Map();
-
-      bundle.objects.forEach(item => {
-        const cloned = ensureMetricFieldsForItem(JSON.parse(JSON.stringify(item)));
-        if (cloned.tinuuid) bundleMap.set(cloned.tinuuid, cloned);
-      });
-
-      for (const [id, fresh] of freshMap.entries()) {
-        if (!bundleMap.has(id)) {
-          bundleMap.set(id, {
-            tinuuid: fresh.tinuuid,
-            name: fresh.name,
-            mainPreview: fresh.mainPreview,
-
-            lastViews: num(fresh.lastViews),
-            lastLikes: num(fresh.lastLikes),
-            lastViewsShowcase: num(fresh.lastViewsShowcase),
-
-            removed: false,
-            history: [{ capturedAt, views: num(fresh.lastViews) }],
-            likesHistory: [{ capturedAt, views: num(fresh.lastLikes) }],
-            viewsShowcaseHistory: [{ capturedAt, views: num(fresh.lastViewsShowcase) }]
-          });
-        } else {
-          const existing = bundleMap.get(id);
-
-          existing.name = fresh.name;
-          existing.mainPreview = fresh.mainPreview;
-
-          existing.lastViews = num(fresh.lastViews);
-          existing.lastLikes = num(fresh.lastLikes);
-          existing.lastViewsShowcase = num(fresh.lastViewsShowcase);
-
-          existing.removed = false;
-          existing.history = pushMetricPoint(existing.history, capturedAt, existing.lastViews);
-          existing.likesHistory = pushMetricPoint(existing.likesHistory, capturedAt, existing.lastLikes);
-          existing.viewsShowcaseHistory = pushMetricPoint(existing.viewsShowcaseHistory, capturedAt, existing.lastViewsShowcase);
-        }
-      }
-
-      for (const [id, existing] of bundleMap.entries()) {
-        if (!freshMap.has(id)) existing.removed = true;
-      }
-
-      const mergedObjects = Array.from(bundleMap.values())
-        .map(ensureMetricFieldsForItem)
-        .sort((a, b) => num(b.lastViews) - num(a.lastViews));
-
-      const totalViews = mergedObjects.filter(x => num(x.lastViews) > 0).reduce((sum, x) => sum + num(x.lastViews), 0);
-      const totalLikes = mergedObjects.filter(x => num(x.lastLikes) > 0).reduce((sum, x) => sum + num(x.lastLikes), 0);
-      const totalViewsShowcase = mergedObjects.filter(x => num(x.lastViewsShowcase) > 0).reduce((sum, x) => sum + num(x.lastViewsShowcase), 0);
-
-      const updated = JSON.parse(JSON.stringify(bundle));
-      updated.updatedAt = capturedAt;
-      updated.snapshots = Array.isArray(updated.snapshots) ? updated.snapshots : [];
-      updated.totalViewsHistory = Array.isArray(updated.totalViewsHistory) ? updated.totalViewsHistory : [];
-      updated.totalLikesHistory = Array.isArray(updated.totalLikesHistory) ? updated.totalLikesHistory : [];
-      updated.totalViewsShowcaseHistory = Array.isArray(updated.totalViewsShowcaseHistory) ? updated.totalViewsShowcaseHistory : [];
-
-      updated.snapshots.push({
-        capturedAt,
-        totalObjects: rawObjects.length,
-        visibleObjectsViews: mergedObjects.filter(x => num(x.lastViews) > 0).length,
-        visibleObjectsLikes: mergedObjects.filter(x => num(x.lastLikes) > 0).length,
-        visibleObjectsViewsShowcase: mergedObjects.filter(x => num(x.lastViewsShowcase) > 0).length,
-        totalViews,
-        totalLikes,
-        totalViewsShowcase
-      });
-
-      updated.totalViewsHistory.push({ capturedAt, views: totalViews });
-      updated.totalLikesHistory.push({ capturedAt, views: totalLikes });
-      updated.totalViewsShowcaseHistory.push({ capturedAt, views: totalViewsShowcase });
-      updated.objects = mergedObjects;
-
-      upgradeBundleSchema(updated);
-      return updated;
-    }
-
-    async function downloadFreshBundle() {
-      try {
-        setMode("создание нового JSON");
-        const raw = await fetchAllObjectsWithProgress("Создание нового JSON");
-        updateLoader("Формирование единого bundle.json...", 94, "Сборка файла");
-
-        const bundle = createBundleFromFreshApi(raw);
-        currentBundle = bundle;
-
-        updateLoader("Рендер объектов...", 98, "Отрисовка");
-        applyBundleToUI(bundle, `bundle_${formatDateTimeForFile()}.json`, "новый JSON из API");
-
-        const filename = `bundle_${formatDateTimeForFile()}.json`;
-        if (!downloadJson(bundle, filename)) throw new Error("Не удалось скачать JSON.");
-
-        setStatus(`Готово. Скачан ${filename}. Объектов по метрике ${METRIC_LABELS[currentMetric]}: ${getVisibleObjects(bundle, currentMetric).length}.`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Ошибка создания JSON: ${err.message}`);
-        setMode("ошибка");
-      } finally {
-        hideLoader();
-      }
-    }
-
-    async function handleFileOpen(e) {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      try {
-        setMode("открытие локального JSON");
-        showLoader("Открытие JSON", "Чтение локального файла...", 18, "Чтение файла");
-        const text = await file.text();
-        updateLoader("Разбор JSON...", 45, "Парсинг");
-
-        const parsed = JSON.parse(text);
-        validateBundle(parsed);
-
-        updateLoader("Подготовка интерфейса...", 82, "Отрисовка");
-        currentBundle = parsed;
-
-        applyBundleToUI(parsed, file.name, "локальный JSON открыт");
-        els.updateBtn.disabled = false;
-
-        setStatus(`Файл открыт: ${file.name}.`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Ошибка открытия JSON: ${err.message}`);
-        setMode("ошибка");
-      } finally {
-        hideLoader();
-        e.target.value = "";
-      }
-    }
-
-    async function updateOpenedBundle() {
-      if (!currentBundle) {
-        setStatus("Сначала открой JSON.");
-        return;
-      }
-
-      try {
-        setMode("обновление статистики");
-        showLoader("Обновление статистики", "Используется уже открытый JSON как база...", 6, "Подготовка");
-        const raw = await fetchAllObjectsWithProgress("Обновление статистики");
-        updateLoader("Слияние старого JSON с новым замером...", 90, "Обновление истории");
-
-        const updatedBundle = mergeOpenedBundleWithFreshApi(currentBundle, raw);
-        currentBundle = updatedBundle;
-
-        updateLoader("Рендер обновлённых данных...", 97, "Отрисовка");
-        applyBundleToUI(updatedBundle, `bundle_updated_${formatDateTimeForFile()}.json`, "статистика обновлена");
-
-        const filename = `bundle_updated_${formatDateTimeForFile()}.json`;
-        if (!downloadJson(updatedBundle, filename)) throw new Error("Не удалось скачать обновлённый JSON.");
-
-        setStatus(`Готово. Статистика обновлена и скачан ${filename}.`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Ошибка обновления статистики: ${err.message}`);
-        setMode("ошибка");
-      } finally {
-        hideLoader();
-      }
-    }
-
-    function getVisibleObjects(bundle, metric = currentMetric) {
-      return [...bundle.objects]
-        .map(ensureMetricFieldsForItem)
-        .filter(x => getItemMetricValue(x, metric) > 0)
-        .sort((a, b) => getItemMetricValue(b, metric) - getItemMetricValue(a, metric));
-    }
-
-    function sortHistory(history) {
-      return [...history].sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
-    }
-
-    function getObjectDeltaFromLast(item, metric = currentMetric) {
-      const history = getItemHistory(item, metric);
-      if (history.length < 2) return 0;
-      const prev = num(history[history.length - 2]?.views);
-      const last = num(history[history.length - 1]?.views);
-      return last - prev;
-    }
-
-    function getObjectDeltaForPeriod(item, period, metric = currentMetric) {
-      const history = getItemHistory(item, metric);
-      if (!history.length) return 0;
-
-      const lastEntry = history[history.length - 1];
-      const lastDate = new Date(lastEntry.capturedAt);
-      if (Number.isNaN(+lastDate)) return 0;
-
-      const fromDate = new Date(lastDate);
-
-      if (period === "week") fromDate.setDate(fromDate.getDate() - 7);
-      else if (period === "month") fromDate.setMonth(fromDate.getMonth() - 1);
-      else if (period === "hour") fromDate.setHours(fromDate.getHours() - 1);
-      else return getObjectDeltaFromLast(item, metric);
-
-      let baseline = null;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const d = new Date(history[i].capturedAt);
-        if (d <= fromDate) {
-          baseline = history[i];
-          break;
-        }
-      }
-
-      if (!baseline) baseline = history[0];
-
-      const lastViews = num(lastEntry.views);
-      const baseViews = num(baseline?.views);
-      return lastViews - baseViews;
-    }
-
-    function getDeltaByFilter(item, filter, metric = currentMetric) {
-      if (filter === "week") return getObjectDeltaForPeriod(item, "week", metric);
-      if (filter === "month") return getObjectDeltaForPeriod(item, "month", metric);
-      if (filter === "hour") return getObjectDeltaForPeriod(item, "hour", metric);
-      if (filter === "last_update") return getObjectDeltaFromLast(item, metric);
-      return getObjectDeltaFromLast(item, metric);
-    }
-
-    function getCurrentDelta(item) {
-      return getDeltaByFilter(item, currentDeltaFilter, currentMetric);
-    }
-
-    function getDeltaSum(filter, metric = currentMetric) {
-      if (!currentBundle) return 0;
-      return getVisibleObjects(currentBundle, metric).reduce((sum, item) => {
-        return sum + Math.max(0, getDeltaByFilter(item, filter, metric));
-      }, 0);
-    }
-
-    function renderInsights() {
-      els.insightLastUpdate.textContent = formatSignedNum(getDeltaSum("last_update", currentMetric));
-      els.insightHour.textContent = formatSignedNum(getDeltaSum("hour", currentMetric));
-      els.insightWeek.textContent = formatSignedNum(getDeltaSum("week", currentMetric));
-      els.insightMonth.textContent = formatSignedNum(getDeltaSum("month", currentMetric));
-    }
-
-    function renderFilterDelta() {
-      if (!currentBundle || currentDeltaFilter === "off") {
-        els.filterDeltaBadge.textContent = "Σ +0";
-        return;
-      }
-
-      const total = getVisibleObjects(currentBundle, currentMetric).reduce((sum, item) => {
-        return sum + Math.max(0, getCurrentDelta(item));
-      }, 0);
-
-      els.filterDeltaBadge.textContent = `Σ +${formatNum(total)}`;
-    }
-
-    function applyBundleToUI(bundle, fileLabel, modeLabel) {
-      validateBundle(bundle);
-      currentDisplayObjects = getVisibleObjects(bundle, currentMetric);
-      setFileChip(`Файл: ${fileLabel}`);
-      setMode(modeLabel);
-      els.updateBtn.disabled = false;
-      renderAll();
-    }
-
-    function renderStats(bundle) {
-      const allCount = Array.isArray(bundle.objects) ? bundle.objects.length : 0;
-      const visible = getVisibleObjects(bundle, currentMetric);
-      const totalMetric = visible.reduce((sum, x) => sum + getItemMetricValue(x, currentMetric), 0);
-
-      els.metricTotalTitle.textContent = `Сумма ${METRIC_LABELS[currentMetric]}`;
-      els.metricTotalSub.textContent = `Общий объём ${METRIC_LABELS[currentMetric]}`;
-      els.statVisibleSub.textContent = `Объекты с ${METRIC_LABELS[currentMetric]} > 0`;
-
-      els.statTotal.textContent = formatNum(allCount);
-      els.statVisible.textContent = formatNum(visible.length);
-      els.statMetricTotal.textContent = formatNum(totalMetric);
-      els.statUpdated.textContent = formatHumanDate(bundle.updatedAt);
-    }
-
-    function applySorting(list) {
-      const arr = [...list];
-
-      if (currentSort === "delta_desc") {
-        arr.sort((a, b) => getCurrentDelta(b) - getCurrentDelta(a));
-        return arr;
-      }
-
-      if (currentSort === "name_asc") {
-        arr.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "ru", { sensitivity: "base" }));
-        return arr;
-      }
-
-      arr.sort((a, b) => getItemMetricValue(b, currentMetric) - getItemMetricValue(a, currentMetric));
-      return arr;
-    }
-
-    function renderCurrent() {
-      if (!currentBundle) {
-        els.grid.innerHTML = "";
-        currentRenderedObjects = [];
-        els.emptyState.classList.remove("hidden");
-        return;
-      }
-
-      currentDisplayObjects = getVisibleObjects(currentBundle, currentMetric);
-
-      const q = String(els.searchInput.value || "").trim().toLowerCase();
-
-      let list = currentDisplayObjects.filter(item => {
-        if (!q) return true;
-        const hay = `${item.name || ""} ${item.tinuuid || ""}`.toLowerCase();
-        return hay.includes(q);
-      });
-
-      if (currentDeltaFilter !== "off") {
-        list = list.filter(item => getCurrentDelta(item) > 0);
-      }
-
-      list = applySorting(list);
-      currentRenderedObjects = list;
-
-      els.grid.innerHTML = "";
-
-      if (!list.length) {
-        els.emptyState.classList.remove("hidden");
-        return;
-      }
-
-      els.emptyState.classList.add("hidden");
-
-      list.forEach((item, index) => {
-        const goUrl = buildGoUrl(item.tinuuid);
-        const viewerUrl = buildViewerUrl(item.tinuuid);
-        const preview = item.mainPreview
-          ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
-          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#8d99ad;">Нет превью</div>`;
-
-        const metricValue = getItemMetricValue(item, currentMetric);
-        const delta = currentDeltaFilter === "off"
-          ? getObjectDeltaFromLast(item, currentMetric)
-          : getCurrentDelta(item);
-
-        const deltaBadge = delta > 0
-          ? `<div class="delta-badge">↗ <span>+${formatNum(delta)}</span></div>`
-          : "";
-
-        const card = document.createElement("article");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="media">
-            ${preview}
-            <div class="rank">#${index + 1}</div>
-            ${item.removed ? `<div class="removed">Удалён</div>` : ``}
-            ${deltaBadge}
-          </div>
-
-          <div class="body">
-            <h3 class="title">${escapeHtml(item.name || "Untitled Object")}</h3>
-
-            <div class="meta">
-              <div class="meta-box">
-                <div class="k">${escapeHtml(METRIC_LABELS[currentMetric])}</div>
-                <div class="v">${formatNum(metricValue)}</div>
-              </div>
-              <div class="meta-box">
-                <div class="k">TINUUID</div>
-                <div class="v">${escapeHtml(item.tinuuid || "—")}</div>
-              </div>
-              <div class="meta-box">
-                <div class="k">likes</div>
-                <div class="v">${formatNum(item.lastLikes)}</div>
-              </div>
-              <div class="meta-box">
-                <div class="k">viewsShowcase</div>
-                <div class="v">${formatNum(item.lastViewsShowcase)}</div>
-              </div>
-            </div>
-
-            <div class="actions">
-              ${
-                goUrl
-                  ? `<a class="mini-btn" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Открыть страницу объекта</a>`
-                  : `<button type="button" class="mini-btn ghost" disabled>Открыть страницу объекта</button>`
-              }
-
-              ${
-                viewerUrl
-                  ? `<a class="mini-btn primary" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">Посмотреть в 3D</a>`
-                  : `<button type="button" class="mini-btn ghost" disabled>Посмотреть в 3D</button>`
-              }
-
-              <button type="button" class="mini-btn ghost chart-btn" data-id="${escapeHtml(item.tinuuid)}">
-                График ${escapeHtml(METRIC_LABELS[currentMetric])}
-              </button>
-            </div>
-          </div>
-        `;
-        els.grid.appendChild(card);
-      });
-
-      els.grid.querySelectorAll(".chart-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.dataset.id;
-          const entry = currentBundle.objects.find(x => x.tinuuid === id);
-          if (!entry) return;
-          openChartModal(entry);
-        });
-      });
-    }
-
-    function exportCurrentCsv() {
-      if (!currentRenderedObjects.length) {
-        setStatus("Нет данных для экспорта CSV.");
-        return;
-      }
-
-      const rows = [[
-        "rank",
-        "name",
-        "tinuuid",
-        "selected_metric",
-        "metric_value",
-        "delta",
-        "views",
-        "likes",
-        "viewsShowcase",
-        "removed",
-        "viewer_url",
-        "go_url"
-      ]];
-
-      currentRenderedObjects.forEach((item, index) => {
-        const delta = currentDeltaFilter === "off"
-          ? getObjectDeltaFromLast(item, currentMetric)
-          : getCurrentDelta(item);
-
-        rows.push([
-          index + 1,
-          item.name || "",
-          item.tinuuid || "",
-          currentMetric,
-          getItemMetricValue(item, currentMetric),
-          delta || 0,
-          item.lastViews || 0,
-          item.lastLikes || 0,
-          item.lastViewsShowcase || 0,
-          item.removed ? "true" : "false",
-          buildViewerUrl(item.tinuuid) || "",
-          buildGoUrl(item.tinuuid) || ""
-        ]);
-      });
-
-      const csv = rows.map(row =>
-        row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")
-      ).join("\n");
-
-      const filename = `vizbl_export_${currentMetric}_${formatDateTimeForFile()}.csv`;
-      if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
-        setStatus(`CSV экспортирован: ${filename}.`);
-      } else {
-        setStatus("Не удалось экспортировать CSV.");
-      }
-    }
-
-    function resetUi() {
-      currentDeltaFilter = "off";
-      currentSort = "metric_desc";
-      currentMetric = "views";
-
-      els.searchInput.value = "";
-      els.sortSelect.value = "metric_desc";
-      els.metricSelect.value = "views";
-
-      updateFilterButtons();
-      updateMetricButtons();
-      renderAll();
-      setStatus("Фильтр, поиск, сортировка и метрика сброшены.");
-    }
-
-    function openChartModal(entry) {
-      currentChartEntry = entry;
-      chartMode = "days";
-      updateChartModeButtons();
-      els.modalTitle.textContent = `${entry.name || "График"} · ${METRIC_LABELS[currentMetric]}`;
-      els.modalSub.textContent = `TINUUID: ${entry.tinuuid || "—"}`;
-      els.chartModal.classList.remove("hidden");
-      drawChart(entry);
-    }
-
-    function openTotalMetricChart() {
-      if (!currentBundle) {
-        setStatus("Нет загруженного bundle.json.");
-        return;
-      }
-
-      const totalHistory = getBundleTotalHistory(currentBundle, currentMetric);
-      if (!totalHistory.length) {
-        setStatus(`Нет истории суммарной метрики ${METRIC_LABELS[currentMetric]}.`);
-        return;
-      }
-
-      currentChartEntry = {
-        name: `Суммарные ${METRIC_LABELS[currentMetric]} всех объектов`,
-        tinuuid: `TOTAL_${currentMetric}`,
-        __isTotalMetric: true
-      };
-
-      chartMode = "days";
-      updateChartModeButtons();
-      els.modalTitle.textContent = `Суммарные ${METRIC_LABELS[currentMetric]} всех объектов`;
-      els.modalSub.textContent = `История общего количества ${METRIC_LABELS[currentMetric]} по всем объектам`;
-      els.chartModal.classList.remove("hidden");
-      drawChart(currentChartEntry);
-    }
-
-    function closeChartModal() {
-      els.chartModal.classList.add("hidden");
-    }
-
-    function updateChartModeButtons() {
-      els.daysBtn.classList.toggle("active", chartMode === "days");
-      els.monthsBtn.classList.toggle("active", chartMode === "months");
-    }
-
-    function drawChart(entry) {
-      let history = [];
-
-      if (entry.__isTotalMetric) {
-        history = getBundleTotalHistory(currentBundle, currentMetric);
-      } else {
-        history = getItemHistory(entry, currentMetric);
-      }
-
-      let labels = [];
-      let values = [];
-
-      if (chartMode === "days") {
-        labels = history.map(x => formatPointLabel(x.capturedAt));
-        values = history.map(x => num(x.views));
-        els.chartMeta.textContent = `Точек: ${values.length} · Метрика: ${METRIC_LABELS[currentMetric]} · Режим: дни / замеры`;
-      } else {
-        const grouped = groupByMonth(history);
-        labels = grouped.labels;
-        values = grouped.values;
-        els.chartMeta.textContent = `Точек: ${values.length} · Метрика: ${METRIC_LABELS[currentMetric]} · Режим: месяцы`;
-      }
-
-      if (chartInstance) chartInstance.destroy();
-
-      const ctx = document.getElementById("chartCanvas").getContext("2d");
-      chartInstance = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: METRIC_LABELS[currentMetric],
-            data: values,
-            borderWidth: 2,
-            tension: .25,
-            fill: true,
-            backgroundColor: "rgba(90,169,255,.14)",
-            borderColor: "rgba(90,169,255,1)",
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: "rgba(120,190,255,1)"
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: { labels: { color: "#dce4f2" } },
-            tooltip: {
-              backgroundColor: "rgba(16,20,27,.96)",
-              titleColor: "#fff",
-              bodyColor: "#dce4f2",
-              borderColor: "rgba(255,255,255,.12)",
-              borderWidth: 1,
-              callbacks: {
-                label: (ctx) => ` ${METRIC_LABELS[currentMetric]}: ${formatNum(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: "#94a1b4", maxRotation: 0, autoSkip: true },
-              grid: { color: "rgba(255,255,255,.05)" }
-            },
-            y: {
-              ticks: {
-                color: "#94a1b4",
-                callback: (v) => formatNum(v)
-              },
-              grid: { color: "rgba(255,255,255,.05)" }
-            }
-          }
-        }
-      });
-    }
-
-    function formatPointLabel(iso) {
-      const d = new Date(iso);
-      const p = n => String(n).padStart(2, "0");
-      return `${p(d.getDate())}.${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
-    }
-
-    function groupByMonth(history) {
-      const map = new Map();
-      history.forEach(x => {
-        const d = new Date(x.capturedAt);
-        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, "0")}`;
-        map.set(key, num(x.views));
-      });
-      const entries = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-      return {
-        labels: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v)
-      };
-    }
-
-    function renderAll() {
-      if (!currentBundle) {
-        renderCurrent();
-        renderFilterDelta();
-        setMetricChip();
-        return;
-      }
-
-      renderStats(currentBundle);
-      renderInsights();
-      renderCurrent();
-      renderFilterDelta();
-      setMetricChip();
-    }
-
-    updateFilterButtons();
-    updateMetricButtons();
-    renderFilterDelta();
-    renderInsights();
-    setMode("ожидание");
-  </script>
+  <script src="./app.js"></script>
 </body>
 </html>
