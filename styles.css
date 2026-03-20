@@ -358,8 +358,32 @@ canvas {
 }
 
 .sidebar {
+  position: relative;
+  align-self: start;
+  gap: 18px;
+}
+
+.filter-panel {
   position: sticky;
   top: 24px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.filter-panel::-webkit-scrollbar {
+  width: 10px;
+}
+
+.filter-panel::-webkit-scrollbar-thumb {
+  background: rgba(103, 178, 255, 0.24);
+  border-radius: 999px;
+}
+
+.content__top,
+.content__mid {
+  align-items: start;
 }
 
 .filter-panel,
@@ -797,6 +821,12 @@ canvas {
 
   .sidebar {
     position: static;
+  }
+
+  .filter-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 
