@@ -1098,7 +1098,7 @@ function renderCurrent() {
     const viewerUrl = buildViewerUrl(item.tinuuid);
     const preview = item.mainPreview
       ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
-      : `<div class="media__fallback">No preview</div>`;
+      : `<div class="catalog-row__fallback">No preview</div>`;
 
     const metricValue = getItemMetricValue(item, currentMetric);
     const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item, currentMetric) : getCurrentDelta(item);
@@ -1106,53 +1106,55 @@ function renderCurrent() {
     const deltaText = delta > 0 ? `+${formatNum(delta)}` : "no growth";
 
     const card = document.createElement("article");
-    card.className = "object-card";
+    card.className = "catalog-row";
     card.innerHTML = `
-      <div class="object-card__media">
+      <div class="catalog-row__media">
         ${preview}
-        <div class="object-card__overlay">
-          <span class="rank-badge">#${index + 1}</span>
-          ${item.removed ? '<span class="status-badge">Removed</span>' : '<span class="status-badge is-live">Active</span>'}
+        <span class="catalog-row__rank">#${index + 1}</span>
+      </div>
+      <div class="catalog-row__title">
+        <h3>${escapeHtml(item.name || "Untitled Object")}</h3>
+        <p>${escapeHtml(item.tinuuid || "—")}</p>
+        <small>${item.removed ? "Removed from latest API snapshot" : "Live in latest API snapshot"}</small>
+      </div>
+
+      <div class="catalog-row__summary">
+        <div class="catalog-row__metric-head">
+          <span class="catalog-row__metric-label">${escapeHtml(METRIC_LABELS[currentMetric])}</span>
+          <strong class="catalog-row__metric-value">${formatNum(metricValue)}</strong>
+        </div>
+        <div class="catalog-row__progress">
+          <div class="catalog-row__progress-bar" style="width:${progress}%"></div>
         </div>
       </div>
-      <div class="object-card__body">
-        <div class="object-card__topline">
-          <div>
-            <h3>${escapeHtml(item.name || "Untitled Object")}</h3>
-            <p>${escapeHtml(item.tinuuid || "—")}</p>
-          </div>
-          <div class="delta-card ${delta > 0 ? 'positive' : ''}">
-            <span>Δ</span>
-            <strong>${deltaText}</strong>
-          </div>
-        </div>
 
-        <div class="metric-hero">
-          <div>
-            <span>${escapeHtml(METRIC_LABELS[currentMetric])}</span>
-            <strong>${formatNum(metricValue)}</strong>
-          </div>
-          <div class="metric-progress">
-            <div class="metric-progress__bar" style="width:${progress}%"></div>
-          </div>
-        </div>
+      <div class="catalog-row__stat">
+        <span class="catalog-row__label">views</span>
+        <strong>${formatNum(item.lastViews)}</strong>
+      </div>
 
-        <div class="kpi-grid">
-          <div class="kpi-pill"><span>views</span><strong>${formatNum(item.lastViews)}</strong></div>
-          <div class="kpi-pill"><span>likes</span><strong>${formatNum(item.lastLikes)}</strong></div>
-          <div class="kpi-pill"><span>showcase</span><strong>${formatNum(item.lastViewsShowcase)}</strong></div>
-          <div class="kpi-pill"><span>engagement</span><strong>${formatDecimal(computeEngagementScore(item), 2)}</strong></div>
-        </div>
+      <div class="catalog-row__stat">
+        <span class="catalog-row__label">likes</span>
+        <strong>${formatNum(item.lastLikes)}</strong>
+      </div>
 
-        <div class="card-actions">
-          ${goUrl
-            ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
-            : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
-          ${viewerUrl
-            ? `<a class="btn btn--primary btn--small" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">3D viewer</a>`
-            : `<button type="button" class="btn btn--ghost btn--small" disabled>3D viewer</button>`}
-          <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
+      <div class="catalog-row__stat">
+        <span class="catalog-row__label">showcase</span>
+        <strong>${formatNum(item.lastViewsShowcase)}</strong>
+      </div>
+
+      <div class="catalog-row__actions">
+        <div class="catalog-row__delta ${delta > 0 ? 'positive' : ''}">
+          <span class="catalog-row__label">Δ ${getFilterName(currentDeltaFilter)}</span>
+          <strong>${deltaText}</strong>
         </div>
+        ${goUrl
+          ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
+          : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
+        ${viewerUrl
+          ? `<a class="btn btn--primary btn--small" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">3D viewer</a>`
+          : `<button type="button" class="btn btn--ghost btn--small" disabled>3D viewer</button>`}
+        <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
       </div>
     `;
     els.grid.appendChild(card);
