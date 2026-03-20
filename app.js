@@ -157,7 +157,7 @@ function setStatus(text) {
 }
 
 function setMode(text) {
-  const value = `Режим: ${text}`;
+  const value = `Mode: ${text}`;
   els.modeChip.textContent = value;
   els.modeChip.title = value;
 }
@@ -173,18 +173,18 @@ function setFilterChip(text) {
 }
 
 function setMetricChip() {
-  const value = `Метрика: ${METRIC_LABELS[currentMetric]}`;
+  const value = `Metric: ${METRIC_LABELS[currentMetric]}`;
   els.metricChip.textContent = value;
   els.metricChip.title = value;
 }
 
 function getFilterName(filter) {
   const map = {
-    off: "все объекты",
-    last_update: "рост с последнего обновления",
-    hour: "рост за час",
-    week: "рост за неделю",
-    month: "рост за месяц"
+    off: "all objects",
+    last_update: "growth since last update",
+    hour: "growth in the last hour",
+    week: "growth in the last 7 days",
+    month: "growth in the last 30 days"
   };
   return map[filter] || map.off;
 }
@@ -193,7 +193,7 @@ function updateFilterButtons() {
   els.filterButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.filter === currentDeltaFilter);
   });
-  setFilterChip(`Фильтр: ${getFilterName(currentDeltaFilter)}`);
+  setFilterChip(`Filter: ${getFilterName(currentDeltaFilter)}`);
 }
 
 function updateMetricButtons() {
@@ -457,21 +457,21 @@ function upgradeBundleSchema(bundle) {
 }
 
 function validateBundle(bundle) {
-  if (!bundle || typeof bundle !== "object") throw new Error("JSON должен быть объектом.");
-  if (!Array.isArray(bundle.objects)) throw new Error("В JSON отсутствует массив objects.");
+  if (!bundle || typeof bundle !== "object") throw new Error("JSON must be an object.");
+  if (!Array.isArray(bundle.objects)) throw new Error("The JSON file must contain an objects array.");
   upgradeBundleSchema(bundle);
   return true;
 }
 
-async function fetchAllObjectsWithProgress(titleText = "Загрузка объектов") {
-  showLoader(titleText, "Подключение к API...", 2, "Шаг 1");
+async function fetchAllObjectsWithProgress(titleText = "Loading objects") {
+  showLoader(titleText, "Connecting to API...", 2, "Step 1");
   let page = 1;
   let all = [];
   let pagesLoaded = 0;
   const hardLimit = 2000;
 
   while (page <= hardLimit) {
-    updateLoader(`Загрузка страницы ${page}...`, Math.min(8 + pagesLoaded * 2, 80), `Страница ${page}`);
+    updateLoader(`Loading page ${page}...`, Math.min(8 + pagesLoaded * 2, 80), `Page ${page}`);
 
     const res = await fetch(API_URL, {
       method: "POST",
@@ -479,7 +479,7 @@ async function fetchAllObjectsWithProgress(titleText = "Загрузка объ�
       body: JSON.stringify({ page })
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status} на странице ${page}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} on page ${page}`);
 
     const data = await res.json();
     const objs = Array.isArray(data?.objs) ? data.objs : [];
@@ -490,7 +490,7 @@ async function fetchAllObjectsWithProgress(titleText = "Загрузка объ�
     pagesLoaded += 1;
   }
 
-  updateLoader(`Получено ${all.length} объектов. Подготовка...`, 88, "Формирование данных");
+  updateLoader(`Fetched ${all.length} objects. Preparing data...`, 88, "Building dataset");
   return all;
 }
 
@@ -635,24 +635,24 @@ function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
 
 async function downloadFreshBundle() {
   try {
-    setMode("создание нового JSON");
-    const raw = await fetchAllObjectsWithProgress("Создание нового JSON");
-    updateLoader("Формирование единого bundle.json...", 94, "Сборка файла");
+    setMode("creating new JSON");
+    const raw = await fetchAllObjectsWithProgress("Create new JSON");
+    updateLoader("Building consolidated bundle.json...", 94, "Bundle assembly");
 
     const bundle = createBundleFromFreshApi(raw);
     currentBundle = bundle;
 
-    updateLoader("Рендер объектов...", 98, "Отрисовка");
-    applyBundleToUI(bundle, `bundle_${formatDateTimeForFile()}.json`, "новый JSON из API");
+    updateLoader("Rendering objects...", 98, "Rendering");
+    applyBundleToUI(bundle, `bundle_${formatDateTimeForFile()}.json`, "new JSON from API");
 
     const filename = `bundle_${formatDateTimeForFile()}.json`;
-    if (!downloadJson(bundle, filename)) throw new Error("Не удалось скачать JSON.");
+    if (!downloadJson(bundle, filename)) throw new Error("Failed to download JSON.");
 
-    setStatus(`Готово. Скачан ${filename}. Объектов по метрике ${METRIC_LABELS[currentMetric]}: ${getVisibleObjects(bundle, currentMetric).length}.`);
+    setStatus(`Done. Downloaded ${filename}. Objects visible for ${METRIC_LABELS[currentMetric]}: ${getVisibleObjects(bundle, currentMetric).length}.`);
   } catch (err) {
     console.error(err);
-    setStatus(`Ошибка создания JSON: ${err.message}`);
-    setMode("ошибка");
+    setStatus(`Failed to create JSON: ${err.message}`);
+    setMode("error");
   } finally {
     hideLoader();
   }
@@ -663,23 +663,23 @@ async function handleFileOpen(e) {
   if (!file) return;
 
   try {
-    setMode("открытие локального JSON");
-    showLoader("Открытие JSON", "Чтение локального файла...", 18, "Чтение файла");
+    setMode("opening local JSON");
+    showLoader("Open JSON", "Reading local file...", 18, "File read");
     const text = await file.text();
-    updateLoader("Разбор JSON...", 45, "Парсинг");
+    updateLoader("Parsing JSON...", 45, "Parsing");
 
     const parsed = JSON.parse(text);
     validateBundle(parsed);
 
-    updateLoader("Подготовка интерфейса...", 82, "Отрисовка");
+    updateLoader("Preparing interface...", 82, "Rendering");
     currentBundle = parsed;
-    applyBundleToUI(parsed, file.name, "локальный JSON открыт");
+    applyBundleToUI(parsed, file.name, "local JSON opened");
     els.updateBtn.disabled = false;
-    setStatus(`Файл открыт: ${file.name}.`);
+    setStatus(`Opened file: ${file.name}.`);
   } catch (err) {
     console.error(err);
-    setStatus(`Ошибка открытия JSON: ${err.message}`);
-    setMode("ошибка");
+    setStatus(`Failed to open JSON: ${err.message}`);
+    setMode("error");
   } finally {
     hideLoader();
     e.target.value = "";
@@ -688,30 +688,30 @@ async function handleFileOpen(e) {
 
 async function updateOpenedBundle() {
   if (!currentBundle) {
-    setStatus("Сначала открой JSON.");
+    setStatus("Open a JSON file first.");
     return;
   }
 
   try {
-    setMode("обновление статистики");
-    showLoader("Обновление статистики", "Используется уже открытый JSON как база...", 6, "Подготовка");
-    const raw = await fetchAllObjectsWithProgress("Обновление статистики");
-    updateLoader("Слияние старого JSON с новым замером...", 90, "Обновление истории");
+    setMode("refreshing statistics");
+    showLoader("Refresh statistics", "Using the currently opened JSON as the baseline...", 6, "Preparation");
+    const raw = await fetchAllObjectsWithProgress("Refresh statistics");
+    updateLoader("Merging previous bundle with the latest snapshot...", 90, "History update");
 
     const updatedBundle = mergeOpenedBundleWithFreshApi(currentBundle, raw);
     currentBundle = updatedBundle;
 
-    updateLoader("Рендер обновлённых данных...", 97, "Отрисовка");
-    applyBundleToUI(updatedBundle, `bundle_updated_${formatDateTimeForFile()}.json`, "статистика обновлена");
+    updateLoader("Rendering refreshed data...", 97, "Rendering");
+    applyBundleToUI(updatedBundle, `bundle_updated_${formatDateTimeForFile()}.json`, "statistics refreshed");
 
     const filename = `bundle_updated_${formatDateTimeForFile()}.json`;
-    if (!downloadJson(updatedBundle, filename)) throw new Error("Не удалось скачать обновлённый JSON.");
+    if (!downloadJson(updatedBundle, filename)) throw new Error("Failed to download the refreshed JSON.");
 
-    setStatus(`Готово. Статистика обновлена и скачан ${filename}.`);
+    setStatus(`Done. Statistics refreshed and downloaded as ${filename}.`);
   } catch (err) {
     console.error(err);
-    setStatus(`Ошибка обновления статистики: ${err.message}`);
-    setMode("ошибка");
+    setStatus(`Failed to refresh statistics: ${err.message}`);
+    setMode("error");
   } finally {
     hideLoader();
   }
@@ -843,9 +843,9 @@ function renderStats(bundle) {
   const values = visible.map((item) => getItemMetricValue(item, currentMetric));
   const average = visible.length ? totalMetric / visible.length : 0;
 
-  els.metricTotalTitle.textContent = `Сумма ${METRIC_LABELS[currentMetric]}`;
-  els.metricTotalSub.textContent = `Общий объём ${METRIC_LABELS[currentMetric]}`;
-  els.statVisibleSub.textContent = `Объекты с ${METRIC_LABELS[currentMetric]} > 0`;
+  els.metricTotalTitle.textContent = `Total ${METRIC_LABELS[currentMetric]}`;
+  els.metricTotalSub.textContent = `Total volume for ${METRIC_LABELS[currentMetric]}`;
+  els.statVisibleSub.textContent = `Objects with ${METRIC_LABELS[currentMetric]} > 0`;
 
   els.statTotal.textContent = formatNum(Array.isArray(bundle.objects) ? bundle.objects.length : 0);
   els.statVisible.textContent = formatNum(visible.length);
@@ -875,7 +875,7 @@ function renderFilterDelta() {
 function renderTopList(list) {
   if (!list.length) {
     els.topList.className = "shortlist empty-list";
-    els.topList.innerHTML = "Нет объектов под текущие фильтры.";
+    els.topList.innerHTML = "No objects match the current filters.";
     return;
   }
 
@@ -892,7 +892,7 @@ function renderTopList(list) {
         </span>
         <span class="shortlist__metric">
           <strong>${formatNum(metricValue)}</strong>
-          <small>${delta > 0 ? `+${formatNum(delta)}` : "без роста"}</small>
+          <small>${delta > 0 ? `+${formatNum(delta)}` : "no growth"}</small>
         </span>
       </button>
     `;
@@ -903,8 +903,8 @@ function renderTopList(list) {
 
 function renderNarrative(list) {
   if (!currentBundle) {
-    els.insightList.innerHTML = "<div class=\"info-card\">Загрузите данные, чтобы увидеть ключевые выводы.</div>";
-    els.benchmarkList.innerHTML = "<div class=\"info-card\">Пока нет данных для бенчмарков.</div>";
+    els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate the key insight panel.</div>";
+    els.benchmarkList.innerHTML = "<div class=\"info-card\">No benchmark data available yet.</div>";
     return;
   }
 
@@ -917,17 +917,17 @@ function renderNarrative(list) {
 
   els.insightList.innerHTML = [
     top
-      ? `<div class="info-card"><strong>Лидер каталога:</strong> ${escapeHtml(top.name)} держит ${formatDecimal(topShare)}% выбранной метрики.</div>`
-      : "<div class=\"info-card\">Нет лидера по текущим фильтрам.</div>",
-    `<div class="info-card"><strong>Рост:</strong> ${formatNum(growthLeaders)} объектов показывают положительную динамику в выбранном режиме.</div>`,
-    `<div class="info-card"><strong>Вовлечение:</strong> средний engagement score = ${formatDecimal(engagementMean, 2)}.</div>`
+      ? `<div class="info-card"><strong>Catalog leader:</strong> ${escapeHtml(top.name)} owns ${formatDecimal(topShare)}% of the selected metric.</div>`
+      : "<div class=\"info-card\">No catalog leader under the current filters.</div>",
+    `<div class="info-card"><strong>Growth:</strong> ${formatNum(growthLeaders)} objects show positive momentum in the active growth window.</div>`,
+    `<div class="info-card"><strong>Engagement:</strong> average engagement score = ${formatDecimal(engagementMean, 2)}.</div>`
   ].join("");
 
   els.benchmarkList.innerHTML = [
-    `<div class="benchmark"><span>Объектов в выдаче</span><strong>${formatNum(list.length)}</strong></div>`,
-    `<div class="benchmark"><span>Удалённых в bundle</span><strong>${formatNum(removedCount)}</strong></div>`,
-    `<div class="benchmark"><span>Средний likes / views</span><strong>${formatDecimal(list.length ? list.reduce((sum, item) => sum + (num(item.lastLikes) / Math.max(1, num(item.lastViews))), 0) / list.length : 0, 3)}</strong></div>`,
-    `<div class="benchmark"><span>Средний showcase / views</span><strong>${formatDecimal(list.length ? list.reduce((sum, item) => sum + (num(item.lastViewsShowcase) / Math.max(1, num(item.lastViews))), 0) / list.length : 0, 3)}</strong></div>`
+    `<div class="benchmark"><span>Objects in view</span><strong>${formatNum(list.length)}</strong></div>`,
+    `<div class="benchmark"><span>Removed in bundle</span><strong>${formatNum(removedCount)}</strong></div>`,
+    `<div class="benchmark"><span>Average likes / views</span><strong>${formatDecimal(list.length ? list.reduce((sum, item) => sum + (num(item.lastLikes) / Math.max(1, num(item.lastViews))), 0) / list.length : 0, 3)}</strong></div>`,
+    `<div class="benchmark"><span>Average showcase / views</span><strong>${formatDecimal(list.length ? list.reduce((sum, item) => sum + (num(item.lastViewsShowcase) / Math.max(1, num(item.lastViews))), 0) / list.length : 0, 3)}</strong></div>`
   ].join("");
 }
 
@@ -973,8 +973,8 @@ function renderTrendChart() {
   const values = history.map((entry) => num(entry.views));
 
   els.trendSummary.textContent = history.length
-    ? `${values.length} точек · последнее значение ${formatNum(values.at(-1))}`
-    : "Нет данных";
+    ? `${values.length} points · latest value ${formatNum(values.at(-1))}`
+    : "No data";
 
   if (trendChartInstance) trendChartInstance.destroy();
   trendChartInstance = new Chart(els.trendCanvas.getContext("2d"), {
@@ -1000,8 +1000,8 @@ function renderTrendChart() {
 function renderRankingChart(list) {
   const top = list.slice(0, 8);
   els.rankingSummary.textContent = top.length
-    ? `Показываем ${top.length} лидеров по ${METRIC_LABELS[currentMetric]}`
-    : "Нет данных";
+    ? `Showing ${top.length} leaders for ${METRIC_LABELS[currentMetric]}`
+    : "No data";
 
   if (rankingChartInstance) rankingChartInstance.destroy();
   rankingChartInstance = new Chart(els.rankingCanvas.getContext("2d"), {
@@ -1068,7 +1068,7 @@ function renderCurrent() {
     els.grid.innerHTML = "";
     currentRenderedObjects = [];
     els.emptyState.classList.remove("hidden");
-    els.resultsSummary.textContent = "0 карточек";
+    els.resultsSummary.textContent = "0 cards";
     renderTopList([]);
     renderNarrative([]);
     renderOverviewCharts([]);
@@ -1078,7 +1078,7 @@ function renderCurrent() {
   const list = getCurrentList();
   currentRenderedObjects = list;
   els.grid.innerHTML = "";
-  els.resultsSummary.textContent = `${formatNum(list.length)} карточек`;
+  els.resultsSummary.textContent = `${formatNum(list.length)} cards`;
 
   renderTopList(list);
   renderNarrative(list);
@@ -1098,12 +1098,12 @@ function renderCurrent() {
     const viewerUrl = buildViewerUrl(item.tinuuid);
     const preview = item.mainPreview
       ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
-      : `<div class="media__fallback">Нет превью</div>`;
+      : `<div class="media__fallback">No preview</div>`;
 
     const metricValue = getItemMetricValue(item, currentMetric);
     const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item, currentMetric) : getCurrentDelta(item);
     const progress = Math.min(100, (metricValue / maxMetric) * 100);
-    const deltaText = delta > 0 ? `+${formatNum(delta)}` : "без роста";
+    const deltaText = delta > 0 ? `+${formatNum(delta)}` : "no growth";
 
     const card = document.createElement("article");
     card.className = "object-card";
@@ -1112,7 +1112,7 @@ function renderCurrent() {
         ${preview}
         <div class="object-card__overlay">
           <span class="rank-badge">#${index + 1}</span>
-          ${item.removed ? '<span class="status-badge">Удалён</span>' : '<span class="status-badge is-live">Active</span>'}
+          ${item.removed ? '<span class="status-badge">Removed</span>' : '<span class="status-badge is-live">Active</span>'}
         </div>
       </div>
       <div class="object-card__body">
@@ -1146,12 +1146,12 @@ function renderCurrent() {
 
         <div class="card-actions">
           ${goUrl
-            ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Открыть объект</a>`
-            : `<button type="button" class="btn btn--ghost btn--small" disabled>Открыть объект</button>`}
+            ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
+            : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
           ${viewerUrl
             ? `<a class="btn btn--primary btn--small" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">3D viewer</a>`
             : `<button type="button" class="btn btn--ghost btn--small" disabled>3D viewer</button>`}
-          <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">График</button>
+          <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
         </div>
       </div>
     `;
@@ -1174,7 +1174,7 @@ function bindChartButtons(scope) {
 
 function exportCurrentCsv() {
   if (!currentRenderedObjects.length) {
-    setStatus("Нет данных для экспорта CSV.");
+    setStatus("No data available for CSV export.");
     return;
   }
 
@@ -1216,9 +1216,9 @@ function exportCurrentCsv() {
   const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
   const filename = `vizbl_export_${currentMetric}_${formatDateTimeForFile()}.csv`;
   if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
-    setStatus(`CSV экспортирован: ${filename}.`);
+    setStatus(`CSV exported: ${filename}.`);
   } else {
-    setStatus("Не удалось экспортировать CSV.");
+    setStatus("Failed to export CSV.");
   }
 }
 
@@ -1238,14 +1238,14 @@ function resetUi() {
   updateFilterButtons();
   updateMetricButtons();
   renderAll();
-  setStatus("Фильтры, поиск, сортировка и метрика сброшены.");
+  setStatus("Filters, search, sorting, and metric were reset.");
 }
 
 function openChartModal(entry) {
   currentChartEntry = entry;
   chartMode = "days";
   updateChartModeButtons();
-  els.modalTitle.textContent = `${entry.name || "График"} · ${METRIC_LABELS[currentMetric]}`;
+  els.modalTitle.textContent = `${entry.name || "Chart"} · ${METRIC_LABELS[currentMetric]}`;
   els.modalSub.textContent = `TINUUID: ${entry.tinuuid || "—"}`;
   els.chartModal.classList.remove("hidden");
   drawChart(entry);
@@ -1253,26 +1253,26 @@ function openChartModal(entry) {
 
 function openTotalMetricChart() {
   if (!currentBundle) {
-    setStatus("Нет загруженного bundle.json.");
+    setStatus("No bundle.json file is loaded.");
     return;
   }
 
   const totalHistory = getBundleTotalHistory(currentBundle, currentMetric);
   if (!totalHistory.length) {
-    setStatus(`Нет истории суммарной метрики ${METRIC_LABELS[currentMetric]}.`);
+    setStatus(`No total-history data found for ${METRIC_LABELS[currentMetric]}.`);
     return;
   }
 
   currentChartEntry = {
-    name: `Суммарные ${METRIC_LABELS[currentMetric]} всех объектов`,
+    name: `Total ${METRIC_LABELS[currentMetric]} across all objects`,
     tinuuid: `TOTAL_${currentMetric}`,
     __isTotalMetric: true
   };
 
   chartMode = "days";
   updateChartModeButtons();
-  els.modalTitle.textContent = `Суммарные ${METRIC_LABELS[currentMetric]} всех объектов`;
-  els.modalSub.textContent = `История общего количества ${METRIC_LABELS[currentMetric]} по всем объектам`;
+  els.modalTitle.textContent = `Total ${METRIC_LABELS[currentMetric]} across all objects`;
+  els.modalSub.textContent = `Historical total of ${METRIC_LABELS[currentMetric]} across all objects`;
   els.chartModal.classList.remove("hidden");
   drawChart(currentChartEntry);
 }
@@ -1297,12 +1297,12 @@ function drawChart(entry) {
   if (chartMode === "days") {
     labels = history.map((x) => formatPointLabel(x.capturedAt));
     values = history.map((x) => num(x.views));
-    els.chartMeta.textContent = `Точек: ${values.length} · Метрика: ${METRIC_LABELS[currentMetric]} · Режим: дни / замеры`;
+    els.chartMeta.textContent = `Points: ${values.length} · Metric: ${METRIC_LABELS[currentMetric]} · Mode: day snapshots`;
   } else {
     const grouped = groupByMonth(history);
     labels = grouped.labels;
     values = grouped.values;
-    els.chartMeta.textContent = `Точек: ${values.length} · Метрика: ${METRIC_LABELS[currentMetric]} · Режим: месяцы`;
+    els.chartMeta.textContent = `Points: ${values.length} · Metric: ${METRIC_LABELS[currentMetric]} · Mode: monthly view`;
   }
 
   if (chartInstance) chartInstance.destroy();
@@ -1356,7 +1356,7 @@ function truncate(text, length) {
 function applyBundleToUI(bundle, fileLabel, modeLabel) {
   validateBundle(bundle);
   currentDisplayObjects = getVisibleObjects(bundle, currentMetric);
-  setFileChip(`Файл: ${fileLabel}`);
+  setFileChip(`File: ${fileLabel}`);
   setMode(modeLabel);
   els.updateBtn.disabled = false;
   renderAll();
@@ -1382,5 +1382,5 @@ updateFilterButtons();
 updateMetricButtons();
 renderFilterDelta();
 renderInsights();
-setMode("ожидание");
+setMode("idle");
 renderCurrent();

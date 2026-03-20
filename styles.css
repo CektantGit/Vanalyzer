@@ -24,6 +24,11 @@
   box-sizing: border-box;
 }
 
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body {
   margin: 0;
@@ -72,6 +77,8 @@ canvas {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .hero {
@@ -84,6 +91,7 @@ canvas {
 .hero__main,
 .hero__actions {
   padding: 28px;
+  min-width: 0;
 }
 
 .eyebrow,
@@ -109,6 +117,7 @@ canvas {
   font-size: clamp(34px, 5vw, 56px);
   line-height: 0.98;
   max-width: 14ch;
+  overflow-wrap: anywhere;
 }
 
 .hero__text {
@@ -137,6 +146,8 @@ canvas {
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .chip--solid {
@@ -221,6 +232,9 @@ canvas {
   border: 1px solid transparent;
   text-decoration: none;
   font-weight: 800;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .btn:disabled {
@@ -289,6 +303,7 @@ canvas {
 .stat-card,
 .insight-card {
   padding: 20px;
+  min-width: 0;
 }
 
 .stat-card {
@@ -339,6 +354,7 @@ canvas {
 .benchmark-list {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .sidebar {
@@ -362,6 +378,7 @@ canvas {
 .field-group {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .field-group.two-cols {
@@ -489,6 +506,7 @@ canvas {
 
 .chart-panel__body {
   min-height: 320px;
+  min-width: 0;
 }
 
 .chart-panel__body.large {
@@ -528,6 +546,7 @@ canvas {
   border-radius: 22px;
   border: 1px solid var(--stroke);
   background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  min-width: 0;
 }
 
 .object-card__media {
@@ -586,6 +605,7 @@ canvas {
   padding: 18px;
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .object-card__topline {
@@ -599,6 +619,7 @@ canvas {
   margin: 0;
   font-size: 20px;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .object-card__topline p {
@@ -663,6 +684,7 @@ canvas {
   border: 1px solid var(--stroke);
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .kpi-pill span {
@@ -737,6 +759,25 @@ canvas {
   line-height: 1.6;
 }
 
+.panel h2,
+.hero__text,
+.hero__hint,
+.panel__hint,
+.status-line,
+.info-card,
+.benchmark span,
+.benchmark strong,
+.shortlist__body strong,
+.shortlist__body small,
+.shortlist__metric,
+.field__label,
+.metric-hero,
+.metric-hero strong,
+.metric-hero span,
+.object-card__topline p {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1420px) {
   .stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -790,6 +831,11 @@ canvas {
     max-width: none;
   }
 
+  .chip {
+    width: 100%;
+    justify-content: center;
+  }
+
   .shortlist__item,
   .object-card__topline {
     grid-template-columns: 1fr;
@@ -806,5 +852,52 @@ canvas {
 
   .modal__body {
     min-height: 320px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 12px;
+  }
+
+  .hero__main,
+  .hero__actions,
+  .filter-panel,
+  .shortlist-panel,
+  .chart-panel,
+  .results-panel,
+  .micro-panel,
+  .text-panel,
+  .benchmark-panel,
+  .overlay-card,
+  .modal-card {
+    padding: 16px;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 10vw, 40px);
+  }
+
+  .panel__header,
+  .panel__header.compact,
+  .results-header,
+  .modal__head,
+  .modal__toolbar,
+  .field__row,
+  .progress__meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .segmented__btn {
+    flex-basis: 100%;
+  }
+
+  .shortlist__item {
+    grid-template-columns: 1fr;
+  }
+
+  .shortlist__metric {
+    justify-items: start;
   }
 }
