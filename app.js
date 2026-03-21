@@ -1,0 +1,1691 @@
+const API_URL = "https://api.vizbl.us/obj/GetPublic";
+const METRICS = ["views", "likes", "viewsShowcase"];
+const METRIC_LABELS = {
+  views: "views",
+  likes: "likes",
+  viewsShowcase: "viewsShowcase"
+};
+
+let currentBundle = null;
+let currentDisplayObjects = [];
+let currentRenderedObjects = [];
+let chartInstance = null;
+let trendChartInstance = null;
+let rankingChartInstance = null;
+let mixChartInstance = null;
+let currentChartEntry = null;
+let chartMode = "days";
+let currentDeltaFilter = "off";
+let currentSort = "metric_desc";
+let currentMetric = "views";
+let currentOwnerFilterKey = "";
+let currentOwnerModalKey = "";
+
+const els = {
+  statTotal: document.getElementById("statTotal"),
+  statVisible: document.getElementById("statVisible"),
+  statVisibleSub: document.getElementById("statVisibleSub"),
+  statMetricTotal: document.getElementById("statMetricTotal"),
+  statAverage: document.getElementById("statAverage"),
+  statMedian: document.getElementById("statMedian"),
+  statUpdated: document.getElementById("statUpdated"),
+  metricTotalTitle: document.getElementById("metricTotalTitle"),
+  metricTotalSub: document.getElementById("metricTotalSub"),
+
+  insightLastUpdate: document.getElementById("insightLastUpdate"),
+  insightDay: document.getElementById("insightDay"),
+  insightWeek: document.getElementById("insightWeek"),
+  insightMonth: document.getElementById("insightMonth"),
+  insightList: document.getElementById("insightList"),
+  benchmarkList: document.getElementById("benchmarkList"),
+  topList: document.getElementById("topList"),
+
+  trendSummary: document.getElementById("trendSummary"),
+  rankingSummary: document.getElementById("rankingSummary"),
+  resultsSummary: document.getElementById("resultsSummary"),
+  boardSub: document.getElementById("boardSub"),
+  boardViewsDelta: document.getElementById("boardViewsDelta"),
+  boardLikesDelta: document.getElementById("boardLikesDelta"),
+  boardShowcaseDelta: document.getElementById("boardShowcaseDelta"),
+  boardViewsHint: document.getElementById("boardViewsHint"),
+  boardLikesHint: document.getElementById("boardLikesHint"),
+  boardShowcaseHint: document.getElementById("boardShowcaseHint"),
+
+  totalMetricChartBtn: document.getElementById("totalMetricChartBtn"),
+  fileChip: document.getElementById("fileChip"),
+  modeChip: document.getElementById("modeChip"),
+  metricChip: document.getElementById("metricChip"),
+  filterChip: document.getElementById("filterChip"),
+  status: document.getElementById("status"),
+  grid: document.getElementById("grid"),
+  emptyState: document.getElementById("emptyState"),
+  searchInput: document.getElementById("searchInput"),
+  ownerInput: document.getElementById("ownerInput"),
+  sortSelect: document.getElementById("sortSelect"),
+  metricSelect: document.getElementById("metricSelect"),
+  exportCsvBtn: document.getElementById("exportCsvBtn"),
+  resetBtn: document.getElementById("resetBtn"),
+
+  minViewsInput: document.getElementById("minViewsInput"),
+  minLikesInput: document.getElementById("minLikesInput"),
+  minShowcaseInput: document.getElementById("minShowcaseInput"),
+  minMetricInput: document.getElementById("minMetricInput"),
+  maxMetricInput: document.getElementById("maxMetricInput"),
+  removedSelect: document.getElementById("removedSelect"),
+
+  fileInput: document.getElementById("fileInput"),
+  downloadBtn: document.getElementById("downloadBtn"),
+  openBtn: document.getElementById("openBtn"),
+  updateBtn: document.getElementById("updateBtn"),
+
+  loader: document.getElementById("loader"),
+  loaderTitle: document.getElementById("loaderTitle"),
+  loaderText: document.getElementById("loaderText"),
+  loaderBar: document.getElementById("loaderBar"),
+  loaderStep: document.getElementById("loaderStep"),
+  loaderPercent: document.getElementById("loaderPercent"),
+
+  chartModal: document.getElementById("chartModal"),
+  modalTitle: document.getElementById("modalTitle"),
+  modalSub: document.getElementById("modalSub"),
+  chartMeta: document.getElementById("chartMeta"),
+  closeModalBtn: document.getElementById("closeModalBtn"),
+  daysBtn: document.getElementById("daysBtn"),
+  monthsBtn: document.getElementById("monthsBtn"),
+  boardModal: document.getElementById("boardModal"),
+  openBoardBtn: document.getElementById("openBoardBtn"),
+  closeBoardBtn: document.getElementById("closeBoardBtn"),
+  ownerModal: document.getElementById("ownerModal"),
+  ownerModalTitle: document.getElementById("ownerModalTitle"),
+  ownerModalSub: document.getElementById("ownerModalSub"),
+  ownerProfile: document.getElementById("ownerProfile"),
+  ownerTopObjects: document.getElementById("ownerTopObjects"),
+  ownerFilterBtn: document.getElementById("ownerFilterBtn"),
+  closeOwnerBtn: document.getElementById("closeOwnerBtn"),
+  ownerObjectCount: document.getElementById("ownerObjectCount"),
+  ownerObjectHint: document.getElementById("ownerObjectHint"),
+  ownerMetricTotal: document.getElementById("ownerMetricTotal"),
+  ownerMetricHint: document.getElementById("ownerMetricHint"),
+  ownerGrowthTotal: document.getElementById("ownerGrowthTotal"),
+  ownerGrowthHint: document.getElementById("ownerGrowthHint"),
+
+  trendCanvas: document.getElementById("trendCanvas"),
+  rankingCanvas: document.getElementById("rankingCanvas"),
+  mixCanvas: document.getElementById("mixCanvas"),
+
+  filterDeltaBadge: document.getElementById("filterDeltaBadge"),
+  filterButtons: Array.from(document.querySelectorAll(".filter-btn")),
+  metricButtons: Array.from(document.querySelectorAll(".metric-btn"))
+};
+
+els.downloadBtn.addEventListener("click", downloadFreshBundle);
+els.openBtn.addEventListener("click", () => els.fileInput.click());
+els.updateBtn.addEventListener("click", updateOpenedBundle);
+els.fileInput.addEventListener("change", handleFileOpen);
+els.searchInput.addEventListener("input", renderAll);
+els.ownerInput.addEventListener("input", () => {
+  currentOwnerFilterKey = "";
+  renderAll();
+});
+
+[els.minViewsInput, els.minLikesInput, els.minShowcaseInput, els.minMetricInput, els.maxMetricInput].forEach((input) => {
+  input.addEventListener("input", renderAll);
+});
+
+els.removedSelect.addEventListener("change", renderAll);
+
+els.sortSelect.addEventListener("change", () => {
+  currentSort = els.sortSelect.value;
+  renderAll();
+});
+
+els.metricSelect.addEventListener("change", () => {
+  setMetric(els.metricSelect.value);
+});
+
+els.exportCsvBtn.addEventListener("click", exportCurrentCsv);
+els.resetBtn.addEventListener("click", resetUi);
+els.totalMetricChartBtn.addEventListener("click", openTotalMetricChart);
+els.closeModalBtn.addEventListener("click", closeChartModal);
+els.openBoardBtn.addEventListener("click", openBoardModal);
+els.closeBoardBtn.addEventListener("click", closeBoardModal);
+els.closeOwnerBtn.addEventListener("click", closeOwnerModal);
+els.ownerFilterBtn.addEventListener("click", () => {
+  if (!currentOwnerModalKey) return;
+  applyOwnerFilter(currentOwnerModalKey);
+  closeOwnerModal();
+});
+
+els.chartModal.addEventListener("click", (e) => {
+  if (e.target === els.chartModal) closeChartModal();
+});
+
+els.boardModal.addEventListener("click", (e) => {
+  if (e.target === els.boardModal) closeBoardModal();
+});
+
+els.ownerModal.addEventListener("click", (e) => {
+  if (e.target === els.ownerModal) closeOwnerModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeChartModal();
+  if (e.key === "Escape") closeBoardModal();
+  if (e.key === "Escape") closeOwnerModal();
+});
+
+els.daysBtn.addEventListener("click", () => {
+  chartMode = "days";
+  updateChartModeButtons();
+  if (currentChartEntry) drawChart(currentChartEntry);
+});
+
+els.monthsBtn.addEventListener("click", () => {
+  chartMode = "months";
+  updateChartModeButtons();
+  if (currentChartEntry) drawChart(currentChartEntry);
+});
+
+els.filterButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentDeltaFilter = btn.dataset.filter;
+    updateFilterButtons();
+    renderAll();
+  });
+});
+
+els.metricButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setMetric(btn.dataset.metric);
+  });
+});
+
+function setStatus(text) {
+  els.status.textContent = text;
+}
+
+function setMode(text) {
+  const value = `Session: ${text}`;
+  els.modeChip.textContent = value;
+  els.modeChip.title = value;
+}
+
+function syncModalOpenState() {
+  const hasOpenModal = !els.chartModal.classList.contains("hidden")
+    || !els.boardModal.classList.contains("hidden")
+    || !els.ownerModal.classList.contains("hidden");
+  document.body.classList.toggle("modal-open", hasOpenModal);
+}
+
+function setFileChip(text) {
+  els.fileChip.textContent = text;
+  els.fileChip.title = text;
+}
+
+function setFilterChip(text) {
+  els.filterChip.textContent = text;
+  els.filterChip.title = text;
+}
+
+function setMetricChip() {
+  const value = `Metric: ${METRIC_LABELS[currentMetric]}`;
+  els.metricChip.textContent = value;
+  els.metricChip.title = value;
+}
+
+function getFilterName(filter) {
+  const map = {
+    off: "all objects",
+    last_update: "growth since last update",
+    day: "growth in the last 24 hours",
+    week: "growth in the last 7 days",
+    month: "growth in the last 30 days"
+  };
+  return map[filter] || map.off;
+}
+
+function getActiveGrowthFilter() {
+  return currentDeltaFilter === "off" ? "last_update" : currentDeltaFilter;
+}
+
+function updateFilterButtons() {
+  els.filterButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.filter === currentDeltaFilter);
+  });
+  setFilterChip(`Filter: ${getFilterName(currentDeltaFilter)}`);
+}
+
+function updateMetricButtons() {
+  els.metricButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.metric === currentMetric);
+  });
+  els.metricSelect.value = currentMetric;
+  setMetricChip();
+}
+
+function setMetric(metric) {
+  if (!METRICS.includes(metric)) return;
+  currentMetric = metric;
+  updateMetricButtons();
+  renderAll();
+}
+
+function formatNum(n) {
+  return Number(n || 0).toLocaleString("ru-RU");
+}
+
+function formatSignedNum(n) {
+  const value = Number(n || 0);
+  if (value > 0) return `+${formatNum(value)}`;
+  if (value < 0) return `-${formatNum(Math.abs(value))}`;
+  return "0";
+}
+
+function formatDecimal(n, digits = 1) {
+  return Number(n || 0).toLocaleString("ru-RU", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits
+  });
+}
+
+function formatDateTimeForFile(date = new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}_${p(date.getHours())}-${p(date.getMinutes())}-${p(date.getSeconds())}`;
+}
+
+function formatHumanDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(+d)) return "—";
+  return d.toLocaleString("ru-RU");
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function showLoader(title, text, percent = 0, step = "") {
+  els.loaderTitle.textContent = title;
+  els.loaderText.textContent = text;
+  els.loaderBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  els.loaderPercent.textContent = `${Math.round(percent)}%`;
+  els.loaderStep.textContent = step || "";
+  els.loader.classList.remove("hidden");
+}
+
+function updateLoader(text, percent, step = "") {
+  els.loaderText.textContent = text;
+  els.loaderBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  els.loaderPercent.textContent = `${Math.round(percent)}%`;
+  els.loaderStep.textContent = step || "";
+}
+
+function hideLoader() {
+  els.loader.classList.add("hidden");
+}
+
+function downloadJson(data, filename) {
+  try {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+    return true;
+  } catch (e) {
+    console.error("downloadJson failed", e);
+    return false;
+  }
+}
+
+function downloadText(text, filename, mime = "text/plain;charset=utf-8") {
+  try {
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+    return true;
+  } catch (e) {
+    console.error("downloadText failed", e);
+    return false;
+  }
+}
+
+function num(v) {
+  return Number(v || 0);
+}
+
+function median(list) {
+  if (!list.length) return 0;
+  const sorted = [...list].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+function getViews(obj) {
+  return num(obj?.views || obj?.lastViews || 0);
+}
+
+function getLikes(obj) {
+  return num(obj?.likes || obj?.lastLikes || 0);
+}
+
+function getViewsShowcase(obj) {
+  return num(obj?.viewsShowcase || obj?.lastViewsShowcase || 0);
+}
+
+function getTinuuid(obj) {
+  return obj?.tinuuid || obj?.tinUuid || obj?.tinUUID || obj?.uuid || obj?.id || "";
+}
+
+function getName(obj) {
+  return obj?.name || obj?.title || "Untitled Object";
+}
+
+function getPreview(obj) {
+  return obj?.mainPreview || obj?.preview || obj?.image || "";
+}
+
+function normalizeOwnerData(obj) {
+  const owner = obj?.owner && typeof obj.owner === "object" ? obj.owner : {};
+  const uuid = owner.uuid || owner.useruuid || owner.userUuid || obj?.ownerUuid || obj?.owneruuid || obj?.ownerUUID || obj?.useruuid || obj?.userUuid || "";
+  const name = owner.name || owner.fullName || obj?.ownerName || obj?.username || "";
+  const username = owner.username || owner.login || obj?.ownerUsername || "";
+  const label = name || username || uuid || "Unknown owner";
+  return {
+    uuid: uuid || "Unknown owner",
+    name: name || "",
+    username: username || "",
+    label
+  };
+}
+
+function getOwnerKey(obj) {
+  const owner = normalizeOwnerData(obj);
+  return owner.uuid || owner.username || owner.name || "Unknown owner";
+}
+
+function getOwnerUuid(obj) {
+  return normalizeOwnerData(obj).uuid;
+}
+
+function getOwnerDisplayName(obj) {
+  return normalizeOwnerData(obj).label;
+}
+
+function getOwnerSearchHaystack(obj) {
+  const owner = normalizeOwnerData(obj);
+  return [owner.label, owner.name, owner.username, owner.uuid].filter(Boolean).join(" ").toLowerCase();
+}
+
+function buildGoUrl(tinuuid) {
+  if (!tinuuid) return null;
+  return `https://go.vizbl.com/en/object/${encodeURIComponent(tinuuid)}`;
+}
+
+function buildViewerUrl(tinuuid) {
+  if (!tinuuid) return null;
+  return `https://viewer.vizbl.com/${encodeURIComponent(tinuuid)}`;
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function metricHistoryKey(metric) {
+  if (metric === "views") return "history";
+  if (metric === "likes") return "likesHistory";
+  if (metric === "viewsShowcase") return "viewsShowcaseHistory";
+  return "history";
+}
+
+function metricLastKey(metric) {
+  if (metric === "views") return "lastViews";
+  if (metric === "likes") return "lastLikes";
+  if (metric === "viewsShowcase") return "lastViewsShowcase";
+  return "lastViews";
+}
+
+function metricTotalHistoryKey(metric) {
+  if (metric === "views") return "totalViewsHistory";
+  if (metric === "likes") return "totalLikesHistory";
+  if (metric === "viewsShowcase") return "totalViewsShowcaseHistory";
+  return "totalViewsHistory";
+}
+
+function getItemMetricValue(item, metric = currentMetric) {
+  return num(item?.[metricLastKey(metric)]);
+}
+
+function sortHistory(history) {
+  return [...history].sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt));
+}
+
+function getItemHistory(item, metric = currentMetric) {
+  const key = metricHistoryKey(metric);
+  const arr = Array.isArray(item?.[key]) ? item[key] : [];
+  return sortHistory(arr);
+}
+
+function getBundleTotalHistory(bundle, metric = currentMetric) {
+  const key = metricTotalHistoryKey(metric);
+  return sortHistory(Array.isArray(bundle?.[key]) ? bundle[key] : []);
+}
+
+function ensureMetricFieldsForItem(item) {
+  item.lastViews = num(item.lastViews);
+  item.lastLikes = num(item.lastLikes);
+  item.lastViewsShowcase = num(item.lastViewsShowcase);
+  item.owner = normalizeOwnerData(item);
+  item.ownerUuid = getOwnerUuid(item);
+  item.ownerKey = getOwnerKey(item);
+
+  if (!Array.isArray(item.history)) item.history = [];
+  if (!Array.isArray(item.likesHistory)) item.likesHistory = [];
+  if (!Array.isArray(item.viewsShowcaseHistory)) item.viewsShowcaseHistory = [];
+
+  return item;
+}
+
+function upgradeBundleSchema(bundle) {
+  if (!bundle || typeof bundle !== "object") return bundle;
+
+  if (!Array.isArray(bundle.objects)) bundle.objects = [];
+  if (!Array.isArray(bundle.snapshots)) bundle.snapshots = [];
+  if (!Array.isArray(bundle.totalViewsHistory)) bundle.totalViewsHistory = [];
+  if (!Array.isArray(bundle.totalLikesHistory)) bundle.totalLikesHistory = [];
+  if (!Array.isArray(bundle.totalViewsShowcaseHistory)) bundle.totalViewsShowcaseHistory = [];
+
+  bundle.objects = bundle.objects.map((raw) => {
+    const item = JSON.parse(JSON.stringify(raw));
+
+    if (item.lastViews == null) item.lastViews = num(item.views || 0);
+    if (item.lastLikes == null) item.lastLikes = num(item.likes || 0);
+    if (item.lastViewsShowcase == null) item.lastViewsShowcase = num(item.viewsShowcase || 0);
+    item.owner = normalizeOwnerData(item);
+    item.ownerUuid = getOwnerUuid(item);
+
+    if (!Array.isArray(item.history)) {
+      item.history = item.lastViews || item.createdAt || bundle.updatedAt
+        ? [{ capturedAt: bundle.updatedAt || bundle.createdAt || nowIso(), views: num(item.lastViews) }]
+        : [];
+    }
+
+    if (!Array.isArray(item.likesHistory)) {
+      item.likesHistory = item.lastLikes || item.createdAt || bundle.updatedAt
+        ? [{ capturedAt: bundle.updatedAt || bundle.createdAt || nowIso(), views: num(item.lastLikes) }]
+        : [];
+    }
+
+    if (!Array.isArray(item.viewsShowcaseHistory)) {
+      item.viewsShowcaseHistory = item.lastViewsShowcase || item.createdAt || bundle.updatedAt
+        ? [{ capturedAt: bundle.updatedAt || bundle.createdAt || nowIso(), views: num(item.lastViewsShowcase) }]
+        : [];
+    }
+
+    item.removed = Boolean(item.removed);
+    return ensureMetricFieldsForItem(item);
+  });
+
+  return bundle;
+}
+
+function validateBundle(bundle) {
+  if (!bundle || typeof bundle !== "object") throw new Error("JSON must be an object.");
+  if (!Array.isArray(bundle.objects)) throw new Error("The JSON file must contain an objects array.");
+  upgradeBundleSchema(bundle);
+  return true;
+}
+
+async function fetchAllObjectsWithProgress(titleText = "Loading objects") {
+  showLoader(titleText, "Connecting to API...", 2, "Step 1");
+  let page = 1;
+  let all = [];
+  let pagesLoaded = 0;
+  const hardLimit = 2000;
+
+  while (page <= hardLimit) {
+    updateLoader(`Loading page ${page}...`, Math.min(8 + pagesLoaded * 2, 80), `Page ${page}`);
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status} on page ${page}`);
+
+    const data = await res.json();
+    const objs = Array.isArray(data?.objs) ? data.objs : [];
+    if (!objs.length) break;
+
+    all = all.concat(objs);
+    page += 1;
+    pagesLoaded += 1;
+  }
+
+  updateLoader(`Fetched ${all.length} objects. Preparing data...`, 88, "Building dataset");
+  return all;
+}
+
+function normalizeApiObjects(rawObjects) {
+  return rawObjects.map((obj) => ({
+    tinuuid: getTinuuid(obj),
+    owner: normalizeOwnerData(obj),
+    ownerUuid: getOwnerUuid(obj),
+    name: getName(obj),
+    mainPreview: getPreview(obj),
+    lastViews: getViews(obj),
+    lastLikes: getLikes(obj),
+    lastViewsShowcase: getViewsShowcase(obj),
+    removed: false,
+    history: [],
+    likesHistory: [],
+    viewsShowcaseHistory: []
+  })).filter((x) => x.tinuuid);
+}
+
+function createBundleFromFreshApi(rawObjects) {
+  const capturedAt = nowIso();
+  const normalized = normalizeApiObjects(rawObjects);
+
+  normalized.forEach((item) => {
+    item.history = [{ capturedAt, views: num(item.lastViews) }];
+    item.likesHistory = [{ capturedAt, views: num(item.lastLikes) }];
+    item.viewsShowcaseHistory = [{ capturedAt, views: num(item.lastViewsShowcase) }];
+  });
+
+  normalized.sort((a, b) => num(b.lastViews) - num(a.lastViews));
+
+  const totalViews = normalized.filter((x) => num(x.lastViews) > 0).reduce((sum, x) => sum + num(x.lastViews), 0);
+  const totalLikes = normalized.filter((x) => num(x.lastLikes) > 0).reduce((sum, x) => sum + num(x.lastLikes), 0);
+  const totalViewsShowcase = normalized.filter((x) => num(x.lastViewsShowcase) > 0).reduce((sum, x) => sum + num(x.lastViewsShowcase), 0);
+
+  return {
+    version: 2,
+    source: API_URL,
+    createdAt: capturedAt,
+    updatedAt: capturedAt,
+    totalViewsHistory: [{ capturedAt, views: totalViews }],
+    totalLikesHistory: [{ capturedAt, views: totalLikes }],
+    totalViewsShowcaseHistory: [{ capturedAt, views: totalViewsShowcase }],
+    snapshots: [{
+      capturedAt,
+      totalObjects: rawObjects.length,
+      visibleObjectsViews: normalized.filter((x) => num(x.lastViews) > 0).length,
+      visibleObjectsLikes: normalized.filter((x) => num(x.lastLikes) > 0).length,
+      visibleObjectsViewsShowcase: normalized.filter((x) => num(x.lastViewsShowcase) > 0).length,
+      totalViews,
+      totalLikes,
+      totalViewsShowcase
+    }],
+    objects: normalized
+  };
+}
+
+function pushMetricPoint(historyArr, capturedAt, value) {
+  if (!Array.isArray(historyArr)) historyArr = [];
+  historyArr.push({ capturedAt, views: num(value) });
+  return historyArr;
+}
+
+function mergeOpenedBundleWithFreshApi(bundle, rawObjects) {
+  validateBundle(bundle);
+
+  const capturedAt = nowIso();
+  const freshNorm = normalizeApiObjects(rawObjects);
+  const freshMap = new Map(freshNorm.map((x) => [x.tinuuid, x]));
+  const bundleMap = new Map();
+
+  bundle.objects.forEach((item) => {
+    const cloned = ensureMetricFieldsForItem(JSON.parse(JSON.stringify(item)));
+    if (cloned.tinuuid) bundleMap.set(cloned.tinuuid, cloned);
+  });
+
+  for (const [id, fresh] of freshMap.entries()) {
+    if (!bundleMap.has(id)) {
+      bundleMap.set(id, {
+        tinuuid: fresh.tinuuid,
+        owner: fresh.owner,
+        ownerUuid: fresh.ownerUuid,
+        name: fresh.name,
+        mainPreview: fresh.mainPreview,
+        lastViews: num(fresh.lastViews),
+        lastLikes: num(fresh.lastLikes),
+        lastViewsShowcase: num(fresh.lastViewsShowcase),
+        removed: false,
+        history: [{ capturedAt, views: num(fresh.lastViews) }],
+        likesHistory: [{ capturedAt, views: num(fresh.lastLikes) }],
+        viewsShowcaseHistory: [{ capturedAt, views: num(fresh.lastViewsShowcase) }]
+      });
+    } else {
+      const existing = bundleMap.get(id);
+      existing.owner = fresh.owner;
+      existing.ownerUuid = fresh.ownerUuid;
+      existing.name = fresh.name;
+      existing.mainPreview = fresh.mainPreview;
+      existing.lastViews = num(fresh.lastViews);
+      existing.lastLikes = num(fresh.lastLikes);
+      existing.lastViewsShowcase = num(fresh.lastViewsShowcase);
+      existing.removed = false;
+      existing.history = pushMetricPoint(existing.history, capturedAt, existing.lastViews);
+      existing.likesHistory = pushMetricPoint(existing.likesHistory, capturedAt, existing.lastLikes);
+      existing.viewsShowcaseHistory = pushMetricPoint(existing.viewsShowcaseHistory, capturedAt, existing.lastViewsShowcase);
+    }
+  }
+
+  for (const [id, existing] of bundleMap.entries()) {
+    if (!freshMap.has(id)) existing.removed = true;
+  }
+
+  const mergedObjects = Array.from(bundleMap.values())
+    .map(ensureMetricFieldsForItem)
+    .sort((a, b) => num(b.lastViews) - num(a.lastViews));
+
+  const totalViews = mergedObjects.filter((x) => num(x.lastViews) > 0).reduce((sum, x) => sum + num(x.lastViews), 0);
+  const totalLikes = mergedObjects.filter((x) => num(x.lastLikes) > 0).reduce((sum, x) => sum + num(x.lastLikes), 0);
+  const totalViewsShowcase = mergedObjects.filter((x) => num(x.lastViewsShowcase) > 0).reduce((sum, x) => sum + num(x.lastViewsShowcase), 0);
+
+  const updated = JSON.parse(JSON.stringify(bundle));
+  updated.updatedAt = capturedAt;
+  updated.snapshots = Array.isArray(updated.snapshots) ? updated.snapshots : [];
+  updated.totalViewsHistory = Array.isArray(updated.totalViewsHistory) ? updated.totalViewsHistory : [];
+  updated.totalLikesHistory = Array.isArray(updated.totalLikesHistory) ? updated.totalLikesHistory : [];
+  updated.totalViewsShowcaseHistory = Array.isArray(updated.totalViewsShowcaseHistory) ? updated.totalViewsShowcaseHistory : [];
+
+  updated.snapshots.push({
+    capturedAt,
+    totalObjects: rawObjects.length,
+    visibleObjectsViews: mergedObjects.filter((x) => num(x.lastViews) > 0).length,
+    visibleObjectsLikes: mergedObjects.filter((x) => num(x.lastLikes) > 0).length,
+    visibleObjectsViewsShowcase: mergedObjects.filter((x) => num(x.lastViewsShowcase) > 0).length,
+    totalViews,
+    totalLikes,
+    totalViewsShowcase
+  });
+
+  updated.totalViewsHistory.push({ capturedAt, views: totalViews });
+  updated.totalLikesHistory.push({ capturedAt, views: totalLikes });
+  updated.totalViewsShowcaseHistory.push({ capturedAt, views: totalViewsShowcase });
+  updated.objects = mergedObjects;
+
+  upgradeBundleSchema(updated);
+  return updated;
+}
+
+async function downloadFreshBundle() {
+  try {
+    setMode("creating new JSON");
+    const raw = await fetchAllObjectsWithProgress("Create new JSON");
+    updateLoader("Building consolidated bundle.json...", 94, "Bundle assembly");
+
+    const bundle = createBundleFromFreshApi(raw);
+    currentBundle = bundle;
+
+    updateLoader("Rendering objects...", 98, "Rendering");
+    applyBundleToUI(bundle, `bundle_${formatDateTimeForFile()}.json`, "new JSON from API");
+
+    const filename = `bundle_${formatDateTimeForFile()}.json`;
+    if (!downloadJson(bundle, filename)) throw new Error("Failed to download JSON.");
+
+    setStatus(`Done. Downloaded ${filename}. Objects visible for ${METRIC_LABELS[currentMetric]}: ${getVisibleObjects(bundle, currentMetric).length}.`);
+  } catch (err) {
+    console.error(err);
+    setStatus(`Failed to create JSON: ${err.message}`);
+    setMode("error");
+  } finally {
+    hideLoader();
+  }
+}
+
+async function handleFileOpen(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    setMode("opening local JSON");
+    showLoader("Open JSON", "Reading local file...", 18, "File read");
+    const text = await file.text();
+    updateLoader("Parsing JSON...", 45, "Parsing");
+
+    const parsed = JSON.parse(text);
+    validateBundle(parsed);
+
+    updateLoader("Preparing interface...", 82, "Rendering");
+    currentBundle = parsed;
+    applyBundleToUI(parsed, file.name, "local JSON opened");
+    els.updateBtn.disabled = false;
+    setStatus(`Opened file: ${file.name}.`);
+  } catch (err) {
+    console.error(err);
+    setStatus(`Failed to open JSON: ${err.message}`);
+    setMode("error");
+  } finally {
+    hideLoader();
+    e.target.value = "";
+  }
+}
+
+async function updateOpenedBundle() {
+  if (!currentBundle) {
+    setStatus("Open a JSON file first.");
+    return;
+  }
+
+  try {
+    setMode("refreshing statistics");
+    showLoader("Refresh statistics", "Using the currently opened JSON as the baseline...", 6, "Preparation");
+    const raw = await fetchAllObjectsWithProgress("Refresh statistics");
+    updateLoader("Merging previous bundle with the latest snapshot...", 90, "History update");
+
+    const updatedBundle = mergeOpenedBundleWithFreshApi(currentBundle, raw);
+    currentBundle = updatedBundle;
+
+    updateLoader("Rendering refreshed data...", 97, "Rendering");
+    applyBundleToUI(updatedBundle, `bundle_updated_${formatDateTimeForFile()}.json`, "statistics refreshed");
+
+    const filename = `bundle_updated_${formatDateTimeForFile()}.json`;
+    if (!downloadJson(updatedBundle, filename)) throw new Error("Failed to download the refreshed JSON.");
+
+    setStatus(`Done. Statistics refreshed and downloaded as ${filename}.`);
+  } catch (err) {
+    console.error(err);
+    setStatus(`Failed to refresh statistics: ${err.message}`);
+    setMode("error");
+  } finally {
+    hideLoader();
+  }
+}
+
+function getVisibleObjects(bundle, metric = currentMetric) {
+  return [...bundle.objects]
+    .map(ensureMetricFieldsForItem)
+    .filter((x) => getItemMetricValue(x, metric) > 0)
+    .sort((a, b) => getItemMetricValue(b, metric) - getItemMetricValue(a, metric));
+}
+
+function getObjectDeltaFromLast(item, metric = currentMetric) {
+  const history = getItemHistory(item, metric);
+  if (history.length < 2) return 0;
+  const prev = num(history[history.length - 2]?.views);
+  const last = num(history[history.length - 1]?.views);
+  return last - prev;
+}
+
+function getObjectDeltaForPeriod(item, period, metric = currentMetric) {
+  const history = getItemHistory(item, metric);
+  if (!history.length) return 0;
+
+  const lastEntry = history[history.length - 1];
+  const lastDate = new Date(lastEntry.capturedAt);
+  if (Number.isNaN(+lastDate)) return 0;
+
+  const fromDate = new Date(lastDate);
+  if (period === "week") fromDate.setDate(fromDate.getDate() - 7);
+  else if (period === "month") fromDate.setMonth(fromDate.getMonth() - 1);
+  else if (period === "day") fromDate.setHours(fromDate.getHours() - 24);
+  else return getObjectDeltaFromLast(item, metric);
+
+  let baseline = null;
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const d = new Date(history[i].capturedAt);
+    if (d <= fromDate) {
+      baseline = history[i];
+      break;
+    }
+  }
+
+  if (!baseline) baseline = history[0];
+  return num(lastEntry.views) - num(baseline?.views);
+}
+
+function getDeltaByFilter(item, filter, metric = currentMetric) {
+  if (filter === "week") return getObjectDeltaForPeriod(item, "week", metric);
+  if (filter === "month") return getObjectDeltaForPeriod(item, "month", metric);
+  if (filter === "day") return getObjectDeltaForPeriod(item, "day", metric);
+  return getObjectDeltaFromLast(item, metric);
+}
+
+function getCurrentDelta(item) {
+  return getDeltaByFilter(item, getActiveGrowthFilter(), currentMetric);
+}
+
+function getMetricDeltaTotal(list, metric, filter = getActiveGrowthFilter()) {
+  return list.reduce((sum, item) => sum + getDeltaByFilter(item, filter, metric), 0);
+}
+
+function getGrowthLeaders(list, metric = currentMetric, filter = getActiveGrowthFilter()) {
+  return [...list]
+    .map((item) => ({
+      item,
+      delta: getDeltaByFilter(item, filter, metric)
+    }))
+    .sort((a, b) => b.delta - a.delta || getItemMetricValue(b.item, metric) - getItemMetricValue(a.item, metric))
+    .slice(0, 5);
+}
+
+function getOwnerItems(ownerKey, sourceList = currentBundle?.objects || []) {
+  return sourceList
+    .map(ensureMetricFieldsForItem)
+    .filter((item) => getOwnerKey(item) === ownerKey);
+}
+
+function getOwnerGrowthBreakdown(list, metric = currentMetric, filter = getActiveGrowthFilter()) {
+  const totals = new Map();
+  list.forEach((item) => {
+    const ownerKey = getOwnerKey(item);
+    const owner = normalizeOwnerData(item);
+    const delta = Math.max(0, getDeltaByFilter(item, filter, metric));
+    const current = totals.get(ownerKey) || {
+      ownerKey,
+      ownerUuid: owner.uuid,
+      ownerName: owner.name,
+      ownerUsername: owner.username,
+      ownerLabel: owner.label,
+      delta: 0,
+      objects: 0
+    };
+    current.delta += delta;
+    current.objects += 1;
+    totals.set(ownerKey, current);
+  });
+
+  const sorted = [...totals.values()]
+    .filter((entry) => entry.delta > 0)
+    .sort((a, b) => b.delta - a.delta || b.objects - a.objects);
+
+  const totalGrowth = sorted.reduce((sum, entry) => sum + entry.delta, 0);
+  return sorted.map((entry) => ({
+    ...entry,
+    share: totalGrowth ? (entry.delta / totalGrowth) * 100 : 0
+  }));
+}
+
+function applyOwnerFilter(ownerKey) {
+  if (!ownerKey) return;
+  const ownerItems = getOwnerItems(ownerKey);
+  if (!ownerItems.length) return;
+  currentOwnerFilterKey = ownerKey;
+  els.ownerInput.value = getOwnerDisplayName(ownerItems[0]);
+  renderAll();
+  setStatus(`Owner filter applied: ${getOwnerDisplayName(ownerItems[0])}.`);
+}
+
+function renderOwnerModal(ownerKey) {
+  const ownerItems = getOwnerItems(ownerKey);
+  const owner = ownerItems.length ? normalizeOwnerData(ownerItems[0]) : normalizeOwnerData({});
+  const visibleOwnerItems = filterObjects(getVisibleObjects(currentBundle || { objects: [] }, currentMetric))
+    .filter((item) => getOwnerKey(item) === ownerKey);
+  const totalMetric = visibleOwnerItems.reduce((sum, item) => sum + getItemMetricValue(item, currentMetric), 0);
+  const ownerGrowth = visibleOwnerItems.reduce((sum, item) => sum + Math.max(0, getCurrentDelta(item)), 0);
+  const overallGrowth = currentBundle
+    ? getCurrentList().reduce((sum, item) => sum + Math.max(0, getCurrentDelta(item)), 0)
+    : 0;
+  const growthShare = overallGrowth ? (ownerGrowth / overallGrowth) * 100 : 0;
+  const topObjects = [...visibleOwnerItems]
+    .sort((a, b) => getItemMetricValue(b, currentMetric) - getItemMetricValue(a, currentMetric))
+    .slice(0, 5);
+
+  els.ownerModalTitle.textContent = owner.label;
+  els.ownerModalSub.textContent = `${owner.username ? `@${owner.username} · ` : ""}${owner.uuid || "Unknown UUID"}`;
+  els.ownerObjectCount.textContent = formatNum(visibleOwnerItems.length);
+  els.ownerObjectHint.textContent = `${formatNum(ownerItems.length)} total bundle objects for this owner`;
+  els.ownerMetricTotal.textContent = formatNum(totalMetric);
+  els.ownerMetricHint.textContent = `Visible ${METRIC_LABELS[currentMetric]} total`;
+  els.ownerGrowthTotal.textContent = formatSignedNum(ownerGrowth);
+  els.ownerGrowthHint.textContent = `${formatDecimal(growthShare, 1)}% of current filtered growth`;
+
+  els.ownerProfile.innerHTML = `
+    <div class="owner-profile__row"><span>Name</span><strong>${escapeHtml(owner.name || "—")}</strong></div>
+    <div class="owner-profile__row"><span>Username</span><strong>${escapeHtml(owner.username ? `@${owner.username}` : "—")}</strong></div>
+    <div class="owner-profile__row"><span>UUID</span><strong>${escapeHtml(owner.uuid || "—")}</strong></div>
+  `;
+
+  if (!topObjects.length) {
+    els.ownerTopObjects.className = "shortlist empty-list";
+    els.ownerTopObjects.innerHTML = "No visible objects are available for this owner under the current filters.";
+    return;
+  }
+
+  els.ownerTopObjects.className = "shortlist";
+  els.ownerTopObjects.innerHTML = topObjects.map((item, index) => `
+    <div class="shortlist__item">
+      <span class="shortlist__rank">#${index + 1}</span>
+      <span class="shortlist__body">
+        <strong>${escapeHtml(item.name || "Untitled Object")}</strong>
+        <small>${escapeHtml(item.tinuuid || "—")}</small>
+      </span>
+      <span class="shortlist__metric">
+        <strong>${formatNum(getItemMetricValue(item, currentMetric))}</strong>
+        <small>${formatSignedNum(getCurrentDelta(item))}</small>
+      </span>
+    </div>
+  `).join("");
+}
+
+function openOwnerModal(ownerKey) {
+  if (!currentBundle || !ownerKey) return;
+  currentOwnerModalKey = ownerKey;
+  renderOwnerModal(ownerKey);
+  els.ownerModal.classList.remove("hidden");
+  syncModalOpenState();
+}
+
+function closeOwnerModal() {
+  els.ownerModal.classList.add("hidden");
+  syncModalOpenState();
+}
+
+function getDeltaSum(filter, metric = currentMetric) {
+  if (!currentBundle) return 0;
+  return getVisibleObjects(currentBundle, metric).reduce((sum, item) => sum + Math.max(0, getDeltaByFilter(item, filter, metric)), 0);
+}
+
+function getFilterValues() {
+  return {
+    minViews: num(els.minViewsInput.value),
+    minLikes: num(els.minLikesInput.value),
+    minShowcase: num(els.minShowcaseInput.value),
+    minMetric: num(els.minMetricInput.value),
+    maxMetric: els.maxMetricInput.value === "" ? Infinity : num(els.maxMetricInput.value),
+    removed: els.removedSelect.value,
+    query: String(els.searchInput.value || "").trim().toLowerCase(),
+    ownerQuery: String(els.ownerInput.value || "").trim().toLowerCase()
+  };
+}
+
+function clearFilterInputs() {
+  els.searchInput.value = "";
+  els.ownerInput.value = "";
+  els.minViewsInput.value = "";
+  els.minLikesInput.value = "";
+  els.minShowcaseInput.value = "";
+  els.minMetricInput.value = "";
+  els.maxMetricInput.value = "";
+  els.removedSelect.value = "all";
+  currentOwnerFilterKey = "";
+  currentDeltaFilter = "off";
+  currentSort = "metric_desc";
+  els.sortSelect.value = "metric_desc";
+}
+
+function filterObjects(list) {
+  const filters = getFilterValues();
+  return list.filter((item) => {
+    const metricValue = getItemMetricValue(item, currentMetric);
+    const hay = `${item.name || ""} ${item.tinuuid || ""} ${buildGoUrl(item.tinuuid) || ""}`.toLowerCase();
+    const ownerHay = getOwnerSearchHaystack(item);
+
+    if (filters.query && !hay.includes(filters.query)) return false;
+    if (filters.ownerQuery && !ownerHay.includes(filters.ownerQuery)) return false;
+    if (currentOwnerFilterKey && getOwnerKey(item) !== currentOwnerFilterKey) return false;
+    if (num(item.lastViews) < filters.minViews) return false;
+    if (num(item.lastLikes) < filters.minLikes) return false;
+    if (num(item.lastViewsShowcase) < filters.minShowcase) return false;
+    if (metricValue < filters.minMetric) return false;
+    if (metricValue > filters.maxMetric) return false;
+    if (filters.removed === "active" && item.removed) return false;
+    if (filters.removed === "removed" && !item.removed) return false;
+    if (currentDeltaFilter !== "off" && getCurrentDelta(item) <= 0) return false;
+    return true;
+  });
+}
+
+function computeEngagementScore(item) {
+  const views = Math.max(1, num(item.lastViews));
+  const likes = num(item.lastLikes);
+  const showcase = num(item.lastViewsShowcase);
+  return (likes * 2 + showcase * 1.2) / views;
+}
+
+function applySorting(list) {
+  const arr = [...list];
+  if (currentSort === "delta_desc") {
+    arr.sort((a, b) => getCurrentDelta(b) - getCurrentDelta(a));
+    return arr;
+  }
+  if (currentSort === "engagement_desc") {
+    arr.sort((a, b) => computeEngagementScore(b) - computeEngagementScore(a));
+    return arr;
+  }
+  if (currentSort === "name_asc") {
+    arr.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "ru", { sensitivity: "base" }));
+    return arr;
+  }
+  arr.sort((a, b) => getItemMetricValue(b, currentMetric) - getItemMetricValue(a, currentMetric));
+  return arr;
+}
+
+function getCurrentList() {
+  if (!currentBundle) return [];
+  currentDisplayObjects = getVisibleObjects(currentBundle, currentMetric);
+  return applySorting(filterObjects(currentDisplayObjects));
+}
+
+function ensureRenderableCatalogState(bundle) {
+  const fallbackMetric = METRICS.find((metric) => getVisibleObjects(bundle, metric).length > 0);
+  if (fallbackMetric && !getVisibleObjects(bundle, currentMetric).length) {
+    currentMetric = fallbackMetric;
+  }
+
+  let list = applySorting(filterObjects(getVisibleObjects(bundle, currentMetric)));
+  if (!list.length && getVisibleObjects(bundle, currentMetric).length) {
+    clearFilterInputs();
+    list = applySorting(filterObjects(getVisibleObjects(bundle, currentMetric)));
+  }
+
+  updateFilterButtons();
+  updateMetricButtons();
+  return list;
+}
+
+function renderStats(bundle) {
+  const visible = getVisibleObjects(bundle, currentMetric);
+  const totalMetric = visible.reduce((sum, x) => sum + getItemMetricValue(x, currentMetric), 0);
+  const values = visible.map((item) => getItemMetricValue(item, currentMetric));
+  const average = visible.length ? totalMetric / visible.length : 0;
+
+  els.metricTotalTitle.textContent = `Total ${METRIC_LABELS[currentMetric]}`;
+  els.metricTotalSub.textContent = `Total volume for ${METRIC_LABELS[currentMetric]}`;
+  els.statVisibleSub.textContent = `Objects with ${METRIC_LABELS[currentMetric]} > 0`;
+
+  els.statTotal.textContent = formatNum(Array.isArray(bundle.objects) ? bundle.objects.length : 0);
+  els.statVisible.textContent = formatNum(visible.length);
+  els.statMetricTotal.textContent = formatNum(totalMetric);
+  els.statAverage.textContent = formatDecimal(average);
+  els.statMedian.textContent = formatDecimal(median(values));
+  els.statUpdated.textContent = formatHumanDate(bundle.updatedAt);
+}
+
+function renderInsights() {
+  els.insightLastUpdate.textContent = formatSignedNum(getDeltaSum("last_update", currentMetric));
+  els.insightDay.textContent = formatSignedNum(getDeltaSum("day", currentMetric));
+  els.insightWeek.textContent = formatSignedNum(getDeltaSum("week", currentMetric));
+  els.insightMonth.textContent = formatSignedNum(getDeltaSum("month", currentMetric));
+}
+
+function renderFilterDelta() {
+  if (!currentBundle || currentDeltaFilter === "off") {
+    els.filterDeltaBadge.textContent = "Σ +0";
+    return;
+  }
+
+  const total = getVisibleObjects(currentBundle, currentMetric).reduce((sum, item) => sum + Math.max(0, getCurrentDelta(item)), 0);
+  els.filterDeltaBadge.textContent = `Σ +${formatNum(total)}`;
+}
+
+function renderTopList(list) {
+  const owners = getOwnerGrowthBreakdown(list);
+  if (!owners.length) {
+    els.topList.className = "shortlist empty-list";
+    els.topList.innerHTML = "No owner growth is available for the selected period.";
+    return;
+  }
+
+  els.topList.className = "shortlist";
+  els.topList.innerHTML = owners.slice(0, 5).map((owner, index) => {
+    return `
+      <button type="button" class="shortlist__item shortlist__item--button owner-open-btn" data-owner-key="${escapeHtml(owner.ownerKey)}">
+        <span class="shortlist__rank">#${index + 1}</span>
+        <span class="shortlist__body">
+          <strong>${escapeHtml(owner.ownerLabel)}</strong>
+          <small>${formatNum(owner.objects)} objects</small>
+        </span>
+        <span class="shortlist__metric">
+          <strong>${formatSignedNum(owner.delta)}</strong>
+          <small>${formatDecimal(owner.share, 1)}% share</small>
+        </span>
+      </button>
+    `;
+  }).join("");
+}
+
+function openBoardModal() {
+  els.boardModal.classList.remove("hidden");
+  syncModalOpenState();
+  if (!currentBundle) {
+    setStatus("Analytics board opened in preview mode. Load a bundle.json file to populate the board.");
+  }
+}
+
+function closeBoardModal() {
+  els.boardModal.classList.add("hidden");
+  syncModalOpenState();
+}
+
+function renderNarrative(list) {
+  if (!currentBundle) {
+    els.boardViewsDelta.textContent = "+0";
+    els.boardLikesDelta.textContent = "+0";
+    els.boardShowcaseDelta.textContent = "+0";
+    els.boardViewsHint.textContent = "No growth data yet";
+    els.boardLikesHint.textContent = "No growth data yet";
+    els.boardShowcaseHint.textContent = "No growth data yet";
+    els.insightList.innerHTML = "<div class=\"info-card\">Load data to populate change totals and owner growth highlights.</div>";
+    els.benchmarkList.innerHTML = "<div class=\"info-card\">No owner growth table is available yet.</div>";
+    return;
+  }
+
+  const activeFilter = getActiveGrowthFilter();
+  const viewDelta = getMetricDeltaTotal(list, "views", activeFilter);
+  const likesDelta = getMetricDeltaTotal(list, "likes", activeFilter);
+  const showcaseDelta = getMetricDeltaTotal(list, "viewsShowcase", activeFilter);
+  const positiveViews = list.filter((item) => getDeltaByFilter(item, activeFilter, "views") > 0).length;
+  const positiveLikes = list.filter((item) => getDeltaByFilter(item, activeFilter, "likes") > 0).length;
+  const positiveShowcase = list.filter((item) => getDeltaByFilter(item, activeFilter, "viewsShowcase") > 0).length;
+  const owners = getOwnerGrowthBreakdown(list, currentMetric, activeFilter);
+  const topOwner = owners[0];
+  const metricLeaders = [
+    { label: "views", delta: viewDelta },
+    { label: "likes", delta: likesDelta },
+    { label: "showcase", delta: showcaseDelta }
+  ].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  els.boardViewsDelta.textContent = formatSignedNum(viewDelta);
+  els.boardLikesDelta.textContent = formatSignedNum(likesDelta);
+  els.boardShowcaseDelta.textContent = formatSignedNum(showcaseDelta);
+  els.boardViewsHint.textContent = `${formatNum(positiveViews)} objects gained views`;
+  els.boardLikesHint.textContent = `${formatNum(positiveLikes)} objects gained likes`;
+  els.boardShowcaseHint.textContent = `${formatNum(positiveShowcase)} objects gained showcase`;
+
+  els.insightList.innerHTML = [
+    topOwner
+      ? `<div class="info-card"><strong>Top owner in ${METRIC_LABELS[currentMetric]} growth:</strong> ${escapeHtml(topOwner.ownerLabel)} added ${formatSignedNum(topOwner.delta)} and owns ${formatDecimal(topOwner.share, 1)}% of owner growth.</div>`
+      : "<div class=\"info-card\">No owner growth is available under the current filters.</div>",
+    `<div class="info-card"><strong>Three-metric change:</strong> views ${formatSignedNum(viewDelta)}, likes ${formatSignedNum(likesDelta)}, showcase ${formatSignedNum(showcaseDelta)}.</div>`,
+    `<div class="info-card"><strong>Leading change metric:</strong> ${metricLeaders[0].label} shows the strongest absolute shift in the active period.</div>`
+  ].join("");
+
+  els.benchmarkList.innerHTML = owners.length
+    ? owners.slice(0, 5).map((owner) => `<button type="button" class="benchmark benchmark--button owner-open-btn" data-owner-key="${escapeHtml(owner.ownerKey)}"><span>${escapeHtml(owner.ownerLabel)}</span><strong>${formatSignedNum(owner.delta)} · ${formatDecimal(owner.share, 1)}% · ${formatNum(owner.objects)} objects</strong></button>`).join("")
+    : "<div class=\"info-card\">No owner growth table is available for the selected period.</div>";
+}
+
+function getChartBaseOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: "#d8e1f3" } },
+      tooltip: {
+        backgroundColor: "rgba(11,16,26,.96)",
+        titleColor: "#fff",
+        bodyColor: "#dbe6f6",
+        borderColor: "rgba(255,255,255,.12)",
+        borderWidth: 1
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: "#90a0bb", maxRotation: 0, autoSkip: true },
+        grid: { color: "rgba(255,255,255,.05)" }
+      },
+      y: {
+        ticks: {
+          color: "#90a0bb",
+          callback: (value) => formatNum(value)
+        },
+        grid: { color: "rgba(255,255,255,.05)" }
+      }
+    }
+  };
+}
+
+function renderOverviewCharts(list) {
+  renderTrendChart();
+  renderRankingChart(list);
+  renderMixChart(list);
+}
+
+function renderTrendChart() {
+  const history = currentBundle ? getBundleTotalHistory(currentBundle, currentMetric) : [];
+  const points = history.slice(1).map((entry, index) => ({
+    capturedAt: entry.capturedAt,
+    delta: num(entry.views) - num(history[index].views)
+  }));
+  const labels = points.map((entry) => formatPointLabel(entry.capturedAt));
+  const values = points.map((entry) => entry.delta);
+  const totalChange = values.reduce((sum, value) => sum + value, 0);
+
+  els.trendSummary.textContent = history.length
+    ? `${values.length} change points · total ${formatSignedNum(totalChange)}`
+    : "No data";
+
+  if (trendChartInstance) trendChartInstance.destroy();
+  trendChartInstance = new Chart(els.trendCanvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: `Δ ${METRIC_LABELS[currentMetric]}`,
+        data: values,
+        borderColor: "#7cc4ff",
+        backgroundColor: "rgba(79,146,255,.18)",
+        fill: true,
+        tension: 0.35,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        borderWidth: 2
+      }]
+    },
+    options: getChartBaseOptions()
+  });
+}
+
+function renderRankingChart(list) {
+  const owners = getOwnerGrowthBreakdown(list);
+  els.rankingSummary.textContent = owners.length
+    ? `Top ${owners.length} owners for ${METRIC_LABELS[currentMetric]} growth`
+    : "No data";
+
+  if (rankingChartInstance) rankingChartInstance.destroy();
+  rankingChartInstance = new Chart(els.rankingCanvas.getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: owners.slice(0, 6).map((owner) => truncate(owner.ownerLabel, 18)),
+      datasets: [{
+        label: `Δ ${METRIC_LABELS[currentMetric]}`,
+        data: owners.slice(0, 6).map((owner) => owner.delta),
+        borderRadius: 10,
+        backgroundColor: ["#7cc4ff", "#5aa9ff", "#4f92ff", "#3a7df3", "#58d7ae"]
+      }]
+    },
+    options: {
+      ...getChartBaseOptions(),
+      plugins: {
+        ...getChartBaseOptions().plugins,
+        legend: { display: false }
+      }
+    }
+  });
+}
+
+function renderMixChart(list) {
+  const owners = getOwnerGrowthBreakdown(list.length ? list : currentDisplayObjects);
+  const topOwners = owners.slice(0, 6);
+
+  if (mixChartInstance) mixChartInstance.destroy();
+  mixChartInstance = new Chart(els.mixCanvas.getContext("2d"), {
+    type: "doughnut",
+    data: {
+      labels: topOwners.map((owner) => truncate(owner.ownerLabel, 18)),
+      datasets: [{
+        data: topOwners.map((owner) => owner.delta),
+        backgroundColor: ["#7cc4ff", "#58d7ae", "#ffc857", "#5aa9ff", "#8f7dff", "#67d9c2"],
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "68%",
+      plugins: {
+        legend: {
+          labels: { color: "#d8e1f3" }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${formatNum(ctx.parsed)} (${formatDecimal(topOwners[ctx.dataIndex]?.share || 0, 1)}%)`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderCurrent() {
+  if (!currentBundle) {
+    els.grid.innerHTML = "";
+    currentRenderedObjects = [];
+    els.emptyState.classList.remove("hidden");
+    els.resultsSummary.textContent = "0 cards";
+    els.boardSub.textContent = "Open a bundle to see change totals and top movers across views, likes, and showcase.";
+    renderTopList([]);
+    renderNarrative([]);
+    renderOverviewCharts([]);
+    return;
+  }
+
+  const list = getCurrentList();
+  currentRenderedObjects = list;
+  els.grid.innerHTML = "";
+  els.resultsSummary.textContent = `${formatNum(list.length)} cards`;
+
+  renderTopList(list);
+  renderNarrative(list);
+  renderOverviewCharts(list);
+  els.boardSub.textContent = `${formatNum(list.length)} visible objects · board is focused on ${METRIC_LABELS[currentMetric]} movers.`;
+
+  if (!list.length) {
+    els.emptyState.classList.remove("hidden");
+    return;
+  }
+
+  els.emptyState.classList.add("hidden");
+
+  list.forEach((item, index) => {
+    const goUrl = buildGoUrl(item.tinuuid);
+    const viewerUrl = buildViewerUrl(item.tinuuid);
+    const owner = normalizeOwnerData(item);
+    const preview = item.mainPreview
+      ? `<img src="${escapeHtml(item.mainPreview)}" alt="${escapeHtml(item.name)}">`
+      : `<div class="catalog-row__fallback">No preview</div>`;
+
+    const card = document.createElement("article");
+    card.className = "catalog-row";
+    card.innerHTML = `
+      <div class="catalog-row__media">
+        ${preview}
+        <span class="catalog-row__rank">#${index + 1}</span>
+      </div>
+      <div class="catalog-row__title">
+        <h3>${escapeHtml(item.name || "Untitled Object")}</h3>
+        <p>${escapeHtml(item.tinuuid || "—")}</p>
+        <div class="catalog-row__owner">
+          <span class="catalog-row__owner-label">Owner</span>
+          <button type="button" class="text-btn owner-link-btn owner-open-btn" data-owner-key="${escapeHtml(getOwnerKey(item))}">${escapeHtml(owner.label)}</button>
+        </div>
+        <small>${item.removed ? "Removed from latest API snapshot" : "Live in latest API snapshot"}</small>
+      </div>
+
+        <div class="catalog-row__stat">
+          <span class="catalog-row__label">views</span>
+          <strong>${formatNum(item.lastViews)}</strong>
+          <small>${formatSignedNum(getDeltaByFilter(item, getActiveGrowthFilter(), "views"))}</small>
+        </div>
+
+        <div class="catalog-row__stat">
+          <span class="catalog-row__label">likes</span>
+          <strong>${formatNum(item.lastLikes)}</strong>
+          <small>${formatSignedNum(getDeltaByFilter(item, getActiveGrowthFilter(), "likes"))}</small>
+        </div>
+
+        <div class="catalog-row__stat">
+          <span class="catalog-row__label">showcase</span>
+          <strong>${formatNum(item.lastViewsShowcase)}</strong>
+          <small>${formatSignedNum(getDeltaByFilter(item, getActiveGrowthFilter(), "viewsShowcase"))}</small>
+        </div>
+
+        <div class="catalog-row__actions">
+          ${goUrl
+            ? `<a class="btn btn--ghost btn--small" href="${escapeHtml(goUrl)}" target="_blank" rel="noopener noreferrer">Open object</a>`
+            : `<button type="button" class="btn btn--ghost btn--small" disabled>Open object</button>`}
+        ${viewerUrl
+          ? `<a class="btn btn--primary btn--small" href="${escapeHtml(viewerUrl)}" target="_blank" rel="noopener noreferrer">3D viewer</a>`
+          : `<button type="button" class="btn btn--ghost btn--small" disabled>3D viewer</button>`}
+          <button type="button" class="btn btn--ghost btn--small owner-open-btn" data-owner-key="${escapeHtml(getOwnerKey(item))}">Owner</button>
+          <button type="button" class="btn btn--secondary btn--small chart-btn" data-id="${escapeHtml(item.tinuuid)}">Chart</button>
+        </div>
+    `;
+    els.grid.appendChild(card);
+  });
+
+  bindChartButtons(els.grid);
+  bindOwnerButtons(els.grid);
+  bindOwnerButtons(els.topList);
+  bindOwnerButtons(els.benchmarkList);
+}
+
+function bindChartButtons(scope) {
+  scope.querySelectorAll(".chart-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const entry = currentBundle?.objects.find((x) => x.tinuuid === id);
+      if (!entry) return;
+      openChartModal(entry);
+    });
+  });
+}
+
+function bindOwnerButtons(scope) {
+  scope.querySelectorAll(".owner-open-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ownerKey = btn.dataset.ownerKey;
+      if (!ownerKey) return;
+      openOwnerModal(ownerKey);
+    });
+  });
+}
+
+function exportCurrentCsv() {
+  if (!currentRenderedObjects.length) {
+    setStatus("No data available for CSV export.");
+    return;
+  }
+
+  const rows = [[
+    "rank",
+    "name",
+    "tinuuid",
+    "selected_metric",
+    "metric_value",
+    "delta",
+    "views",
+    "likes",
+    "viewsShowcase",
+    "engagement_score",
+    "removed",
+    "viewer_url",
+    "go_url"
+  ]];
+
+  currentRenderedObjects.forEach((item, index) => {
+    const delta = currentDeltaFilter === "off" ? getObjectDeltaFromLast(item, currentMetric) : getCurrentDelta(item);
+    rows.push([
+      index + 1,
+      item.name || "",
+      item.tinuuid || "",
+      currentMetric,
+      getItemMetricValue(item, currentMetric),
+      delta || 0,
+      item.lastViews || 0,
+      item.lastLikes || 0,
+      item.lastViewsShowcase || 0,
+      formatDecimal(computeEngagementScore(item), 4),
+      item.removed ? "true" : "false",
+      buildViewerUrl(item.tinuuid) || "",
+      buildGoUrl(item.tinuuid) || ""
+    ]);
+  });
+
+  const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const filename = `vizbl_export_${currentMetric}_${formatDateTimeForFile()}.csv`;
+  if (downloadText(csv, filename, "text/csv;charset=utf-8")) {
+    setStatus(`CSV exported: ${filename}.`);
+  } else {
+    setStatus("Failed to export CSV.");
+  }
+}
+
+function resetUi() {
+  currentDeltaFilter = "off";
+  currentSort = "metric_desc";
+  currentMetric = "views";
+  els.searchInput.value = "";
+  els.sortSelect.value = "metric_desc";
+  els.metricSelect.value = "views";
+  els.minViewsInput.value = "";
+  els.minLikesInput.value = "";
+  els.minShowcaseInput.value = "";
+  els.minMetricInput.value = "";
+  els.maxMetricInput.value = "";
+  els.removedSelect.value = "all";
+  updateFilterButtons();
+  updateMetricButtons();
+  renderAll();
+  setStatus("Filters, search, sorting, and metric were reset.");
+}
+
+function openChartModal(entry) {
+  currentChartEntry = entry;
+  chartMode = "days";
+  updateChartModeButtons();
+  els.modalTitle.textContent = `${entry.name || "Chart"} · ${METRIC_LABELS[currentMetric]}`;
+  els.modalSub.textContent = `TINUUID: ${entry.tinuuid || "—"}`;
+  els.chartModal.classList.remove("hidden");
+  syncModalOpenState();
+  drawChart(entry);
+}
+
+function openTotalMetricChart() {
+  if (!currentBundle) {
+    setStatus("No bundle.json file is loaded.");
+    return;
+  }
+
+  const totalHistory = getBundleTotalHistory(currentBundle, currentMetric);
+  if (!totalHistory.length) {
+    setStatus(`No total-history data found for ${METRIC_LABELS[currentMetric]}.`);
+    return;
+  }
+
+  currentChartEntry = {
+    name: `Total ${METRIC_LABELS[currentMetric]} across all objects`,
+    tinuuid: `TOTAL_${currentMetric}`,
+    __isTotalMetric: true
+  };
+
+  chartMode = "days";
+  updateChartModeButtons();
+  els.modalTitle.textContent = `Total ${METRIC_LABELS[currentMetric]} across all objects`;
+  els.modalSub.textContent = `Historical total of ${METRIC_LABELS[currentMetric]} across all objects`;
+  els.chartModal.classList.remove("hidden");
+  syncModalOpenState();
+  drawChart(currentChartEntry);
+}
+
+function closeChartModal() {
+  els.chartModal.classList.add("hidden");
+  syncModalOpenState();
+}
+
+function updateChartModeButtons() {
+  els.daysBtn.classList.toggle("active", chartMode === "days");
+  els.monthsBtn.classList.toggle("active", chartMode === "months");
+}
+
+function drawChart(entry) {
+  let history = [];
+  if (entry.__isTotalMetric) history = getBundleTotalHistory(currentBundle, currentMetric);
+  else history = getItemHistory(entry, currentMetric);
+
+  let labels = [];
+  let values = [];
+
+  if (chartMode === "days") {
+    labels = history.map((x) => formatPointLabel(x.capturedAt));
+    values = history.map((x) => num(x.views));
+    els.chartMeta.textContent = `Points: ${values.length} · Metric: ${METRIC_LABELS[currentMetric]} · Mode: day snapshots`;
+  } else {
+    const grouped = groupByMonth(history);
+    labels = grouped.labels;
+    values = grouped.values;
+    els.chartMeta.textContent = `Points: ${values.length} · Metric: ${METRIC_LABELS[currentMetric]} · Mode: monthly view`;
+  }
+
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(document.getElementById("chartCanvas").getContext("2d"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: METRIC_LABELS[currentMetric],
+        data: values,
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true,
+        backgroundColor: "rgba(90,169,255,.14)",
+        borderColor: "rgba(124,196,255,1)",
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: "rgba(124,196,255,1)"
+      }]
+    },
+    options: getChartBaseOptions()
+  });
+}
+
+function formatPointLabel(iso) {
+  const d = new Date(iso);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function groupByMonth(history) {
+  const map = new Map();
+  history.forEach((x) => {
+    const d = new Date(x.capturedAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    map.set(key, num(x.views));
+  });
+  const entries = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  return {
+    labels: entries.map(([k]) => k),
+    values: entries.map(([, v]) => v)
+  };
+}
+
+function truncate(text, length) {
+  if (String(text).length <= length) return text;
+  return `${String(text).slice(0, length - 1)}…`;
+}
+
+function applyBundleToUI(bundle, fileLabel, modeLabel) {
+  validateBundle(bundle);
+  currentBundle = bundle;
+  currentDisplayObjects = ensureRenderableCatalogState(bundle);
+  setFileChip(`File: ${fileLabel}`);
+  setMode(modeLabel);
+  els.updateBtn.disabled = false;
+  renderAll();
+}
+
+function renderAll() {
+  if (!currentBundle) {
+    renderCurrent();
+    renderFilterDelta();
+    renderInsights();
+    setMetricChip();
+    return;
+  }
+
+  renderStats(currentBundle);
+  renderInsights();
+  renderCurrent();
+  renderFilterDelta();
+  if (!els.ownerModal.classList.contains("hidden") && currentOwnerModalKey) {
+    renderOwnerModal(currentOwnerModalKey);
+  }
+  setMetricChip();
+}
+
+updateFilterButtons();
+updateMetricButtons();
+renderFilterDelta();
+renderInsights();
+setMode("idle");
+renderCurrent();
